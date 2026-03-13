@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Contact {
+  id         String    @id @default(uuid())
+  name       String
+  phone      String
+  email      String    @default("N/A")
+  company    String    @default("N/A")
+  department String    @default("N/A")
+  language   String    @default("English")
+  credit     Float     @default(0)
+  status     String    @default("Pending")
+  type       String    @default("Lead")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  notes      Note[]
+  calls      CallLog[]
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  text      String
+  isSystem  Boolean  @default(false)
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model CallLog {
+  id          String   @id @default(uuid())
+  blandCallId String?
+  status      String
+  duration    Int?
+  transcript  String?
+  summary     String?
+  contactId   String
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
