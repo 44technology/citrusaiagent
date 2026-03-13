@@ -44,10 +44,9 @@ export async function makeCall(contact, settings = {}) {
     first_sentence: `Hi, is this ${contact.name}? This is Alex calling from Citrus Co. How are you doing today?`,
     model: 'base',
     language,
-    voice: 'matt',
+    voice: 'Josh',
     wait_for_greeting: true,
     max_duration: 3,
-    reduce_latency: true,
     metadata: {
       contactId: contact.id
     }
