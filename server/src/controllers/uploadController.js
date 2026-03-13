@@ -17,13 +17,13 @@ export const uploadExcel = async (req, res) => {
 
     // Map to contact structure
     const contactsData = json.map(row => ({
-      name: row.Name || row.name || 'Unknown',
-      phone: String(row.Phone || row.phone || row['Phone Number'] || 'N/A'),
-      email: row.Email || row.email || row['Email Address'] || 'N/A',
-      company: row.Company || row.company || row['Company Name'] || 'N/A',
+      name: row['Full Name'] || row.Name || row.name || row['full name'] || 'Unknown',
+      phone: String(row.Phone || row.phone || row['Phone Number'] || row['phone number'] || 'N/A'),
+      email: row.Email || row.email || row['Email Address'] || row['email address'] || 'N/A',
+      company: row['Company Name'] || row.Company || row.company || row['company name'] || 'N/A',
       department: row.Department || row.department || 'N/A',
       language: row.Language || row.language || 'English',
-      credit: parseFloat(row.CapitalBoxCredit || row['Capital Box Credit'] || 0) || 0,
+      credit: parseFloat(row.CapitalBoxCredit || row['Capital Box Credit'] || row.Credit || 0) || 0,
       status: 'Pending',
       type: 'Lead'
     }));
