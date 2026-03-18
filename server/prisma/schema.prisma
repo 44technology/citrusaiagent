@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -20,8 +20,8 @@ model Contact {
   type       String     @default("Lead")
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  notes      Note[]
   calls      CallLog[]
+  notes      Note[]
   shipments  Shipment[]
 }
 
@@ -30,8 +30,8 @@ model Note {
   text      String
   isSystem  Boolean  @default(false)
   contactId String
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 model CallLog {
@@ -42,14 +42,13 @@ model CallLog {
   transcript  String?
   summary     String?
   contactId   String
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 model Shipment {
   id              String    @id @default(uuid())
   label           String
-  origin          String?
   destination     String
   vesselName      String?
   containerNumber String?
@@ -61,7 +60,8 @@ model Shipment {
   status          String    @default("Pending")
   notes           String?
   contactId       String
-  contact         Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  origin          String?
+  contact         Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }

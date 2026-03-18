@@ -7,7 +7,9 @@ services:
     rootDir: server
     envVars:
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: citrus-db
+          property: connectionString
       - key: PORT
         value: "3001"
       - key: BLAND_API_KEY
@@ -22,3 +24,7 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
+
+databases:
+  - name: citrus-db
+    plan: free
