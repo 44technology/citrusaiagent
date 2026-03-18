@@ -130,8 +130,9 @@ const Dashboard = ({ activeTab }) => {
               </div>
             </div>
           ) : filteredContacts.length === 0 && activeTab === 'customers' ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-              No customers yet. Promote a Lead to see them here.
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
+              <div style={{ color: 'var(--text-muted)' }}>No customers yet. Promote a Lead or add one manually.</div>
+              <button className="btn btn-glass" onClick={() => setIsModalOpen(true)}>+ Add Customer Manually</button>
             </div>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -140,14 +141,12 @@ const Dashboard = ({ activeTab }) => {
                   {filteredContacts.length} {activeTab === 'leads' ? 'Leads' : 'Customers'}
                 </span>
                 <div className="flex-center gap-2">
-                  {activeTab === 'leads' && (
-                    <button 
-                      className="btn btn-glass"
-                      onClick={() => setIsModalOpen(true)}
-                    >
-                      + Add Lead
-                    </button>
-                  )}
+                  <button 
+                    className="btn btn-glass"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    {activeTab === 'leads' ? '+ Add Lead' : '+ Add Customer'}
+                  </button>
                   <button 
                     className="btn btn-glass"
                     onClick={handleClearList}
@@ -169,6 +168,7 @@ const Dashboard = ({ activeTab }) => {
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
             onAdd={handleAddContact} 
+            defaultType={activeTab === 'customers' ? 'Customer' : 'Lead'}
           />
 
         </div>

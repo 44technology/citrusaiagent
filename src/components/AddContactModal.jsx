@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-const AddContactModal = ({ isOpen, onClose, onAdd }) => {
+const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -24,7 +24,7 @@ const AddContactModal = ({ isOpen, onClose, onAdd }) => {
       department: department || 'N/A',
       language,
       status: 'Pending',
-      type: 'Lead',
+      type: defaultType,
       credit: 0
     });
     
