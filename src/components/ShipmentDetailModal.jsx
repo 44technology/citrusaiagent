@@ -173,7 +173,20 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                   {isEditing ? (
                     <input type="text" className="ui-input" value={editData.shippingLine} onChange={(e) => setEditData(p => ({ ...p, shippingLine: e.target.value }))} />
                   ) : (
-                    <span className="shipment-detail-value">{shipment.shippingLine || '—'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span className="shipment-detail-value">{shipment.shippingLine || '—'}</span>
+                      {shipment.shippingLine && (shipment.shippingLine.toLowerCase().includes('maersk') || shipment.shippingLine.toLowerCase().includes('msc')) && (
+                        <a 
+                          href={shipment.shippingLine.toLowerCase().includes('maersk') ? 'https://www.maersk.com/tracking/' : 'https://www.msc.com/en/track-a-shipment'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-glass btn-sm"
+                          style={{ fontSize: '0.7rem', padding: '4px 8px', color: 'var(--orange-primary)' }}
+                        >
+                          <Navigation size={12} /> Track
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="shipment-detail-item">

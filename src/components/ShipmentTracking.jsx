@@ -95,6 +95,14 @@ const ShipmentTracking = () => {
     setFilters({ customer: '', container: '', shippingLine: '', origin: '', destination: '', eta: '' });
   };
 
+  const getTrackingLink = (line, container) => {
+    if (!line) return null;
+    const l = line.toLowerCase();
+    if (l.includes('maersk')) return `https://www.maersk.com/tracking/`;
+    if (l.includes('msc')) return `https://www.msc.com/en/track-a-shipment`;
+    return null;
+  };
+
   if (loading) return <div className="flex-center" style={{ height: '100%' }}><div className="loader"></div></div>;
 
   return (
@@ -127,7 +135,7 @@ const ShipmentTracking = () => {
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="glass-panel" style={{ padding: '20px' }}>
+        <div className="glass-panel" style={{ padding: '20px', border: '1px solid var(--orange-primary)', boxShadow: '0 0 20px rgba(255,107,0,0.1)' }}>
            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
              <div className="shipment-detail-item">
                <label className="shipment-detail-label">Customer / Company</label>
@@ -176,27 +184,62 @@ const ShipmentTracking = () => {
                 <span className="kanban-count">{statusShipments.length}</span>
               </div>
               <div className="kanban-cards">
-                {statusShipments.map(shipment => (
-                  <div key={shipment.id} className="kanban-card" onClick={() => setSelectedShipment(shipment)}>
-                    <div className="kanban-card-title">{shipment.label}</div>
-                    <div className="kanban-card-route">
-                      <MapPin size={12} /> {shipment.origin ? `${shipment.origin} → ` : ''}{shipment.destination}
-                    </div>
-                    <div className="text-muted mt-2" style={{ fontSize: '0.75rem' }}>
-                      {shipment.contact?.name} {shipment.contact?.company && `(${shipment.contact.company})`}
-                    </div>
-                    <div className="kanban-card-footer">
-                      <div className="kanban-card-vessel">
-                        <Anchor size={12} /> {shipment.vesselName || 'No vessel info'}
+                {statusShipments.map(shipment => {
+                  const trackingUrl = getTrackingLink(shipment.shippingLine, shipment.containerNumber);
+                  return (
+                    <div key={shipment.id} className="kanban-card" onClick={() => setSelectedShipment(shipment)}>
+                      <div className="kanban-card-title">{shipment.label}</div>
+                      <div className="kanban-card-route">
+                        <MapPin size={12} /> {shipment.origin ? `${shipment.origin} → ` : ''}{shipment.destination}
                       </div>
-                      {shipment.vesselEta && (
-                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-primary)' }}>
-                          {new Date(shipment.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+
+                      {/* NEW: Container & Shipping Line Info */}
+                      <div className="mt-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {shipment.containerNumber && (
+                          <div className="status-badge" style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(255,255,255,0.05)' }}>
+                            <Package size={10} /> {shipment.containerNumber}
+                          </div>
+                        )}
+                        {shipment.shippingLine && (
+                          <div className="status-badge" style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(255,107,0,0.05)', color: 'var(--orange-primary)' }}>
+                            <Ship size={10} /> {shipment.shippingLine}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-muted mt-2" style={{ fontSize: '0.75rem' }}>
+                        {shipment.contact?.name} {shipment.contact?.company && `(${shipment.contact.company})`}
+                      </div>
+
+                      {/* NEW: Tracking Link Action */}
+                      {trackingUrl && (
+                        <div className="mt-2">
+                          <a 
+                            href={trackingUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-text-action"
+                            style={{ fontSize: '0.7rem', color: 'var(--orange-primary)', padding: 0, textDecoration: 'underline' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Navigation size={10} /> Track on {shipment.shippingLine.split(' ')[0]}
+                          </a>
                         </div>
                       )}
+
+                      <div className="kanban-card-footer">
+                        <div className="kanban-card-vessel">
+                          <Anchor size={12} /> {shipment.vesselName || 'No vessel info'}
+                        </div>
+                        {shipment.vesselEta && (
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-primary)' }}>
+                            {new Date(shipment.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {statusShipments.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: '0.85rem', opacity: 0.5 }}>
                     No shipments in this stage.
