@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
+import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
             {(activeTab === 'leads' || activeTab === 'customers') && (
               <Dashboard activeTab={activeTab} />
             )}
+            {activeTab === 'shipments' && <ShipmentTracking />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <div className="placeholder">Settings Coming Soon</div>}
           </div>

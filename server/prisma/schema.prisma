@@ -8,20 +8,21 @@ datasource db {
 }
 
 model Contact {
-  id         String    @id @default(uuid())
+  id         String     @id @default(uuid())
   name       String
   phone      String
-  email      String    @default("N/A")
-  company    String    @default("N/A")
-  department String    @default("N/A")
-  language   String    @default("English")
-  credit     Float     @default(0)
-  status     String    @default("Pending")
-  type       String    @default("Lead")
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  email      String     @default("N/A")
+  company    String     @default("N/A")
+  department String     @default("N/A")
+  language   String     @default("English")
+  credit     Float      @default(0)
+  status     String     @default("Pending")
+  type       String     @default("Lead")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
   notes      Note[]
   calls      CallLog[]
+  shipments  Shipment[]
 }
 
 model Note {
@@ -43,4 +44,24 @@ model CallLog {
   contactId   String
   contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+model Shipment {
+  id              String    @id @default(uuid())
+  label           String
+  origin          String?
+  destination     String
+  vesselName      String?
+  containerNumber String?
+  bolNumber       String?
+  vesselEta       DateTime?
+  vesselDeparture DateTime?
+  vesselArrival   DateTime?
+  shippingLine    String?
+  status          String    @default("Pending")
+  notes           String?
+  contactId       String
+  contact         Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

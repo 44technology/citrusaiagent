@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import contactRoutes from './routes/contacts.js';
 import campaignRoutes from './routes/campaigns.js';
 import uploadRoutes from './routes/upload.js';
+import shipmentRoutes from './routes/shipments.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,7 +36,8 @@ app.use('/api', authMiddleware);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/shipments', shipmentRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🍊 Citrus AI Caller server running on port ${PORT}`);
 });

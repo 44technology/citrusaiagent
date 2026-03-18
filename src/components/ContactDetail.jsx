@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin } from 'lucide-react';
 import CampaignSettings from './CampaignSettings';
-import { contactsApi, campaignApi } from '../services/api';
+import AddShipmentModal from './AddShipmentModal';
+import { contactsApi, campaignApi, shipmentsApi } from '../services/api';
 
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [note, setNote] = useState('');
@@ -11,11 +12,32 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [callResult, setCallResult] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [customerShipments, setCustomerShipments] = useState([]);
+  const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
 
   useEffect(() => {
     setLocalContact(contact);
     loadNotes();
+    loadShipments();
   }, [contact]);
+
+  const loadShipments = async () => {
+    try {
+      const shipments = await shipmentsApi.getByContact(contact.id);
+      setCustomerShipments(shipments);
+    } catch (err) {
+      console.error('Failed to load shipments:', err);
+    }
+  };
+
+  const handleAddShipment = async (shipmentData) => {
+    try {
+      await shipmentsApi.create(shipmentData);
+      await loadShipments();
+    } catch (err) {
+      console.error('Failed to add shipment:', err);
+    }
+  };
 
   const loadNotes = async () => {
     try {
@@ -278,6 +300,50 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
             </div>
           </div>
 
+          {/* Customer Shipments */}
+          <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Ship size={18} className="text-orange" /> Shipments
+              </h3>
+              <button className="btn btn-text-action" style={{ color: 'var(--orange-primary)' }} onClick={() => setIsShipmentModalOpen(true)}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {customerShipments.length === 0 ? (
+                <div className="text-muted" style={{ textAlign: 'center', margin: 'auto' }}>No shipments trackyed for this customer.</div>
+              ) : (
+                customerShipments.map((s) => (
+                  <div key={s.id} className="shipment-card" style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{s.label}</div>
+                        <div className="text-muted mt-1" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPin size={12} /> {s.origin ? `${s.origin} → ` : ''}{s.destination}
+                        </div>
+                      </div>
+                      <span className="status-pill" style={{ 
+                        fontSize: '0.75rem', 
+                        padding: '2px 8px',
+                        background: s.status === 'Arrived' ? 'rgba(174, 234, 0, 0.1)' : 'rgba(255, 122, 0, 0.1)',
+                        color: s.status === 'Arrived' ? 'var(--green-accent)' : 'var(--orange-primary)'
+                      }}>
+                        {s.status}
+                      </span>
+                    </div>
+                    {s.vesselName && (
+                      <div className="text-muted mt-2" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                        Vessel: {s.vesselName}
+                      </div>
+                    )}
+                  </div>
+                ) )
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Right Col: AI Campaign specific to this contact */}
@@ -291,6 +357,12 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
         </div>
         
       </div>
+      <AddShipmentModal 
+        isOpen={isShipmentModalOpen} 
+        onClose={() => setIsShipmentModalOpen(false)} 
+        onAdd={handleAddShipment} 
+        customers={[localContact]} 
+      />
     </div>
   );
 };

@@ -74,3 +74,13 @@ export const campaignApi = {
     request('/campaigns/bulk', { method: 'POST', body: JSON.stringify({ contactIds, settings }) }),
   getStatus: (callId) => request(`/campaigns/status/${callId}`),
 };
+
+// ─── Shipments ───────────────────────────────────────
+export const shipmentsApi = {
+  getAll: () => request('/shipments'),
+  getByContact: (contactId) => request(`/shipments/contact/${contactId}`),
+  getOne: (id) => request(`/shipments/${id}`),
+  create: (data) => request('/shipments', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/shipments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => request(`/shipments/${id}`, { method: 'DELETE' }),
+};
