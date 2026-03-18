@@ -76,10 +76,11 @@ export const createShipment = async (req, res) => {
       },
       include: { contact: { select: { id: true, name: true, company: true } } }
     });
+    console.log('Shipment created successfully:', shipment.id);
     res.status(201).json(shipment);
   } catch (error) {
-    console.error('Error creating shipment:', error);
-    res.status(500).json({ error: 'Failed to create shipment' });
+    console.error('Detailed Error creating shipment:', error);
+    res.status(500).json({ error: 'Failed to create shipment: ' + error.message });
   }
 };
 

@@ -58,6 +58,7 @@ const ShipmentTracking = () => {
       loadData();
     } catch (err) {
       console.error('Failed to create shipment:', err);
+      throw err; // Re-throw so modal can show alert
     }
   };
 
