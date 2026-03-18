@@ -65,3 +65,12 @@ model Shipment {
   origin          String?
   contact         Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

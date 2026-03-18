@@ -1,25 +1,31 @@
 import React, { useState } from 'react';
-import { LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { UserPlus, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const LoginPage = ({ onLogin }) => {
+const SignupPage = () => {
   const [username, setUsername] = useState('');
-// ... (rest of state and handleLogin)
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) return;
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
     
     setLoading(true);
     setError('');
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || '/api';
-      const res = await fetch(`${apiBase}/auth/login`, {
+      const res = await fetch(`${apiBase}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -30,9 +36,10 @@ const LoginPage = ({ onLogin }) => {
       if (res.ok && data.token) {
         localStorage.setItem('citrus_token', data.token);
         localStorage.setItem('citrus_user', data.username);
-        onLogin(data.token, data.username);
+        // Successful signup, redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Signup failed');
       }
     } catch (err) {
       setError('Connection error. Is the server running?');
@@ -46,13 +53,13 @@ const LoginPage = ({ onLogin }) => {
       <div className="bg-glow-orange"></div>
       <div className="bg-glow-green"></div>
 
-      <div className="login-container glass-panel animate-slide-up">
+      <div className="login-container glass-panel animate-slide-up" style={{ maxWidth: '450px' }}>
         <div className="login-logo">
           <div className="login-logo-icon">
             🍊
           </div>
-          <h1 className="login-title">Citrus AI Caller</h1>
-          <p className="text-sec" style={{ fontSize: '0.9rem' }}>Sign in to access your dashboard</p>
+          <h1 className="login-title">Create Account</h1>
+          <p className="text-sec" style={{ fontSize: '0.9rem' }}>Join Citrus AI Caller platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -68,10 +75,9 @@ const LoginPage = ({ onLogin }) => {
             <input
               type="text"
               className="ui-input"
-              placeholder="Enter your username"
+              placeholder="Pick a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
               required
             />
           </div>
@@ -82,10 +88,9 @@ const LoginPage = ({ onLogin }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 className="ui-input"
-                placeholder="Enter your password"
+                placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
                 required
                 style={{ paddingRight: '48px' }}
               />
@@ -109,34 +114,43 @@ const LoginPage = ({ onLogin }) => {
             </div>
           </div>
 
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 600 }}>CONFIRM PASSWORD</label>
+            <input
+              type="password"
+              className="ui-input"
+              placeholder="Repeat password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: '100%', padding: '14px', marginTop: '8px', fontSize: '1rem' }}
+            style={{ width: '100%', padding: '14px', marginTop: '16px', fontSize: '1rem' }}
             disabled={loading}
           >
             {loading ? (
-              <span>Signing in...</span>
+              <span>Creating account...</span>
             ) : (
               <>
-                <LogIn size={18} />
-                Sign In
+                <UserPlus size={18} />
+                Sign Up
               </>
             )}
           </button>
         </form>
 
         <div style={{ marginTop: '24px', textAlign: 'center' }}>
-          <p className="text-muted" style={{ fontSize: '0.9rem' }}>
-            Don't have an account? <Link to="/signup" className="btn btn-text-action">Sign Up</Link>
-          </p>
-          <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '16px' }}>
-            Citrus Co. Internal Platform
-          </div>
+          <Link to="/login" className="btn btn-text-action" style={{ fontSize: '0.9rem' }}>
+            <ArrowLeft size={16} /> Already have an account? Sign In
+          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default SignupPage;
