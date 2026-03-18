@@ -36,8 +36,14 @@ const ShipmentTracking = () => {
         contactsApi.getAll()
       ]);
       setShipments(sData);
-      // Filter for only 'Customer' type
-      const customerOnly = cData.filter(c => c.type === 'Customer');
+      
+      // LOGS FOR DEBUGGING PRODUCTION DATA
+      console.log(`Loaded ${cData.length} contacts. Types:`, [...new Set(cData.map(c => c.type))]);
+      
+      // Filter for 'Customer' type (case-insensitive)
+      const customerOnly = cData.filter(c => 
+        c.type && c.type.toLowerCase() === 'customer'
+      );
       setCustomers(customerOnly);
     } catch (err) {
       console.error('Failed to load tracking data:', err);

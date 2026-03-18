@@ -112,8 +112,8 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
               <label className="shipment-label" style={{ marginBottom: 0 }}>Customer Info *</label>
               <button 
                 type="button" 
-                className="btn btn-text-action" 
-                style={{ fontSize: '0.75rem', gap: '4px' }}
+                className="btn btn-glass" 
+                style={{ fontSize: '0.75rem', gap: '4px', padding: '4px 10px', background: 'rgba(255,107,0,0.1)', color: 'var(--orange-primary)' }}
                 onClick={() => setIsNewCustomer(!isNewCustomer)}
               >
                 {isNewCustomer ? <><UserCheck size={14} /> Use Existing</> : <><UserPlus size={14} /> + New Customer</>}
@@ -127,13 +127,18 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
                   className="ui-input"
                   value={form.contactId}
                   onChange={(e) => handleChange('contactId', e.target.value)}
-                  style={{ width: '100%', border: form.contactId ? '1px solid var(--orange-primary)' : '' }}
+                  style={{ width: '100%', border: form.contactId ? '1px solid var(--orange-primary)' : '1px solid var(--border-glass)' }}
                 >
                   <option value="">Select Customer...</option>
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>
                   ))}
                 </select>
+                {customers.length === 0 && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--orange-primary)', marginTop: '6px', opacity: 0.8 }}>
+                    No customers found in directory. Use "New Customer" to create one.
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{ background: 'rgba(255,107,0,0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,107,0,0.1)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
