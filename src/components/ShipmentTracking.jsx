@@ -36,7 +36,9 @@ const ShipmentTracking = () => {
         contactsApi.getAll()
       ]);
       setShipments(sData);
-      setCustomers(cData);
+      // Filter for only 'Customer' type
+      const customerOnly = cData.filter(c => c.type === 'Customer');
+      setCustomers(customerOnly);
     } catch (err) {
       console.error('Failed to load tracking data:', err);
     } finally {
