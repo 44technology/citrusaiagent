@@ -1,5 +1,4 @@
-import React from 'react';
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Ship } from 'lucide-react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Ship, ShoppingBag } from 'lucide-react';
 import '../index.css';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
@@ -7,6 +6,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'customers', label: 'Customers', icon: CheckCircle2 },
     { id: 'shipments', label: 'Shipments', icon: Ship },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];

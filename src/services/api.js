@@ -84,3 +84,12 @@ export const shipmentsApi = {
   update: (id, data) => request(`/shipments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/shipments/${id}`, { method: 'DELETE' }),
 };
+// ─── Orders ──────────────────────────────────────────
+export const ordersApi = {
+  getAll: () => request('/orders'),
+  getByContact: (contactId) => request(`/orders/contact/${contactId}`),
+  getOne: (id) => request(`/orders/${id}`),
+  create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => request(`/orders/${id}`, { method: 'DELETE' }),
+};

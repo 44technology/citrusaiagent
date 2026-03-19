@@ -23,6 +23,7 @@ model Contact {
   calls      CallLog[]
   notes      Note[]
   shipments  Shipment[]
+  orders     Order[]
 }
 
 model Note {
@@ -73,4 +74,21 @@ model User {
   role      String   @default("user")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  referenceId String
+  shipper     String
+  product     String
+  label       String
+  variety     String
+  boxType     String
+  boxQuantity Int
+  receiver    String
+  week        String
+  contactId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag } from 'lucide-react';
 import CampaignSettings from './CampaignSettings';
 import AddShipmentModal from './AddShipmentModal';
-import { contactsApi, campaignApi, shipmentsApi } from '../services/api';
+import AddOrderModal from './AddOrderModal';
+import { contactsApi, campaignApi, shipmentsApi, ordersApi } from '../services/api';
 
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [note, setNote] = useState('');
@@ -13,13 +14,34 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [customerShipments, setCustomerShipments] = useState([]);
+  const [customerOrders, setCustomerOrders] = useState([]);
   const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   useEffect(() => {
     setLocalContact(contact);
     loadNotes();
     loadShipments();
+    loadOrders();
   }, [contact]);
+
+  const loadOrders = async () => {
+    try {
+      const orders = await ordersApi.getByContact(contact.id);
+      setCustomerOrders(orders);
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    }
+  };
+
+  const handleAddOrder = async (orderData) => {
+    try {
+      await ordersApi.create(orderData);
+      await loadOrders();
+    } catch (err) {
+      console.error('Failed to add order:', err);
+    }
+  };
 
   const loadShipments = async () => {
     try {
@@ -313,7 +335,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
             
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {customerShipments.length === 0 ? (
-                <div className="text-muted" style={{ textAlign: 'center', margin: 'auto' }}>No shipments trackyed for this customer.</div>
+                <div className="text-muted" style={{ textAlign: 'center', margin: 'auto' }}>No shipments recorded for this customer.</div>
               ) : (
                 customerShipments.map((s) => (
                   <div key={s.id} className="shipment-card" style={{ padding: '12px 16px' }}>
@@ -344,6 +366,44 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
             </div>
           </div>
 
+          {/* Customer Orders */}
+          <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <ShoppingBag size={18} className="text-orange" /> Orders
+              </h3>
+              <button className="btn btn-text-action" style={{ color: 'var(--orange-primary)' }} onClick={() => setIsOrderModalOpen(true)}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {customerOrders.length === 0 ? (
+                <div className="text-muted" style={{ textAlign: 'center', margin: 'auto' }}>No orders recorded for this customer.</div>
+              ) : (
+                customerOrders.map((o) => (
+                  <div key={o.id} className="shipment-card" style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{o.product} - {o.variety}</div>
+                        <div className="text-muted mt-1" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          Ref: {o.referenceId} | Week: {o.week}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--orange-primary)' }}>{o.boxQuantity} Boxes</div>
+                        <div className="text-muted mt-1" style={{ fontSize: '0.75rem' }}>{o.boxType}</div>
+                      </div>
+                    </div>
+                    <div className="text-muted mt-2" style={{ fontSize: '0.8rem' }}>
+                      Shipper: {o.shipper} | Recv: {o.receiver}
+                    </div>
+                  </div>
+                ) )
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Right Col: AI Campaign specific to this contact */}
@@ -361,6 +421,12 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
         isOpen={isShipmentModalOpen} 
         onClose={() => setIsShipmentModalOpen(false)} 
         onAdd={handleAddShipment} 
+        customers={[localContact]} 
+      />
+      <AddOrderModal 
+        isOpen={isOrderModalOpen} 
+        onClose={() => setIsOrderModalOpen(false)} 
+        onAdd={handleAddOrder} 
         customers={[localContact]} 
       />
     </div>
