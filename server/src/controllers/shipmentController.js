@@ -2,6 +2,22 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Helper to parse date as UTC midnight to avoid timezone shifts
+const parseDateUTC = (dateStr) => {
+  if (!dateStr) return null;
+  if (dateStr instanceof Date) return dateStr;
+  
+  const dateString = String(dateStr);
+  const matches = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matches) {
+    const year = parseInt(matches[1], 10);
+    const month = parseInt(matches[2], 10) - 1;
+    const day = parseInt(matches[3], 10);
+    return new Date(Date.UTC(year, month, day));
+  }
+  return new Date(dateString);
+};
+
 // GET /api/shipments
 export const getShipments = async (req, res) => {
   try {
@@ -58,6 +74,9 @@ export const createShipment = async (req, res) => {
       return res.status(400).json({ error: 'Label, destination, and contactId are required' });
     }
 
+    // Log the incoming dates for debugging
+    console.log(`Creating shipment. ETA: ${vesselEta}, DEP: ${vesselDeparture}, ARR: ${vesselArrival}`);
+
     const shipment = await prisma.shipment.create({
       data: {
         label,
@@ -66,9 +85,9 @@ export const createShipment = async (req, res) => {
         vesselName: vesselName || null,
         containerNumber: containerNumber || null,
         bolNumber: bolNumber || null,
-        vesselEta: vesselEta ? new Date(vesselEta) : null,
-        vesselDeparture: vesselDeparture ? new Date(vesselDeparture) : null,
-        vesselArrival: vesselArrival ? new Date(vesselArrival) : null,
+        vesselEta: parseDateUTC(vesselEta),
+        vesselDeparture: parseDateUTC(vesselDeparture),
+        vesselArrival: parseDateUTC(vesselArrival),
         shippingLine: shippingLine || null,
         status: status || 'Pending',
         notes: notes || null,
@@ -88,10 +107,23 @@ export const createShipment = async (req, res) => {
 export const updateShipment = async (req, res) => {
   try {
     const data = { ...req.body };
-    // Convert date strings to Date objects
-    if (data.vesselEta) data.vesselEta = new Date(data.vesselEta);
-    if (data.vesselDeparture) data.vesselDeparture = new Date(data.vesselDeparture);
-    if (data.vesselArrival) data.vesselArrival = new Date(data.vesselArrival);
+    
+    // Log incoming update data
+    console.log(`Updating shipment ${req.params.id}. Dates:`, {
+      vesselEta: data.vesselEta,
+      vesselDeparture: data.vesselDeparture,
+      vesselArrival: data.vesselArrival
+    });
+
+    // Convert date strings to Date objects using UTC parsing
+    if (data.vesselEta) data.vesselEta = parseDateUTC(data.vesselEta);
+    if (data.vesselDeparture) data.vesselDeparture = parseDateUTC(data.vesselDeparture);
+    if (data.vesselArrival) data.vesselArrival = parseDateUTC(data.vesselArrival);
+
+    delete data.id; // Ensure we don't try to update the ID
+    delete data.contact; // Ensure we don't try to update the relation object directly
+    delete data.createdAt;
+    delete data.updatedAt;
 
     const shipment = await prisma.shipment.update({
       where: { id: req.params.id },

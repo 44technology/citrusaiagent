@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Ship, MapPin, Calendar, Anchor, Hash, FileText, Trash2, Save, Edit3, Clock, CheckCircle2, Navigation, Package } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
+import { formatDateUTC, formatFullDateUTC } from '../utils/dateUtils';
 
 const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -32,16 +33,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Re-generate label if route or date changed
-      const dateStr = editData.vesselEta
-        ? new Date(editData.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      
-      let route = editData.destination;
-      if (editData.origin) route = `${editData.origin} - ${editData.destination}`;
-      const newLabel = `${dateStr} ${route}`;
-
-      const updated = await shipmentsApi.update(shipment.id, { ...editData, label: newLabel });
+      // NOTE: We no longer auto-regenerate the label here to respect manual edits.
+      const updated = await shipmentsApi.update(shipment.id, editData);
       onUpdate(updated);
       setIsEditing(false);
     } catch (err) {
@@ -133,6 +126,23 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
             <div className="shipment-detail-section" style={{ gridColumn: '1 / -1' }}>
               <div className="shipment-detail-section-title"><MapPin size={16} /> Route & Customer</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px' }}>
+                
+                {/* Manual Label Edit */}
+                <div className="shipment-detail-item" style={{ gridColumn: '1 / -1' }}>
+                  <span className="shipment-detail-label">Shipment Label (Display Name)</span>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      className="ui-input" 
+                      value={editData.label} 
+                      onChange={(e) => setEditData(p => ({ ...p, label: e.target.value }))} 
+                      placeholder="e.g. 24/03/2026 Morocco - Newark" 
+                    />
+                  ) : (
+                    <span className="shipment-detail-value" style={{ fontWeight: 700, color: 'var(--orange-primary)' }}>{shipment.label}</span>
+                  )}
+                </div>
+
                 <div className="shipment-detail-item">
                   <span className="shipment-detail-label">Origin</span>
                   {isEditing ? (
@@ -218,7 +228,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                     <input type="date" className="ui-input" value={editData.vesselEta} onChange={(e) => setEditData(p => ({ ...p, vesselEta: e.target.value }))} />
                   ) : (
                     <span className="shipment-detail-value" style={{ color: 'var(--orange-primary)', fontWeight: 700 }}>
-                      {shipment.vesselEta ? new Date(shipment.vesselEta).toLocaleDateString() : '—'}
+                      {formatFullDateUTC(shipment.vesselEta)}
                     </span>
                   )}
                 </div>
@@ -227,7 +237,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                   {isEditing ? (
                     <input type="date" className="ui-input" value={editData.vesselDeparture} onChange={(e) => setEditData(p => ({ ...p, vesselDeparture: e.target.value }))} />
                   ) : (
-                    <span className="shipment-detail-value">{shipment.vesselDeparture ? new Date(shipment.vesselDeparture).toLocaleDateString() : '—'}</span>
+                    <span className="shipment-detail-value">{formatFullDateUTC(shipment.vesselDeparture)}</span>
                   )}
                 </div>
                 <div className="shipment-detail-item">
@@ -235,7 +245,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                   {isEditing ? (
                     <input type="date" className="ui-input" value={editData.vesselArrival} onChange={(e) => setEditData(p => ({ ...p, vesselArrival: e.target.value }))} />
                   ) : (
-                    <span className="shipment-detail-value">{shipment.vesselArrival ? new Date(shipment.vesselArrival).toLocaleDateString() : '—'}</span>
+                    <span className="shipment-detail-value">{formatFullDateUTC(shipment.vesselArrival)}</span>
                   )}
                 </div>
               </div>

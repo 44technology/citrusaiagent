@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Ship, Plus, Search, Filter, Calendar, MapPin, Anchor, Clock, CheckCircle2, Navigation, Package, Hash, ChevronDown, X } from 'lucide-react';
 import { shipmentsApi, contactsApi } from '../services/api';
+import { formatDateUTC } from '../utils/dateUtils';
 import AddShipmentModal from './AddShipmentModal';
 import ShipmentDetailModal from './ShipmentDetailModal';
 
@@ -233,7 +234,7 @@ const ShipmentTracking = () => {
                         </div>
                         {shipment.vesselEta && (
                           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--orange-primary)' }}>
-                            {new Date(shipment.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+                            {formatDateUTC(shipment.vesselEta)}
                           </div>
                         )}
                       </div>

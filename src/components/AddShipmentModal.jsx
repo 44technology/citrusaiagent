@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3 } from 'lucide-react';
 import { contactsApi } from '../services/api';
+import { formatFullDateUTC } from '../utils/dateUtils';
 
 const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isLabelManual, setIsLabelManual] = useState(false);
   const [form, setForm] = useState({
     contactId: '',
+    label: '',
     origin: '',
     destination: '',
     vesselName: '',
@@ -25,9 +28,23 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
     customerPhone: ''
   });
 
+  // Auto-generate label logic
+  useEffect(() => {
+    if (!isLabelManual && isOpen) {
+      const dateStr = form.vesselEta
+        ? formatFullDateUTC(form.vesselEta)
+        : formatFullDateUTC(new Date().toISOString());
+      
+      let route = form.destination || 'New Shipment';
+      if (form.origin) route = `${form.origin} - ${form.destination}`;
+      setForm(prev => ({ ...prev, label: `${dateStr} ${route}` }));
+    }
+  }, [form.vesselEta, form.origin, form.destination, isLabelManual, isOpen]);
+
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
+    if (field === 'label') setIsLabelManual(true);
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
@@ -62,25 +79,17 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
         return;
       }
 
-      // 2. Auto-generate label
-      const dateStr = form.vesselEta
-        ? new Date(form.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      
-      let route = form.destination;
-      if (form.origin) route = `${form.origin} - ${form.destination}`;
-      const label = `${dateStr} ${route}`;
-
       // 3. Create shipment
-      await onAdd({ ...form, contactId: finalContactId, label });
+      await onAdd({ ...form, contactId: finalContactId });
 
       // 4. Reset & Close
       setForm({
-        contactId: '', origin: '', destination: '', vesselName: '', containerNumber: '',
+        contactId: '', label: '', origin: '', destination: '', vesselName: '', containerNumber: '',
         bolNumber: '', vesselEta: '', vesselDeparture: '', vesselArrival: '',
         shippingLine: '', status: 'Pending', notes: '',
         customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
       });
+      setIsLabelManual(false);
       setIsNewCustomer(false);
       onClose();
     } catch (err) {
@@ -106,6 +115,37 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ gap: '14px', paddingBottom: '20px' }}>
+
+            {/* Shipment Label (Manual/Auto) */}
+            <div>
+              <div className="flex-between">
+                <label className="shipment-label">Shipment Label *</label>
+                <button 
+                  type="button" 
+                  className="btn btn-text-action" 
+                  style={{ fontSize: '0.7rem' }}
+                  onClick={() => setIsLabelManual(!isLabelManual)}
+                >
+                  {isLabelManual ? 'Auto-generate' : 'Manual Edit'}
+                </button>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  className="ui-input"
+                  placeholder="e.g. 24/03/2026 Morocco - Newark"
+                  value={form.label}
+                  onChange={(e) => handleChange('label', e.target.value)}
+                  style={{ width: '100%', paddingRight: '35px', border: isLabelManual ? '1px solid var(--orange-primary)' : '1px solid var(--border-glass)' }}
+                  required
+                />
+                {!isLabelManual && (
+                  <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
+                    <Edit3 size={14} />
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Customer Selection Header */}
             <div className="flex-between" style={{ marginBottom: '4px' }}>
@@ -260,9 +300,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
                 </select>
               </div>
               <div>
-                 <label className="shipment-label">Notes</label>
-                 <input type="text" className="ui-input" placeholder="Short notes..."
-                   value={form.notes} onChange={(e) => handleChange('notes', e.target.value)} />
+                <label className="shipment-label">Notes</label>
+                <input type="text" className="ui-input" placeholder="Short notes..."
+                  value={form.notes} onChange={(e) => handleChange('notes', e.target.value)} />
               </div>
             </div>
 
