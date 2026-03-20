@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package } from 'lucide-react';
 import { ordersApi, contactsApi } from '../services/api';
-import AddOrderModal from '../components/AddOrderModal';
+import OrderModal from '../components/OrderModal';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -39,6 +40,25 @@ const OrdersPage = () => {
     }
   };
 
+  const handleEditOrder = async (id, orderData) => {
+    try {
+      await ordersApi.update(id, orderData);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to update order:', err);
+    }
+  };
+
+  const openAddModal = () => {
+    setSelectedOrder(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
   const filteredOrders = orders.filter(o => 
     o.referenceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o.shipper.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +76,7 @@ const OrdersPage = () => {
           </h1>
           <p className="text-muted mt-2">Manage customer orders, box quantities, and shipping details.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+        <button className="btn btn-primary" onClick={openAddModal}>
           <Plus size={20} /> New Order
         </button>
       </div>
@@ -83,6 +103,7 @@ const OrdersPage = () => {
               <th>SHIPPER / RECEIVER</th>
               <th>QUANTITY</th>
               <th>WEEK</th>
+              <th>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -118,6 +139,15 @@ const OrdersPage = () => {
                       {o.week}
                     </div>
                   </td>
+                  <td>
+                    <button 
+                      className="btn btn-glass" 
+                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                      onClick={() => openEditModal(o)}
+                    >
+                      View / Edit
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -125,10 +155,12 @@ const OrdersPage = () => {
         </table>
       </div>
 
-      <AddOrderModal 
+      <OrderModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAdd={handleAddOrder} 
+        onAdd={handleAddOrder}
+        onEdit={handleEditOrder}
+        initialData={selectedOrder}
         customers={customers} 
       />
     </div>

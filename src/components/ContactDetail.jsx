@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag } from 'lucide-react';
 import CampaignSettings from './CampaignSettings';
 import AddShipmentModal from './AddShipmentModal';
-import AddOrderModal from './AddOrderModal';
+import OrderModal from './OrderModal';
 import { contactsApi, campaignApi, shipmentsApi, ordersApi } from '../services/api';
 
 
@@ -18,6 +18,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [customerOrders, setCustomerOrders] = useState([]);
   const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     setLocalContact(contact);
@@ -42,6 +43,26 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
     } catch (err) {
       console.error('Failed to add order:', err);
     }
+  };
+
+  const handleEditOrder = async (id, orderData) => {
+    try {
+      await ordersApi.update(id, orderData);
+      await loadOrders();
+    } catch (err) {
+      console.error('Failed to update order:', err);
+    }
+  };
+
+  const openAddOrderModal = () => {
+    setSelectedOrder(null);
+    setIsOrderModalOpen(true);
+  };
+
+  const openEditOrderModal = (order) => {
+    // Inject contact info for the modal
+    setSelectedOrder({ ...order, contact: localContact });
+    setIsOrderModalOpen(true);
   };
 
   const loadShipments = async () => {
@@ -373,7 +394,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
               <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <ShoppingBag size={18} className="text-orange" /> Orders
               </h3>
-              <button className="btn btn-text-action" style={{ color: 'var(--orange-primary)' }} onClick={() => setIsOrderModalOpen(true)}>
+              <button className="btn btn-text-action" style={{ color: 'var(--orange-primary)' }} onClick={openAddOrderModal}>
                 <Plus size={14} /> Add
               </button>
             </div>
@@ -396,8 +417,15 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                         <div className="text-muted mt-1" style={{ fontSize: '0.75rem' }}>{o.boxType}</div>
                       </div>
                     </div>
-                    <div className="text-muted mt-2" style={{ fontSize: '0.8rem' }}>
-                      Shipper: {o.shipper} | Recv: {o.receiver}
+                    <div className="text-muted mt-2" style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Shipper: {o.shipper} | Recv: {o.receiver}</span>
+                      <button 
+                        className="btn btn-text-action" 
+                        style={{ fontSize: '0.75rem', padding: '2px 6px', height: 'auto' }}
+                        onClick={() => openEditOrderModal(o)}
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
                 ) )
@@ -424,10 +452,12 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
         onAdd={handleAddShipment} 
         customers={[localContact]} 
       />
-      <AddOrderModal 
+      <OrderModal 
         isOpen={isOrderModalOpen} 
         onClose={() => setIsOrderModalOpen(false)} 
-        onAdd={handleAddOrder} 
+        onAdd={handleAddOrder}
+        onEdit={handleEditOrder}
+        initialData={selectedOrder}
         customers={[localContact]} 
       />
     </div>
