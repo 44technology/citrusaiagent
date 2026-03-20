@@ -114,7 +114,12 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                 </span>
               )}
             </div>
-            {!isEditing && JSON.parse(localStorage.getItem('citrus_user') || '{}').role === 'super admin' && (
+            {!isEditing && (() => {
+               try {
+                 const u = JSON.parse(localStorage.getItem('citrus_user') || '{}');
+                 return u.role === 'super admin';
+               } catch(e) { return false; }
+            })() && (
                <button className="btn btn-text-action" style={{ color: '#FF6B6B', fontSize: '0.85rem' }} onClick={handleDelete}>
                  <Trash2 size={14} /> Delete Shipment
                </button>

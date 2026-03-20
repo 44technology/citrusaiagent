@@ -35,7 +35,11 @@ const SignupPage = () => {
 
       if (res.ok && data.token) {
         localStorage.setItem('citrus_token', data.token);
-        localStorage.setItem('citrus_user', data.username);
+        localStorage.setItem('citrus_user', JSON.stringify({ 
+          username: data.username, 
+          role: data.role, 
+          contactId: data.contactId 
+        }));
         // Successful signup, redirect to dashboard
         window.location.href = '/dashboard';
       } else {

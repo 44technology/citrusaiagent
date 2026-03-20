@@ -6,8 +6,15 @@ const SettingsPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null); // stores userId being updated
-  const currentUser = JSON.parse(localStorage.getItem('citrus_user') || '{}');
-  const isSuperAdmin = currentUser.role === 'super admin';
+  const currentUser = (() => {
+    try {
+      const userStr = localStorage.getItem('citrus_user');
+      return userStr ? JSON.parse(userStr) : {};
+    } catch (e) {
+      return { username: localStorage.getItem('citrus_user'), role: 'customer' };
+    }
+  })();
+  const isSuperAdmin = currentUser?.role === 'super admin';
 
   useEffect(() => {
     loadUsers();

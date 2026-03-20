@@ -11,9 +11,18 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const userRole = localStorage.getItem('citrus_role') || 'user';
-  const userContactId = localStorage.getItem('citrus_contact_id');
-  const isOp = userRole === 'admin' || userRole === 'operation';
+  const currentUser = (() => {
+    try {
+      const uStr = localStorage.getItem('citrus_user');
+      return uStr ? JSON.parse(uStr) : {};
+    } catch (e) {
+      return { role: localStorage.getItem('citrus_role') || 'customer', contactId: localStorage.getItem('citrus_contact_id') };
+    }
+  })();
+
+  const userRole = currentUser?.role || 'customer';
+  const userContactId = currentUser?.contactId;
+  const isOp = userRole === 'admin' || userRole === 'operation' || userRole === 'super admin';
 
   useEffect(() => {
     loadData();

@@ -29,8 +29,17 @@ function App() {
       fetch(`${apiBase}/auth/verify`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-        .then(res => {
-          if (res.ok) setIsAuthenticated(true);
+        .then(async res => {
+          if (res.ok) {
+            const userData = await res.json();
+            setIsAuthenticated(true);
+            // Refresh user info from verify response
+            localStorage.setItem('citrus_user', JSON.stringify({
+              username: userData.username,
+              role: userData.role,
+              contactId: userData.contactId
+            }));
+          }
           else {
             localStorage.removeItem('citrus_token');
             localStorage.removeItem('citrus_user');

@@ -12,7 +12,14 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
-  const username = localStorage.getItem('citrus_user') || 'Admin';
+  const username = (() => {
+    try {
+      const uStr = localStorage.getItem('citrus_user');
+      return uStr ? (JSON.parse(uStr).username || uStr) : 'Admin';
+    } catch (e) {
+      return localStorage.getItem('citrus_user') || 'Admin';
+    }
+  })();
 
   return (
     <aside className="sidebar glass-panel">

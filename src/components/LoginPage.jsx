@@ -29,7 +29,11 @@ const LoginPage = ({ onLogin }) => {
 
       if (res.ok && data.token) {
         localStorage.setItem('citrus_token', data.token);
-        localStorage.setItem('citrus_user', data.username);
+        localStorage.setItem('citrus_user', JSON.stringify({ 
+          username: data.username, 
+          role: data.role, 
+          contactId: data.contactId 
+        }));
         onLogin(data.token, data.username);
       } else {
         setError(data.error || 'Login failed');
