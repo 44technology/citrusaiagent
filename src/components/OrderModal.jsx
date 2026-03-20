@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, X, User, Phone, Mail, Building, Tag, Package, Hash, Plus, Loader2 } from 'lucide-react';
 import { contactsApi } from '../services/api';
 
-const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers }) => {
+const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, userRole, userContactId }) => {
   const isEdit = !!initialData;
+  const isCustomer = userRole === 'customer';
+
   const [formData, setFormData] = useState({
     referenceId: '',
     shipper: '',
@@ -52,11 +54,17 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers }) 
         boxQuantity: 0,
         receiver: '',
         week: '',
-        contactId: ''
+        contactId: isCustomer ? (userContactId || '') : ''
       });
       setIsNewCustomer(false);
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, isCustomer, userContactId]);
+
+  useEffect(() => {
+    if (isCustomer && userContactId && !isEdit) {
+      setFormData(prev => ({ ...prev, contactId: userContactId }));
+    }
+  }, [isCustomer, userContactId, isOpen, isEdit]);
 
   if (!isOpen) return null;
 
@@ -114,38 +122,35 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers }) 
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             
-            <div className="col-span-2">
-              <label className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                {isEdit ? 'CUSTOMER' : 'SELECT CUSTOMER'}
-              </label>
-              
-              {isEdit ? (
-                <div className="glass-panel" style={{ padding: '12px', background: 'rgba(255,255,255,0.03)' }}>
-                  <div style={{ fontWeight: 600 }}>{initialData.contact?.name || 'Unknown'}</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem' }}>{initialData.contact?.company}</div>
-                </div>
-              ) : (
+            {!isCustomer && (
+              <div className="col-span-2">
+                <label className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                  {isEdit ? 'CUSTOMER' : 'SELECT CUSTOMER'}
+                </label>
+                
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-                    <button 
-                      type="button" 
-                      className={`btn ${!isNewCustomer ? 'btn-primary' : 'btn-glass'}`} 
-                      style={{ flex: 1, fontSize: '0.85rem' }}
-                      onClick={() => setIsNewCustomer(false)}
-                    >
-                      Existing Customer
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`btn ${isNewCustomer ? 'btn-primary' : 'btn-glass'}`} 
-                      style={{ flex: 1, fontSize: '0.85rem' }}
-                      onClick={() => setIsNewCustomer(true)}
-                    >
-                      New Customer
-                    </button>
-                  </div>
+                  {!isEdit && (
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+                      <button 
+                        type="button" 
+                        className={`btn ${!isNewCustomer ? 'btn-primary' : 'btn-glass'}`} 
+                        style={{ flex: 1, fontSize: '0.85rem' }}
+                        onClick={() => setIsNewCustomer(false)}
+                      >
+                        Existing Customer
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`btn ${isNewCustomer ? 'btn-primary' : 'btn-glass'}`} 
+                        style={{ flex: 1, fontSize: '0.85rem' }}
+                        onClick={() => setIsNewCustomer(true)}
+                      >
+                        New Customer
+                      </button>
+                    </div>
+                  )}
 
-                  {isNewCustomer ? (
+                  {isNewCustomer && !isEdit ? (
                     <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'rgba(255,122,0,0.05)', padding: '16px', borderRadius: '12px' }}>
                       <input 
                         className="ui-input" 
@@ -186,8 +191,8 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers }) 
                     </select>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div>
               <label className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>REF ID *</label>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package } from 'lucide-react';
-import { ordersApi, contactsApi } from '../services/api';
+import { ordersApi, contactsApi, accountingApi } from '../services/api';
 import OrderModal from '../components/OrderModal';
 
 const OrdersPage = () => {
@@ -10,6 +10,10 @@ const OrdersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const userRole = localStorage.getItem('citrus_role') || 'user';
+  const userContactId = localStorage.getItem('citrus_contact_id');
+  const isOp = userRole === 'admin' || userRole === 'operation';
 
   useEffect(() => {
     loadData();
@@ -46,6 +50,27 @@ const OrdersPage = () => {
       await loadData();
     } catch (err) {
       console.error('Failed to update order:', err);
+    }
+  };
+
+  const handleDeleteOrder = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      await ordersApi.delete(id);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to delete order:', err);
+      alert('Delete failed: ' + err.message);
+    }
+  };
+
+  const handleConvertToInvoice = async (orderId) => {
+    try {
+      await accountingApi.convertToInvoice(orderId);
+      alert('Order converted to Invoice successfully!');
+      loadData();
+    } catch (err) {
+      alert('Conversion failed: ' + err.message);
     }
   };
 
@@ -100,17 +125,17 @@ const OrdersPage = () => {
               <th>REF ID</th>
               <th>CUSTOMER</th>
               <th>PRODUCT / VARIETY</th>
-              <th>SHIPPER / RECEIVER</th>
               <th>QUANTITY</th>
               <th>WEEK</th>
+              <th>STATUS</th>
               <th>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>Loading orders...</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>Loading orders...</td></tr>
             ) : filteredOrders.length === 0 ? (
-              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>No orders found.</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>No orders found.</td></tr>
             ) : (
               filteredOrders.map((o) => (
                 <tr key={o.id} className="shipment-card" style={{ marginBottom: '8px' }}>
@@ -126,10 +151,6 @@ const OrdersPage = () => {
                     </div>
                   </td>
                   <td>
-                    <div style={{ fontSize: '0.9rem' }}>S: {o.shipper}</div>
-                    <div className="text-muted" style={{ fontSize: '0.8rem' }}>R: {o.receiver}</div>
-                  </td>
-                  <td>
                     <div style={{ fontWeight: 600, color: 'var(--orange-primary)' }}>{o.boxQuantity} Boxes</div>
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>{o.boxType}</div>
                   </td>
@@ -140,13 +161,83 @@ const OrdersPage = () => {
                     </div>
                   </td>
                   <td>
-                    <button 
-                      className="btn btn-glass" 
-                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      onClick={() => openEditModal(o)}
-                    >
-                      View / Edit
-                    </button>
+                    {isOp ? (
+                      <>
+                        <select 
+                          className="status-badge"
+                          value={o.status || 'pending'}
+                          onChange={async (e) => {
+                            try {
+                              await ordersApi.update(o.id, { status: e.target.value });
+                              loadData();
+                            } catch (err) {
+                              alert('Update failed: ' + err.message);
+                            }
+                          }}
+                          style={{ 
+                            background: 'rgba(255,107,0,0.1)', 
+                            border: '1px solid rgba(255,107,0,0.2)',
+                            color: 'var(--orange-primary)',
+                            borderRadius: '20px',
+                            padding: '4px 12px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="pending shipment">Pending Shipment</option>
+                          <option value="in-transit">In-Transit</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                        <div className="flex-center gap-2 mt-2">
+                          <button 
+                            className="btn btn-glass" 
+                            style={{ fontSize: '0.7rem', padding: '4px 8px' }}
+                            onClick={() => handleConvertToInvoice(o.id)}
+                          >
+                            Conv. to Invoice
+                          </button>
+                          <button 
+                            className="btn btn-glass" 
+                            style={{ fontSize: '0.7rem', padding: '4px 8px' }}
+                            onClick={() => alert('Create PO feature coming in Accounting tab')}
+                          >
+                            Create PO
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <span className={`status-badge status-${(o.status || 'pending').replace(' ', '-')}`} style={{ 
+                        background: 'rgba(255,107,0,0.1)', 
+                        color: 'var(--orange-primary)',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '0.8rem'
+                      }}>
+                        {o.status || 'pending'}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="flex-center gap-2">
+                      <button 
+                        className="btn btn-glass" 
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                        onClick={() => openEditModal(o)}
+                      >
+                        View / Edit
+                      </button>
+                      {isOp && (
+                        <button 
+                          className="btn btn-glass text-red" 
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#ff4d4d' }}
+                          onClick={() => handleDeleteOrder(o.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -161,7 +252,9 @@ const OrdersPage = () => {
         onAdd={handleAddOrder}
         onEdit={handleEditOrder}
         initialData={selectedOrder}
-        customers={customers} 
+        customers={customers}
+        userRole={userRole}
+        userContactId={userContactId} 
       />
     </div>
   );

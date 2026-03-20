@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, contactId } = req.body;
     
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
@@ -21,17 +21,32 @@ router.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // If contactId is provided, we assign the 'customer' role
+    const role = contactId ? 'customer' : 'user';
+
     const user = await prisma.user.create({
-      data: { username, password: hashedPassword }
+      data: { 
+        username, 
+        password: hashedPassword,
+        role,
+        contactId: contactId || null
+      }
     });
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username },
+      { userId: user.id, username: user.username, role: user.role, contactId: user.contactId },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ success: true, token, username: user.username });
+    res.status(201).json({ 
+      success: true, 
+      token, 
+      username: user.username, 
+      role: user.role, 
+      contactId: user.contactId 
+    });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ error: 'Failed to create account' });
@@ -43,10 +58,10 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Support legacy admin credentials if needed, but per-db is better
+    // Support legacy admin credentials
     if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
       const token = jwt.sign({ username, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ success: true, token, username });
+      return res.json({ success: true, token, username, role: 'admin' });
     }
 
     const user = await prisma.user.findUnique({ where: { username } });
@@ -60,11 +75,17 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username },
+      { userId: user.id, username: user.username, role: user.role, contactId: user.contactId },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    res.json({ success: true, token, username: user.username });
+    res.json({ 
+      success: true, 
+      token, 
+      username: user.username, 
+      role: user.role, 
+      contactId: user.contactId 
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -79,8 +100,14 @@ router.get('/verify', (req, res) => {
   const token = authHeader.replace('Bearer ', '');
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ valid: true, username: decoded.username });
-  } catch {
+    res.json({ 
+      valid: true, 
+      userId: decoded.userId, 
+      username: decoded.username, 
+      role: decoded.role, 
+      contactId: decoded.contactId 
+    });
+  } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
   }
 });

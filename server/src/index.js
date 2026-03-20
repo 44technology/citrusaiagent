@@ -8,6 +8,7 @@ import campaignRoutes from './routes/campaigns.js';
 import uploadRoutes from './routes/upload.js';
 import shipmentRoutes from './routes/shipments.js';
 import orderRoutes from './routes/orders.js';
+import accountingRoutes from './routes/accounting.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +40,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/accounting', accountingRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🍊 Citrus AI Caller server running on port ${PORT}`);

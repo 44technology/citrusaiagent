@@ -8,6 +8,7 @@ import SignupPage from './components/SignupPage';
 import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 import OrdersPage from './pages/OrdersPage';
+import AccountingPage from './pages/AccountingPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -68,6 +69,7 @@ function App() {
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} />}
             {activeTab === 'shipments' && <ShipmentTracking />}
             {activeTab === 'orders' && <OrdersPage />}
+            {activeTab === 'accounting' && <AccountingPage />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <div className="placeholder">Settings Coming Soon</div>}
           </div>

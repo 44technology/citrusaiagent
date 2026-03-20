@@ -24,6 +24,8 @@ model Contact {
   notes      Note[]
   shipments  Shipment[]
   orders     Order[]
+  users      User[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Note {
@@ -72,6 +74,9 @@ model User {
   username  String   @unique
   password  String
   role      String   @default("user")
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -87,8 +92,43 @@ model Order {
   boxQuantity Int
   receiver    String
   week        String
+  status      String   @default("pending")
+  userId      String?
   contactId   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User?    @relation(fields: [userId], references: [id])
   contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+  invoices    Invoice[]
+}
+
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  poNumber    String   @unique
+  orderId     String
+  supplierId  String
+  totalAmount Float    @default(0)
+  status      String   @default("Draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id])
+  supplier    Contact  @relation(fields: [supplierId], references: [id])
+  invoices    Invoice[]
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  type          String   // "Sales" or "Purchase"
+  amount        Float
+  status        String   @default("Unpaid")
+  issueDate     DateTime @default(now())
+  dueDate       DateTime?
+  orderId       String?
+  poId          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  order         Order?   @relation(fields: [orderId], references: [id])
+  purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id])
 }

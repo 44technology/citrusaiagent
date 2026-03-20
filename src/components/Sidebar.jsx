@@ -1,12 +1,13 @@
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Ship, ShoppingBag } from 'lucide-react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt } from 'lucide-react';
 import '../index.css';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
   const menuItems = [
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'customers', label: 'Customers', icon: CheckCircle2 },
-    { id: 'shipments', label: 'Shipments', icon: Ship },
+    { id: 'shipments', label: 'Shipments', icon: Truck },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'accounting', label: 'Accounting', icon: Receipt },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];

@@ -93,3 +93,19 @@ export const ordersApi = {
   update: (id, data) => request(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/orders/${id}`, { method: 'DELETE' }),
 };
+
+// ─── Accounting ──────────────────────────────────────
+export const accountingApi = {
+  // Purchase Orders
+  getAllPOs: () => request('/accounting/purchase-orders'),
+  createPO: (data) => request('/accounting/purchase-orders', { method: 'POST', body: JSON.stringify(data) }),
+  updatePO: (id, data) => request(`/accounting/purchase-orders/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  
+  // Invoices
+  getAllInvoices: () => request('/accounting/invoices'),
+  createInvoice: (data) => request('/accounting/invoices', { method: 'POST', body: JSON.stringify(data) }),
+  updateInvoice: (id, data) => request(`/accounting/invoices/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  
+  // Actions
+  convertToInvoice: (orderId) => request(`/accounting/convert-to-invoice/${orderId}`, { method: 'POST' }),
+};

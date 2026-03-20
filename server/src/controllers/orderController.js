@@ -3,7 +3,16 @@ const prisma = new PrismaClient();
 
 export const getAllOrders = async (req, res) => {
   try {
+    const { userId, role } = req.user || {};
+    let where = {};
+    
+    // If user is a customer, only show their own orders
+    if (role === 'customer' && userId) {
+      where = { userId };
+    }
+
     const orders = await prisma.order.findMany({
+      where,
       include: { contact: true },
       orderBy: { createdAt: 'desc' }
     });
@@ -28,8 +37,14 @@ export const getContactOrders = async (req, res) => {
 
 export const createOrder = async (req, res) => {
   try {
+    const { userId } = req.user || {};
+    const orderData = {
+      ...req.body,
+      userId: userId || null
+    };
+
     const order = await prisma.order.create({
-      data: req.body
+      data: orderData
     });
     res.status(201).json(order);
   } catch (error) {
@@ -39,7 +54,14 @@ export const createOrder = async (req, res) => {
 
 export const updateOrder = async (req, res) => {
   const { id } = req.params;
+  const { role } = req.user || {};
+
   try {
+    // If trying to update status, check if user is admin/op
+    if (req.body.status && role !== 'admin' && role !== 'operation') {
+      return res.status(403).json({ error: 'Only operation team can update order status' });
+    }
+
     const order = await prisma.order.update({
       where: { id },
       data: req.body
@@ -52,6 +74,12 @@ export const updateOrder = async (req, res) => {
 
 export const deleteOrder = async (req, res) => {
   const { id } = req.params;
+  const { role } = req.user || {};
+
+  if (role !== 'admin' && role !== 'operation') {
+    return res.status(403).json({ error: 'Permission denied' });
+  }
+
   try {
     await prisma.order.delete({ where: { id } });
     res.json({ message: 'Order deleted' });
