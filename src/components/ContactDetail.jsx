@@ -5,6 +5,7 @@ import AddShipmentModal from './AddShipmentModal';
 import AddOrderModal from './AddOrderModal';
 import { contactsApi, campaignApi, shipmentsApi, ordersApi } from '../services/api';
 
+
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [note, setNote] = useState('');
   const [notesList, setNotesList] = useState([]);
