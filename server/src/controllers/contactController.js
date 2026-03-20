@@ -99,6 +99,11 @@ export const updateContact = async (req, res) => {
 
 // DELETE /api/contacts/:id
 export const deleteContact = async (req, res) => {
+  const { role } = req.user || {};
+  if (role !== 'super admin') {
+    return res.status(403).json({ error: 'Only Super Admin can delete contacts' });
+  }
+
   try {
     await prisma.contact.delete({ where: { id: req.params.id } });
     res.json({ success: true });

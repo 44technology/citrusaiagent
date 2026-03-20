@@ -76,8 +76,8 @@ export const deleteOrder = async (req, res) => {
   const { id } = req.params;
   const { role } = req.user || {};
 
-  if (role !== 'admin' && role !== 'operation') {
-    return res.status(403).json({ error: 'Permission denied' });
+  if (role !== 'super admin') {
+    return res.status(403).json({ error: 'Only Super Admin can delete orders' });
   }
 
   try {

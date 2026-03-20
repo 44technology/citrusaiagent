@@ -139,6 +139,11 @@ export const updateShipment = async (req, res) => {
 
 // DELETE /api/shipments/:id
 export const deleteShipment = async (req, res) => {
+  const { role } = req.user || {};
+  if (role !== 'super admin') {
+    return res.status(403).json({ error: 'Only Super Admin can delete shipments' });
+  }
+
   try {
     await prisma.shipment.delete({ where: { id: req.params.id } });
     res.json({ success: true });

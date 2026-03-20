@@ -12,6 +12,9 @@ const Dashboard = ({ activeTab }) => {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const currentUser = JSON.parse(localStorage.getItem('citrus_user') || '{}');
+  const isSuperAdmin = currentUser.role === 'super admin';
+
   // Fetch contacts from API
   const fetchContacts = async () => {
     try {
@@ -147,12 +150,14 @@ const Dashboard = ({ activeTab }) => {
                   >
                     {activeTab === 'leads' ? '+ Add Lead' : '+ Add Customer'}
                   </button>
-                  <button 
-                    className="btn btn-glass"
-                    onClick={handleClearList}
-                  >
-                    Clear List
-                  </button>
+                  {isSuperAdmin && (
+                    <button 
+                      className="btn btn-glass"
+                      onClick={handleClearList}
+                    >
+                      Clear List
+                    </button>
+                  )}
                 </div>
               </div>
               

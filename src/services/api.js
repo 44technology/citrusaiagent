@@ -109,3 +109,10 @@ export const accountingApi = {
   // Actions
   convertToInvoice: (orderId) => request(`/accounting/convert-to-invoice/${orderId}`, { method: 'POST' }),
 };
+
+// ─── Users ───────────────────────────────────────────
+export const usersApi = {
+  getAll: () => request('/users'),
+  updateRole: (id, role) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+};

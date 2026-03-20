@@ -228,7 +228,7 @@ const OrdersPage = () => {
                       >
                         View / Edit
                       </button>
-                      {isOp && (
+                      {userRole === 'super admin' && (
                         <button 
                           className="btn btn-glass text-red" 
                           style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#ff4d4d' }}
