@@ -83,6 +83,7 @@ export const shipmentsApi = {
   create: (data) => request('/shipments', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/shipments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/shipments/${id}`, { method: 'DELETE' }),
+  import: (rows) => request('/shipments/import', { method: 'POST', body: JSON.stringify({ rows }) }),
   // Journey events
   getEvents: (id) => request(`/shipments/${id}/events`),
   createEvent: (id, data) => request(`/shipments/${id}/events`, { method: 'POST', body: JSON.stringify(data) }),

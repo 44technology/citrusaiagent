@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Ship, Plus, Search, Filter, Calendar, MapPin, Anchor, Clock, CheckCircle2, Navigation, Package, Hash, ChevronDown, X } from 'lucide-react';
+import { Ship, Plus, Search, Filter, Calendar, MapPin, Anchor, Clock, CheckCircle2, Navigation, Package, Hash, ChevronDown, X, FileSpreadsheet } from 'lucide-react';
 import { shipmentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 import AddShipmentModal from './AddShipmentModal';
 import ShipmentDetailModal from './ShipmentDetailModal';
+import ImportShipmentsModal from './ImportShipmentsModal';
 
 const ShipmentTracking = () => {
   const [shipments, setShipments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
   
   // Filters State
@@ -127,6 +129,9 @@ const ShipmentTracking = () => {
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <Filter size={18} /> {showFilters ? 'Hide Filters' : 'Filters'}
+          </button>
+          <button className="btn btn-glass" onClick={() => setIsImportModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileSpreadsheet size={18} /> Import Excel
           </button>
           <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
             <Plus size={18} /> Add Shipment
@@ -252,12 +257,19 @@ const ShipmentTracking = () => {
         })}
       </div>
 
-      <AddShipmentModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onAdd={handleAddShipment} 
-        customers={customers} 
+      <AddShipmentModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddShipment}
+        customers={customers}
       />
+
+      {isImportModalOpen && (
+        <ImportShipmentsModal
+          onClose={() => setIsImportModalOpen(false)}
+          onImported={() => { loadData(); setIsImportModalOpen(false); }}
+        />
+      )}
 
       {selectedShipment && (
         <ShipmentDetailModal

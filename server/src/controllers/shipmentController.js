@@ -165,6 +165,73 @@ export const deleteShipment = async (req, res) => {
   }
 };
 
+// ─── Bulk Import ─────────────────────────────────────────────
+
+export const importShipments = async (req, res) => {
+  try {
+    const { rows } = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ error: 'No rows provided' });
+    }
+
+    // Build customer lookup map: name/company → id
+    const contacts = await prisma.contact.findMany({
+      select: { id: true, name: true, company: true }
+    });
+    const contactMap = {};
+    contacts.forEach(c => {
+      if (c.name) contactMap[c.name.toLowerCase().trim()] = c.id;
+      if (c.company) contactMap[c.company.toLowerCase().trim()] = c.id;
+    });
+
+    const results = { created: 0, failed: [], skipped: 0 };
+
+    for (const row of rows) {
+      try {
+        // Resolve customer
+        const customerKey = (row.customerName || '').toLowerCase().trim();
+        const contactId = contactMap[customerKey] || null;
+
+        if (!row.label) { results.failed.push({ row: row.label || '?', reason: 'Missing Shipment Number' }); continue; }
+
+        await prisma.shipment.create({
+          data: {
+            label: String(row.label),
+            status: row.status || 'Pending',
+            vesselName: row.vesselName || null,
+            containerNumber: row.containerNumber || null,
+            vesselDeparture: parseDateUTC(row.etd),
+            vesselEta: parseDateUTC(row.eta),
+            portOfLoading: row.portOfLoading || null,
+            transshipmentPort: row.transshipmentPort || null,
+            portOfDischarge: row.portOfDischarge || null,
+            destination: row.portOfDischarge || row.destination || 'TBD',
+            origin: row.portOfLoading || null,
+            containerType: row.containerType || null,
+            sealNumber: row.sealNumber || null,
+            cargoDescription: row.cargoDescription || null,
+            grossWeight: row.grossWeight ? parseFloat(row.grossWeight) : null,
+            numberOfBoxes: row.numberOfBoxes ? parseInt(row.numberOfBoxes) : null,
+            reeferTempSet: row.reeferTempSet !== undefined && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
+            humidity: row.humidity !== undefined && row.humidity !== '' ? parseFloat(row.humidity) : null,
+            ventilation: row.ventilation !== undefined && row.ventilation !== '' ? parseFloat(row.ventilation) : null,
+            co2Level: row.co2Level !== undefined && row.co2Level !== '' ? parseFloat(row.co2Level) : null,
+            contactId: contactId || null,
+          }
+        });
+        results.created++;
+      } catch (err) {
+        results.failed.push({ row: row.label || '?', reason: err.message });
+      }
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Import error:', error);
+    res.status(500).json({ error: 'Import failed: ' + error.message });
+  }
+};
+
 // ─── Shipment Events ──────────────────────────────────────────
 
 export const getEvents = async (req, res) => {
