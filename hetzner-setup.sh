@@ -7,7 +7,7 @@
 set -e
 
 REPO_URL="https://github.com/44technology/citrusaiagent.git"
-DOMAIN="YOUR_DOMAIN_OR_IP"         # e.g. app.citrusimport.com or 65.21.xx.xx
+DOMAIN="5.78.195.90"
 APP_DIR="/var/www/citrus"
 UPLOADS_DIR="/var/uploads/citrus"
 LOG_DIR="/var/log/citrus"
