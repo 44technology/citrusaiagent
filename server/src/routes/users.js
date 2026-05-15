@@ -1,10 +1,10 @@
 import express from 'express';
 import { getAllUsers, updateUserRole, deleteUser } from '../controllers/userController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authenticateToken);
+router.use(authMiddleware);
 
 router.get('/', getAllUsers);
 router.patch('/:id/role', updateUserRole);
