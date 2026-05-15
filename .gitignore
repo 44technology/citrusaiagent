@@ -25,6 +25,13 @@ dist-ssr
 
 # Server
 server/.env
+server/.env.*
+!server/.env.production.example
 server/prisma/dev.db
 server/prisma/dev.db-journal
 server/node_modules
+server/uploads/
+
+# Uploaded documents (stored on server, never in git)
+uploads/
+*.tar.gz

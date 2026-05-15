@@ -57,7 +57,11 @@ export const updatePurchaseOrder = async (req, res) => {
 export const getAllInvoices = async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
-      include: { order: true, purchaseOrder: true },
+      include: {
+        order: { include: { contact: { select: { id: true, name: true, company: true } } } },
+        purchaseOrder: { include: { supplier: { select: { id: true, name: true, company: true } } } },
+        payments: true
+      },
       orderBy: { createdAt: 'desc' }
     });
     res.json(invoices);

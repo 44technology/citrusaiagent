@@ -8,24 +8,18 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
   const [loading, setLoading] = useState(false);
   const [isLabelManual, setIsLabelManual] = useState(false);
   const [form, setForm] = useState({
-    contactId: '',
-    label: '',
-    origin: '',
-    destination: '',
-    vesselName: '',
-    containerNumber: '',
-    bolNumber: '',
-    vesselEta: '',
-    vesselDeparture: '',
-    vesselArrival: '',
-    shippingLine: '',
-    status: 'Pending',
-    notes: '',
-    // New customer fields
-    customerName: '',
-    customerCompany: '',
-    customerEmail: '',
-    customerPhone: ''
+    contactId: '', label: '', origin: 'Morocco', destination: '',
+    vesselName: '', containerNumber: '', bolNumber: '',
+    vesselEta: '', vesselDeparture: '', vesselArrival: '',
+    shippingLine: '', status: 'Pending', notes: '',
+    // Ports
+    portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: 'Port of Algeciras',
+    // Container & cargo
+    containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
+    // Reefer
+    reeferTempSet: '', humidity: '', ventilation: '',
+    // New customer
+    customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
   });
 
   // Auto-generate label logic
@@ -84,9 +78,13 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
       // 4. Reset & Close
       setForm({
-        contactId: '', label: '', origin: '', destination: '', vesselName: '', containerNumber: '',
-        bolNumber: '', vesselEta: '', vesselDeparture: '', vesselArrival: '',
+        contactId: '', label: '', origin: 'Morocco', destination: '',
+        vesselName: '', containerNumber: '', bolNumber: '',
+        vesselEta: '', vesselDeparture: '', vesselArrival: '',
         shippingLine: '', status: 'Pending', notes: '',
+        portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: 'Port of Algeciras',
+        containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
+        reeferTempSet: '', humidity: '', ventilation: '',
         customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
       });
       setIsLabelManual(false);
@@ -255,16 +253,84 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
             </div>
 
             {/* Container & BOL */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">Container Type</label>
+                <select className="ui-input" value={form.containerType} onChange={e => handleChange('containerType', e.target.value)}>
+                  {['40RF','40HC-RF','20RF','40DRY','40HC-DRY','20DRY'].map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="shipment-label">Container Number</label>
-                <input type="text" className="ui-input" placeholder="e.g. MSCU1234567"
+                <input type="text" className="ui-input" placeholder="e.g. CMAU1234567"
                   value={form.containerNumber} onChange={(e) => handleChange('containerNumber', e.target.value)} />
               </div>
               <div>
                 <label className="shipment-label">BOL Number</label>
                 <input type="text" className="ui-input" placeholder="Bill of Lading #"
                   value={form.bolNumber} onChange={(e) => handleChange('bolNumber', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Cargo */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">Cargo Description</label>
+                <input type="text" className="ui-input" placeholder="e.g. Citrus - Clementines"
+                  value={form.cargoDescription} onChange={e => handleChange('cargoDescription', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">Gross Weight (kg)</label>
+                <input type="number" className="ui-input" placeholder="e.g. 22000"
+                  value={form.grossWeight} onChange={e => handleChange('grossWeight', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">Number of Boxes</label>
+                <input type="number" className="ui-input" placeholder="e.g. 1120"
+                  value={form.numberOfBoxes} onChange={e => handleChange('numberOfBoxes', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Reefer Settings (shown for RF containers) */}
+            {form.containerType && form.containerType.includes('RF') && (
+              <div style={{ background: 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 10, padding: '12px 14px' }}>
+                <label className="shipment-label" style={{ color: '#38bdf8', marginBottom: 10 }}>❄ Reefer Settings</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label className="shipment-label">Set Temp (°C)</label>
+                    <input type="number" step="0.1" className="ui-input" placeholder="e.g. 6.0"
+                      value={form.reeferTempSet} onChange={e => handleChange('reeferTempSet', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="shipment-label">Humidity (%)</label>
+                    <input type="number" step="1" className="ui-input" placeholder="e.g. 85"
+                      value={form.humidity} onChange={e => handleChange('humidity', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="shipment-label">Ventilation (cbm/h)</label>
+                    <input type="number" step="1" className="ui-input" placeholder="e.g. 25"
+                      value={form.ventilation} onChange={e => handleChange('ventilation', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Ports */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">Port of Loading</label>
+                <input type="text" className="ui-input" placeholder="e.g. Port of Agadir"
+                  value={form.portOfLoading} onChange={e => handleChange('portOfLoading', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">Transshipment Port</label>
+                <input type="text" className="ui-input" placeholder="e.g. Port of Algeciras"
+                  value={form.transshipmentPort} onChange={e => handleChange('transshipmentPort', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">Port of Discharge</label>
+                <input type="text" className="ui-input" placeholder="e.g. Port of Newark, NJ"
+                  value={form.portOfDischarge} onChange={e => handleChange('portOfDischarge', e.target.value)} />
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt } from 'lucide-react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen } from 'lucide-react';
 import '../index.css';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
@@ -8,6 +8,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'shipments', label: 'Shipments', icon: Truck },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'accounting', label: 'Accounting', icon: Receipt },
+    { id: 'documents', label: 'Documents', icon: FolderOpen },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];

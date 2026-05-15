@@ -83,6 +83,11 @@ export const shipmentsApi = {
   create: (data) => request('/shipments', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/shipments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/shipments/${id}`, { method: 'DELETE' }),
+  // Journey events
+  getEvents: (id) => request(`/shipments/${id}/events`),
+  createEvent: (id, data) => request(`/shipments/${id}/events`, { method: 'POST', body: JSON.stringify(data) }),
+  updateEvent: (id, eventId, data) => request(`/shipments/${id}/events/${eventId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteEvent: (id, eventId) => request(`/shipments/${id}/events/${eventId}`, { method: 'DELETE' }),
 };
 // ─── Orders ──────────────────────────────────────────
 export const ordersApi = {
@@ -115,4 +120,42 @@ export const usersApi = {
   getAll: () => request('/users'),
   updateRole: (id, role) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Payments ────────────────────────────────────────
+export const paymentsApi = {
+  getByInvoice: (invoiceId) => request(`/payments/invoice/${invoiceId}`),
+  create: (invoiceId, data) =>
+    request(`/payments/invoice/${invoiceId}`, { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id) => request(`/payments/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Documents ───────────────────────────────────────
+export const documentsApi = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
+    ).toString();
+    return request(`/documents${params ? `?${params}` : ''}`);
+  },
+  upload: async (file, meta = {}) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    Object.entries(meta).forEach(([k, v]) => { if (v) formData.append(k, v); });
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/documents`, { method: 'POST', body: formData, headers });
+    if (res.status === 401) {
+      localStorage.removeItem('citrus_token');
+      window.location.reload();
+      throw new Error('Session expired');
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || 'Upload failed');
+    }
+    return res.json();
+  },
+  delete: (id) => request(`/documents/${id}`, { method: 'DELETE' }),
 };

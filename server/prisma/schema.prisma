@@ -26,6 +26,7 @@ model Contact {
   orders     Order[]
   users      User[]
   purchaseOrders PurchaseOrder[]
+  documents      Document[]
 }
 
 model Note {
@@ -66,7 +67,44 @@ model Shipment {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   origin          String?
-  contact         Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  // ── Port details ────────────────────────────────
+  portOfLoading       String?   // e.g. "Port of Agadir"
+  portOfDischarge     String?   // e.g. "Port of Rotterdam"
+  transshipmentPort   String?   // e.g. "Port of Algeciras"
+
+  // ── Container & cargo ────────────────────────────
+  containerType    String?   // "20RF" | "40RF" | "40HC-RF" | "20DRY" | "40DRY"
+  sealNumber       String?
+  cargoDescription String?   // e.g. "Citrus - Clementines - Morocco"
+  grossWeight      Float?    // kg
+  numberOfBoxes    Int?
+
+  // ── Reefer settings ──────────────────────────────
+  reeferTempSet    Float?    // Target temperature °C  (e.g. 6.0)
+  reeferTempActual Float?    // Last recorded actual °C
+  humidity         Float?    // Relative humidity %    (e.g. 85)
+  ventilation      Float?    // Ventilation setting cbm/h (e.g. 25)
+  co2Level         Float?    // CO2 % (optional, controlled atmosphere)
+
+  contact          Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  documents        Document[]
+  events           ShipmentEvent[]
+}
+
+model ShipmentEvent {
+  id          String   @id @default(uuid())
+  shipmentId  String
+  eventType   String
+  // Pre-Cooling | Stuffing | Gate In | Customs Cleared | Vessel Departed |
+  // Transshipment Arrived | Transshipment Departed | Vessel Arrived |
+  // Customs Destination | Out for Delivery | Delivered
+  location    String
+  description String?
+  eventDate   DateTime
+  tempReading Float?   // Optional temperature recorded at this milestone (°C)
+  createdAt   DateTime @default(now())
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -101,6 +139,7 @@ model Order {
   contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
   invoices    Invoice[]
+  documents   Document[]
 }
 
 model PurchaseOrder {
@@ -118,17 +157,52 @@ model PurchaseOrder {
 }
 
 model Invoice {
-  id            String   @id @default(uuid())
-  invoiceNumber String   @unique
-  type          String   // "Sales" or "Purchase"
+  id            String    @id @default(uuid())
+  invoiceNumber String    @unique
+  type          String    // "Sales" or "Purchase"
   amount        Float
-  status        String   @default("Unpaid")
-  issueDate     DateTime @default(now())
+  status        String    @default("Unpaid") // Unpaid | Partial | Paid
+  issueDate     DateTime  @default(now())
   dueDate       DateTime?
+  notes         String?
   orderId       String?
   poId          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  order         Order?   @relation(fields: [orderId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  order         Order?    @relation(fields: [orderId], references: [id])
   purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id])
+  payments      Payment[]
+  documents     Document[]
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  amount      Float
+  method      String   @default("Bank Transfer") // Bank Transfer | Cash | Check | Card | Other
+  reference   String?
+  notes       String?
+  paidAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  name        String
+  originalName String
+  mimeType    String
+  size        Int
+  path        String
+  category    String   @default("General") // BOL | Phytosanitary | Invoice | Certificate | General
+  contactId   String?
+  orderId     String?
+  shipmentId  String?
+  invoiceId   String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+  invoice     Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
 }

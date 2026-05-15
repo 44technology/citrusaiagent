@@ -1,283 +1,655 @@
 import React, { useState, useEffect } from 'react';
-import { X, Ship, MapPin, Calendar, Anchor, Hash, FileText, Trash2, Save, Edit3, Clock, CheckCircle2, Navigation, Package } from 'lucide-react';
+import {
+  X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
+  CheckCircle2, Navigation, Package, Thermometer, Droplets,
+  Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
+  ShieldCheck, FileSearch, Building2, Snowflake
+} from 'lucide-react';
 import { shipmentsApi } from '../services/api';
-import { formatDateUTC, formatFullDateUTC } from '../utils/dateUtils';
+import { formatDateUTC } from '../utils/dateUtils';
+
+// ─── Journey config (Morocco → USA) ──────────────────────────────────────────
+
+const EVENT_TYPES = [
+  // Origin
+  'Pre-Cooling',
+  'Stuffing',
+  'Gate In (Port of Agadir)',
+  'Customs Cleared (Origin)',
+  'Vessel Departed',
+  // Sea
+  'Transshipment Arrived',
+  'Transshipment Departed',
+  // USA
+  'Vessel Arrived',
+  'USDA / APHIS Inspection',
+  'CBP Customs Clearance',
+  'FDA Hold',
+  'Released - Out for Delivery',
+  'Delivered to Warehouse',
+  // Generic
+  'Port Inspection',
+  'Delay / Exception',
+  'Temperature Excursion',
+  'Other',
+];
+
+const EVENT_META = {
+  'Pre-Cooling':                 { icon: Snowflake,     color: '#818cf8', phase: 'origin' },
+  'Stuffing':                    { icon: Package,       color: '#fb923c', phase: 'origin' },
+  'Gate In (Port of Agadir)':   { icon: ArrowRight,    color: '#fb923c', phase: 'origin' },
+  'Customs Cleared (Origin)':   { icon: CheckCircle2,  color: '#22c55e', phase: 'origin' },
+  'Vessel Departed':             { icon: Ship,          color: '#38bdf8', phase: 'sea'    },
+  'Transshipment Arrived':      { icon: Anchor,        color: '#a78bfa', phase: 'sea'    },
+  'Transshipment Departed':     { icon: Ship,          color: '#a78bfa', phase: 'sea'    },
+  'Vessel Arrived':              { icon: Anchor,        color: '#22c55e', phase: 'usa'    },
+  'USDA / APHIS Inspection':    { icon: FileSearch,    color: '#fbbf24', phase: 'usa'    },
+  'CBP Customs Clearance':      { icon: ShieldCheck,   color: '#fbbf24', phase: 'usa'    },
+  'FDA Hold':                    { icon: AlertTriangle, color: '#ef4444', phase: 'usa'    },
+  'Released - Out for Delivery': { icon: Truck,         color: '#22c55e', phase: 'usa'    },
+  'Delivered to Warehouse':     { icon: Building2,     color: '#22c55e', phase: 'usa'    },
+  'Port Inspection':             { icon: FileSearch,    color: '#fbbf24', phase: 'usa'    },
+  'Delay / Exception':          { icon: AlertTriangle, color: '#ef4444', phase: 'sea'    },
+  'Temperature Excursion':      { icon: Thermometer,   color: '#ef4444', phase: 'sea'    },
+  'Other':                       { icon: Navigation,    color: '#94a3b8', phase: 'sea'    },
+};
+
+const PHASE_LABELS = {
+  origin: { label: '🇲🇦 Morocco',        color: '#fb923c' },
+  sea:    { label: '🌊 At Sea',           color: '#38bdf8' },
+  usa:    { label: '🇺🇸 USA',             color: '#22c55e' },
+};
+
+const CONTAINER_TYPES = ['40RF', '40HC-RF', '20RF', '40DRY', '40HC-DRY', '20DRY'];
+const STATUS_OPTIONS  = ['Pending', 'Departed', 'In Transit', 'Arrived'];
+
+const isReefer = (type) => type && type.includes('RF');
+
+// ─── Small helpers ────────────────────────────────────────────────────────────
+
+const Field = ({ label, value, editing, children }) => (
+  <div style={{ marginBottom: 10 }}>
+    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    {editing
+      ? children
+      : <div style={{ fontSize: '0.88rem', fontWeight: 500 }}>{value ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}</div>}
+  </div>
+);
+
+const Inp = (props) => <input className="ui-input" style={{ padding: '6px 10px', fontSize: '0.84rem' }} {...props} />;
+
+const Sel = ({ opts, ...props }) => (
+  <select className="ui-input" style={{ padding: '6px 10px', fontSize: '0.84rem' }} {...props}>
+    <option value="">— None —</option>
+    {opts.map(o => <option key={o}>{o}</option>)}
+  </select>
+);
+
+// ─── Reefer Panel ─────────────────────────────────────────────────────────────
+
+const ReeferPanel = ({ s, editing, ed, set }) => {
+  const fields = [
+    { k: 'reeferTempSet',    label: 'Set Temp',    unit: '°C',     icon: Thermometer, color: '#38bdf8', hint: '6.0' },
+    { k: 'reeferTempActual', label: 'Actual Temp', unit: '°C',     icon: Thermometer, color: '#f87171', hint: '5.8' },
+    { k: 'humidity',         label: 'Humidity',    unit: '%',      icon: Droplets,    color: '#a78bfa', hint: '85'  },
+    { k: 'ventilation',      label: 'Ventilation', unit: ' cbm/h', icon: Wind,        color: '#22c55e', hint: '25'  },
+    { k: 'co2Level',         label: 'CO₂',         unit: '%',      icon: Wind,        color: '#fbbf24', hint: '0.5' },
+  ];
+
+  const diff = s.reeferTempActual != null && s.reeferTempSet != null
+    ? +(s.reeferTempActual - s.reeferTempSet).toFixed(1) : null;
+  const tempOk = diff !== null && Math.abs(diff) <= 1.5;
+
+  return (
+    <div className="glass-panel" style={{ padding: 14, borderLeft: '3px solid #38bdf8' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <Snowflake size={14} style={{ color: '#38bdf8' }} />
+        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Reefer Settings</span>
+        {diff !== null && (
+          <span style={{
+            marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: 10,
+            background: tempOk ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+            color: tempOk ? '#22c55e' : '#ef4444'
+          }}>
+            {tempOk ? '✓ On Target' : `⚠ Δ${diff > 0 ? '+' : ''}${diff}°C`}
+          </span>
+        )}
+      </div>
+      {editing ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {fields.map(f => (
+            <div key={f.k}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>{f.label} ({f.unit.trim()})</div>
+              <Inp type="number" step="0.1" placeholder={f.hint} value={ed[f.k] ?? ''} onChange={e => set(f.k, e.target.value)} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+          {fields.map(f => {
+            const Icon = f.icon;
+            const val  = s[f.k];
+            return (
+              <div key={f.k} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 10px 8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <Icon size={10} style={{ color: f.color }} />
+                  <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</span>
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: f.color }}>
+                  {val != null ? `${val}${f.unit}` : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>—</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Route Progress Bar ───────────────────────────────────────────────────────
+
+const RouteProgress = ({ shipment, events }) => {
+  const phases = [
+    { key: 'origin', label: '🇲🇦 Agadir',      done: ['Customs Cleared (Origin)', 'Vessel Departed'] },
+    { key: 'sea',    label: '🌊 At Sea',         done: ['Vessel Departed', 'Transshipment Arrived', 'Transshipment Departed'] },
+    { key: 'newark', label: '⚓ Newark Port',    done: ['Vessel Arrived', 'CBP Customs Clearance', 'USDA / APHIS Inspection', 'Released - Out for Delivery'] },
+    { key: 'final',  label: '🏭 Philadelphia',   done: ['Delivered to Warehouse'] },
+  ];
+  const eventTypes = new Set(events.map(e => e.eventType));
+  let activeIdx = -1;
+  phases.forEach((p, i) => { if (p.done.some(t => eventTypes.has(t))) activeIdx = i; });
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'stretch', gap: 3, marginBottom: 4 }}>
+      {phases.map((p, i) => {
+        const done   = i < activeIdx;
+        const active = i === activeIdx;
+        return (
+          <div key={p.key} style={{
+            flex: 1, padding: '7px 8px', borderRadius: 7, textAlign: 'center',
+            background: done ? 'rgba(34,197,94,0.15)' : active ? 'rgba(255,107,0,0.15)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${done ? 'rgba(34,197,94,0.3)' : active ? 'rgba(255,107,0,0.35)' : 'var(--border-glass)'}`,
+          }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: done ? '#22c55e' : active ? 'var(--orange-primary)' : 'var(--text-muted)' }}>
+              {done ? '✓ ' : active ? '● ' : ''}{p.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Add Event Modal ──────────────────────────────────────────────────────────
+
+const LOCATION_HINTS = {
+  'Pre-Cooling':                 'Packhouse / Cold Store, Agadir, Morocco',
+  'Stuffing':                    'Packhouse, Agadir, Morocco',
+  'Gate In (Port of Agadir)':   'Port of Agadir, Morocco',
+  'Customs Cleared (Origin)':   'Port of Agadir, Morocco',
+  'Vessel Departed':             'Port of Agadir, Morocco',
+  'Transshipment Arrived':      'Port of Algeciras, Spain',
+  'Transshipment Departed':     'Port of Algeciras, Spain',
+  'Vessel Arrived':              'Port of Newark, NJ, USA',
+  'USDA / APHIS Inspection':    'Port of Newark, NJ, USA',
+  'CBP Customs Clearance':      'Port of Newark, NJ, USA',
+  'FDA Hold':                    'Port of Newark, NJ, USA',
+  'Released - Out for Delivery': 'Newark, NJ, USA',
+  'Delivered to Warehouse':     'Philadelphia, PA, USA',
+  'Port Inspection':             'Port of Newark, NJ, USA',
+};
+
+const AddEventModal = ({ shipmentId, destination, onClose, onSaved }) => {
+  const [form, setForm] = useState({
+    eventType: 'Gate In (Port of Agadir)',
+    location: LOCATION_HINTS['Gate In (Port of Agadir)'],
+    description: '',
+    eventDate: new Date().toISOString().slice(0, 10),
+    tempReading: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState('');
+
+  const set = (k, v) => setForm(f => {
+    const next = { ...f, [k]: v };
+    if (k === 'eventType') {
+      next.location = k === 'eventType' && v === 'Delivered to Warehouse'
+        ? (destination || LOCATION_HINTS[v] || '')
+        : (LOCATION_HINTS[v] || '');
+    }
+    return next;
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.location) { setError('Location is required'); return; }
+    setSaving(true);
+    try {
+      await shipmentsApi.createEvent(shipmentId, form);
+      onSaved();
+    } catch (err) { setError(err.message); setSaving(false); }
+  };
+
+  const meta = EVENT_META[form.eventType] || { icon: Ship, color: 'var(--orange-primary)' };
+  const Icon = meta.icon;
+
+  const GROUPED = [
+    { header: '🇲🇦 Morocco (Origin)', types: EVENT_TYPES.slice(0, 5) },
+    { header: '🌊 At Sea',            types: EVENT_TYPES.slice(5, 7) },
+    { header: '🇺🇸 USA — Newark → Philadelphia', types: EVENT_TYPES.slice(7, 13) },
+    { header: 'Other',               types: EVENT_TYPES.slice(13) },
+  ];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Icon size={16} style={{ color: meta.color }} /> Add Journey Event
+          </h3>
+          <button className="btn btn-glass" style={{ padding: '5px 7px' }} onClick={onClose}><X size={15} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 3 }}>Event Type</div>
+            <select className="ui-input" value={form.eventType} onChange={e => set('eventType', e.target.value)}>
+              {GROUPED.map(g => (
+                <optgroup key={g.header} label={g.header}>
+                  {g.types.map(t => <option key={t} value={t}>{t}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 3 }}>Location *</div>
+            <Inp placeholder="City, Port, Country" value={form.location} onChange={e => set('location', e.target.value)} required />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 3 }}>Date *</div>
+              <Inp type="date" value={form.eventDate} onChange={e => set('eventDate', e.target.value)} required />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 3 }}>Temp Reading (°C)</div>
+              <Inp type="number" step="0.1" placeholder="e.g. 5.8" value={form.tempReading} onChange={e => set('tempReading', e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 3 }}>Notes</div>
+            <textarea className="ui-input" rows={2} style={{ resize: 'vertical', fontSize: '0.84rem' }}
+              placeholder="e.g. USDA released, no holds. Reefer temp OK at 5.8°C."
+              value={form.description} onChange={e => set('description', e.target.value)} />
+          </div>
+
+          {error && <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-glass" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon size={13} />{saving ? 'Saving…' : 'Add Event'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── Journey Timeline ─────────────────────────────────────────────────────────
+
+const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
+  const grouped = { origin: [], sea: [], usa: [] };
+  events.forEach(ev => {
+    const phase = EVENT_META[ev.eventType]?.phase || 'sea';
+    grouped[phase].push(ev);
+  });
+
+  return (
+    <div className="glass-panel" style={{ padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Navigation size={14} style={{ color: 'var(--orange-primary)' }} />
+          Journey Log
+          <span style={{ background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)', padding: '1px 8px', borderRadius: 10, fontSize: '0.7rem', marginLeft: 4 }}>
+            {events.length} events
+          </span>
+        </h4>
+        {canEdit && (
+          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.78rem' }} onClick={onAdd}>
+            <Plus size={13} /> Add Event
+          </button>
+        )}
+      </div>
+
+      {/* Route strip */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 16, padding: '9px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, flexWrap: 'wrap', fontSize: '0.82rem' }}>
+        <MapPin size={12} style={{ color: '#fb923c' }} />
+        <strong>{shipment.portOfLoading || 'Port of Agadir'}</strong>
+        {shipment.transshipmentPort && (
+          <><ChevronRight size={11} style={{ color: 'var(--text-muted)' }} />
+          <span style={{ color: '#a78bfa' }}>{shipment.transshipmentPort}</span></>
+        )}
+        <ChevronRight size={11} style={{ color: 'var(--text-muted)' }} />
+        <Anchor size={11} style={{ color: '#38bdf8' }} />
+        <strong style={{ color: '#38bdf8' }}>{shipment.portOfDischarge || 'Port of Newark, NJ'}</strong>
+        <ChevronRight size={11} style={{ color: 'var(--text-muted)' }} />
+        <Building2 size={11} style={{ color: '#22c55e' }} />
+        <strong style={{ color: '#22c55e' }}>{shipment.destination || 'Philadelphia, PA'}</strong>
+        {shipment.vesselEta && (
+          <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+            ETA <strong style={{ color: 'var(--orange-primary)' }}>{formatDateUTC(shipment.vesselEta)}</strong>
+          </span>
+        )}
+      </div>
+
+      {events.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+          No events recorded yet. Click "Add Event" to start tracking.
+        </div>
+      ) : (
+        ['origin', 'sea', 'usa'].map(phase => {
+          const phaseEvs = grouped[phase];
+          if (!phaseEvs.length) return null;
+          const ph = PHASE_LABELS[phase];
+          return (
+            <div key={phase} style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: ph.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ph.label}</span>
+                <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
+              </div>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 16, top: 20, bottom: 16, width: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }} />
+                {phaseEvs.map((ev, idx) => {
+                  const meta = EVENT_META[ev.eventType] || { icon: Ship, color: '#94a3b8' };
+                  const Icon = meta.icon;
+                  const isAlert = ['FDA Hold', 'Temperature Excursion', 'Delay / Exception'].includes(ev.eventType);
+                  return (
+                    <div key={ev.id} style={{ display: 'flex', gap: 11, marginBottom: idx < phaseEvs.length - 1 ? 14 : 4, position: 'relative' }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%', flexShrink: 0, zIndex: 1,
+                        background: `${meta.color}18`, border: `2px solid ${meta.color}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Icon size={13} style={{ color: meta.color }} />
+                      </div>
+                      <div style={{ flex: 1, paddingTop: 2 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '0.84rem', color: isAlert ? '#ef4444' : meta.color }}>
+                              {ev.eventType}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2, flexWrap: 'wrap' }}>
+                              <MapPin size={10} style={{ color: 'var(--text-muted)' }} />
+                              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{ev.location}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>·</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {new Date(ev.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                              {ev.tempReading != null && (
+                                <>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>·</span>
+                                  <Thermometer size={10} style={{ color: '#38bdf8' }} />
+                                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 700 }}>{ev.tempReading}°C</span>
+                                </>
+                              )}
+                            </div>
+                            {ev.description && (
+                              <div style={{ marginTop: 3, fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>{ev.description}</div>
+                            )}
+                          </div>
+                          {canEdit && (
+                            <button className="btn btn-glass" style={{ padding: '3px 6px', color: '#ef4444', flexShrink: 0 }}
+                              onClick={() => onDelete(ev.id)}>
+                              <Trash2 size={11} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
+// ─── Main Modal ───────────────────────────────────────────────────────────────
 
 const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [ed, setEd]               = useState(null);
+  const [events, setEvents]       = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [showAdd, setShowAdd]     = useState(false);
+
+  const currentUser = (() => {
+    try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
+  })();
+  const canEdit    = ['admin', 'operation', 'super admin'].includes(currentUser.role);
+  const isSuperAdmin = currentUser.role === 'super admin';
 
   useEffect(() => {
-    if (shipment) {
-      setEditData({
-        label: shipment.label,
-        origin: shipment.origin || '',
-        destination: shipment.destination || '',
-        vesselName: shipment.vesselName || '',
-        containerNumber: shipment.containerNumber || '',
-        bolNumber: shipment.bolNumber || '',
-        vesselEta: shipment.vesselEta ? shipment.vesselEta.split('T')[0] : '',
-        vesselDeparture: shipment.vesselDeparture ? shipment.vesselDeparture.split('T')[0] : '',
-        vesselArrival: shipment.vesselArrival ? shipment.vesselArrival.split('T')[0] : '',
-        shippingLine: shipment.shippingLine || '',
-        status: shipment.status,
-        notes: shipment.notes || ''
-      });
-      setIsEditing(false);
-    }
+    if (!shipment) return;
+    setEd({
+      label: shipment.label || '', origin: shipment.origin || '',
+      destination: shipment.destination || '', vesselName: shipment.vesselName || '',
+      containerNumber: shipment.containerNumber || '', bolNumber: shipment.bolNumber || '',
+      vesselEta: shipment.vesselEta?.split('T')[0] || '',
+      vesselDeparture: shipment.vesselDeparture?.split('T')[0] || '',
+      vesselArrival: shipment.vesselArrival?.split('T')[0] || '',
+      shippingLine: shipment.shippingLine || '', status: shipment.status || 'Pending',
+      notes: shipment.notes || '',
+      portOfLoading: shipment.portOfLoading || '',
+      portOfDischarge: shipment.portOfDischarge || '',
+      transshipmentPort: shipment.transshipmentPort || '',
+      containerType: shipment.containerType || '', sealNumber: shipment.sealNumber || '',
+      cargoDescription: shipment.cargoDescription || '',
+      grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
+      reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
+      humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
+      co2Level: shipment.co2Level ?? '',
+    });
+    setEvents(shipment.events || []);
+    setIsEditing(false);
   }, [shipment]);
 
-  if (!isOpen || !shipment || !editData) return null;
+  if (!isOpen || !shipment || !ed) return null;
+
+  const set = (k, v) => setEd(p => ({ ...p, [k]: v }));
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // NOTE: We no longer auto-regenerate the label here to respect manual edits.
-      const updated = await shipmentsApi.update(shipment.id, editData);
-      onUpdate(updated);
-      setIsEditing(false);
-    } catch (err) {
-      console.error('Failed to update shipment:', err);
-      alert('Failed to save changes.');
-    } finally {
-      setLoading(false);
-    }
+      const updated = await shipmentsApi.update(shipment.id, ed);
+      onUpdate(updated); setEvents(updated.events || []); setIsEditing(false);
+    } catch (err) { alert('Save failed: ' + err.message); }
+    finally { setLoading(false); }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this shipment?')) return;
-    try {
-      await shipmentsApi.delete(shipment.id);
-      onDelete(shipment.id);
-      onClose();
-    } catch (err) {
-      console.error('Failed to delete shipment:', err);
-    }
+    if (!window.confirm('Delete this shipment and all its journey events?')) return;
+    try { await shipmentsApi.delete(shipment.id); onDelete(shipment.id); onClose(); }
+    catch (err) { alert('Delete failed: ' + err.message); }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Pending': return <Clock size={16} />;
-      case 'Departed': return <Navigation size={16} />;
-      case 'In Transit': return <Anchor size={16} />;
-      case 'Arrived': return <CheckCircle2 size={16} />;
-      default: return null;
-    }
+  const refreshEvents = async () => {
+    try {
+      const fresh = await shipmentsApi.getOne(shipment.id);
+      setEvents(fresh.events || []); onUpdate(fresh);
+    } catch (err) { console.error(err); }
   };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm('Delete this journey event?')) return;
+    try { await shipmentsApi.deleteEvent(shipment.id, eventId); setEvents(p => p.filter(e => e.id !== eventId)); }
+    catch (err) { alert('Delete failed: ' + err.message); }
+  };
+
+  const showReefer = isReefer(isEditing ? ed.containerType : shipment.containerType) || !shipment.containerType;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', width: '90%' }}>
-        <div className="modal-header">
-          <div className="flex-center gap-2">
-            <Ship size={20} className="text-orange" />
-            <h3 style={{ margin: 0 }}>Shipment Details</h3>
-          </div>
-          <div className="flex-center gap-2">
-            {isEditing ? (
-              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={loading}>
-                <Save size={16} /> Save
-              </button>
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={e => e.stopPropagation()}
+          style={{ maxWidth: 800, width: '96%', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}>
+
+          {/* Sticky header */}
+          <div style={{
+            padding: '13px 18px', borderBottom: '1px solid var(--border-glass)',
+            display: 'flex', alignItems: 'center', gap: 10,
+            position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 20
+          }}>
+            <Ship size={16} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.94rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {shipment.label}
+              </div>
+              <div style={{ fontSize: '0.71rem', color: 'var(--text-muted)' }}>
+                {[shipment.containerNumber, shipment.containerType, shipment.shippingLine].filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            {!isEditing && (
+              <span style={{
+                padding: '3px 12px', borderRadius: 20, fontSize: '0.74rem', fontWeight: 600, flexShrink: 0,
+                background: shipment.status === 'Arrived' ? 'rgba(34,197,94,0.15)' : shipment.status === 'In Transit' ? 'rgba(56,189,248,0.15)' : shipment.status === 'Departed' ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.07)',
+                color: shipment.status === 'Arrived' ? '#22c55e' : shipment.status === 'In Transit' ? '#38bdf8' : shipment.status === 'Departed' ? '#fbbf24' : 'var(--text-muted)',
+              }}>{shipment.status}</span>
+            )}
+            {canEdit && (isEditing ? (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 10px' }} onClick={() => setIsEditing(false)}>Cancel</button>
+                <button className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '5px 10px' }} onClick={handleSave} disabled={loading}>
+                  <Save size={12} />{loading ? 'Saving…' : 'Save'}
+                </button>
+              </div>
             ) : (
-              <button className="btn btn-glass btn-sm" onClick={() => setIsEditing(true)}>
-                <Edit3 size={16} /> Edit
+              <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 10px' }} onClick={() => setIsEditing(true)}>
+                <Edit3 size={12} /> Edit
               </button>
-            )}
-            <button className="icon-btn-small" onClick={onClose}>
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="modal-body" style={{ padding: '24px' }}>
-          
-          {/* Status Badge Select (Always accessible if editing) */}
-          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="flex-center gap-2">
-              <span className="shipment-detail-label">Current Status:</span>
-              {isEditing ? (
-                <select 
-                  className="ui-input" 
-                  style={{ padding: '4px 8px', fontSize: '0.85rem' }}
-                  value={editData.status}
-                  onChange={(e) => setEditData(p => ({ ...p, status: e.target.value }))}
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Departed">Departed</option>
-                  <option value="In Transit">In Transit</option>
-                  <option value="Arrived">Arrived</option>
-                </select>
-              ) : (
-                <span className={`status-pill status-${shipment.status.toLowerCase().replace(' ', '-')}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {getStatusIcon(shipment.status)} {shipment.status}
-                </span>
-              )}
-            </div>
-            {!isEditing && (() => {
-               try {
-                 const u = JSON.parse(localStorage.getItem('citrus_user') || '{}');
-                 return u.role === 'super admin';
-               } catch(e) { return false; }
-            })() && (
-               <button className="btn btn-text-action" style={{ color: '#FF6B6B', fontSize: '0.85rem' }} onClick={handleDelete}>
-                 <Trash2 size={14} /> Delete Shipment
-               </button>
-            )}
+            ))}
+            <button className="btn btn-glass" style={{ padding: '5px 7px' }} onClick={onClose}><X size={14} /></button>
           </div>
 
-          <div className="shipment-detail-grid">
-            {/* Route Info */}
-            <div className="shipment-detail-section" style={{ gridColumn: '1 / -1' }}>
-              <div className="shipment-detail-section-title"><MapPin size={16} /> Route & Customer</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px' }}>
-                
-                {/* Manual Label Edit */}
-                <div className="shipment-detail-item" style={{ gridColumn: '1 / -1' }}>
-                  <span className="shipment-detail-label">Shipment Label (Display Name)</span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      className="ui-input" 
-                      value={editData.label} 
-                      onChange={(e) => setEditData(p => ({ ...p, label: e.target.value }))} 
-                      placeholder="e.g. 24/03/2026 Morocco - Newark" 
-                    />
-                  ) : (
-                    <span className="shipment-detail-value" style={{ fontWeight: 700, color: 'var(--orange-primary)' }}>{shipment.label}</span>
-                  )}
-                </div>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
+            {/* Progress bar */}
+            <RouteProgress shipment={shipment} events={events} />
 
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Origin</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.origin} onChange={(e) => setEditData(p => ({ ...p, origin: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{shipment.origin || '—'}</span>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Destination</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.destination} onChange={(e) => setEditData(p => ({ ...p, destination: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{shipment.destination}</span>
-                  )}
-                </div>
-                <div className="shipment-detail-item" style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
-                  <span className="shipment-detail-label">Customer</span>
-                  <span className="shipment-detail-value">{shipment.contact?.name} — {shipment.contact?.company}</span>
-                </div>
+            {/* Container & Cargo */}
+            <div className="glass-panel" style={{ padding: 14 }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Container & Cargo</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <Field label="Container #" value={shipment.containerNumber} editing={isEditing}>
+                  <Inp placeholder="e.g. CMAU1234567" value={ed.containerNumber} onChange={e => set('containerNumber', e.target.value)} />
+                </Field>
+                <Field label="Container Type" value={shipment.containerType} editing={isEditing}>
+                  <Sel opts={CONTAINER_TYPES} value={ed.containerType} onChange={e => set('containerType', e.target.value)} />
+                </Field>
+                <Field label="Seal #" value={shipment.sealNumber} editing={isEditing}>
+                  <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
+                </Field>
+                <Field label="Cargo" value={shipment.cargoDescription} editing={isEditing}>
+                  <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />
+                </Field>
+                <Field label="Gross Weight" value={shipment.grossWeight ? `${Number(shipment.grossWeight).toLocaleString()} kg` : null} editing={isEditing}>
+                  <Inp type="number" placeholder="kg" value={ed.grossWeight} onChange={e => set('grossWeight', e.target.value)} />
+                </Field>
+                <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={isEditing}>
+                  <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
+                </Field>
               </div>
             </div>
 
-            {/* Vessel Info */}
-            <div className="shipment-detail-section">
-              <div className="shipment-detail-section-title"><Anchor size={16} /> Vessel Details</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Vessel Name</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.vesselName} onChange={(e) => setEditData(p => ({ ...p, vesselName: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{shipment.vesselName || '—'}</span>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Shipping Line</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.shippingLine} onChange={(e) => setEditData(p => ({ ...p, shippingLine: e.target.value }))} />
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="shipment-detail-value">{shipment.shippingLine || '—'}</span>
-                      {shipment.shippingLine && (shipment.shippingLine.toLowerCase().includes('maersk') || shipment.shippingLine.toLowerCase().includes('msc')) && (
-                        <a 
-                          href={shipment.shippingLine.toLowerCase().includes('maersk') ? 'https://www.maersk.com/tracking/' : 'https://www.msc.com/en/track-a-shipment'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-glass btn-sm"
-                          style={{ fontSize: '0.7rem', padding: '4px 8px', color: 'var(--orange-primary)' }}
-                        >
-                          <Navigation size={12} /> Track
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Container Number</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.containerNumber} onChange={(e) => setEditData(p => ({ ...p, containerNumber: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{shipment.containerNumber || '—'}</span>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">BOL Number</span>
-                  {isEditing ? (
-                    <input type="text" className="ui-input" value={editData.bolNumber} onChange={(e) => setEditData(p => ({ ...p, bolNumber: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{shipment.bolNumber || '—'}</span>
-                  )}
-                </div>
+            {/* Reefer */}
+            {showReefer && <ReeferPanel s={shipment} editing={isEditing} ed={ed} set={set} />}
+
+            {/* Ports & Schedule */}
+            <div className="glass-panel" style={{ padding: 14 }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Ports & Schedule</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <Field label="Port of Loading" value={shipment.portOfLoading} editing={isEditing}>
+                  <Inp placeholder="e.g. Port of Agadir" value={ed.portOfLoading} onChange={e => set('portOfLoading', e.target.value)} />
+                </Field>
+                <Field label="Transshipment Port" value={shipment.transshipmentPort} editing={isEditing}>
+                  <Inp placeholder="e.g. Port of Algeciras" value={ed.transshipmentPort} onChange={e => set('transshipmentPort', e.target.value)} />
+                </Field>
+                <Field label="Port of Discharge" value={shipment.portOfDischarge} editing={isEditing}>
+                  <Inp placeholder="e.g. Port of Newark, NJ" value={ed.portOfDischarge} onChange={e => set('portOfDischarge', e.target.value)} />
+                </Field>
+                <Field label="Vessel Name" value={shipment.vesselName} editing={isEditing}>
+                  <Inp placeholder="Vessel name" value={ed.vesselName} onChange={e => set('vesselName', e.target.value)} />
+                </Field>
+                <Field label="Shipping Line" value={shipment.shippingLine} editing={isEditing}>
+                  <Inp placeholder="e.g. CMA CGM" value={ed.shippingLine} onChange={e => set('shippingLine', e.target.value)} />
+                </Field>
+                <Field label="BOL Number" value={shipment.bolNumber} editing={isEditing}>
+                  <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
+                </Field>
+                <Field label="Departure Date" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={isEditing}>
+                  <Inp type="date" value={ed.vesselDeparture} onChange={e => set('vesselDeparture', e.target.value)} />
+                </Field>
+                <Field label="ETA (Newark)" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={isEditing}>
+                  <Inp type="date" value={ed.vesselEta} onChange={e => set('vesselEta', e.target.value)} />
+                </Field>
+                <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={isEditing}>
+                  <Inp type="date" value={ed.vesselArrival} onChange={e => set('vesselArrival', e.target.value)} />
+                </Field>
+                {isEditing && (
+                  <Field label="Status" value={shipment.status} editing={isEditing}>
+                    <Sel opts={STATUS_OPTIONS} value={ed.status} onChange={e => set('status', e.target.value)} />
+                  </Field>
+                )}
               </div>
             </div>
 
-            {/* Dates */}
-            <div className="shipment-detail-section">
-              <div className="shipment-detail-section-title"><Calendar size={16} /> Schedule</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Vessel ETA</span>
-                  {isEditing ? (
-                    <input type="date" className="ui-input" value={editData.vesselEta} onChange={(e) => setEditData(p => ({ ...p, vesselEta: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value" style={{ color: 'var(--orange-primary)', fontWeight: 700 }}>
-                      {formatFullDateUTC(shipment.vesselEta)}
-                    </span>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Departure Date</span>
-                  {isEditing ? (
-                    <input type="date" className="ui-input" value={editData.vesselDeparture} onChange={(e) => setEditData(p => ({ ...p, vesselDeparture: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{formatFullDateUTC(shipment.vesselDeparture)}</span>
-                  )}
-                </div>
-                <div className="shipment-detail-item">
-                  <span className="shipment-detail-label">Actual Arrival</span>
-                  {isEditing ? (
-                    <input type="date" className="ui-input" value={editData.vesselArrival} onChange={(e) => setEditData(p => ({ ...p, vesselArrival: e.target.value }))} />
-                  ) : (
-                    <span className="shipment-detail-value">{formatFullDateUTC(shipment.vesselArrival)}</span>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Journey Timeline */}
+            <JourneyTimeline
+              shipment={shipment} events={events}
+              onAdd={() => setShowAdd(true)}
+              onDelete={handleDeleteEvent}
+              canEdit={canEdit}
+            />
 
             {/* Notes */}
-            <div className="shipment-detail-section" style={{ gridColumn: '1 / -1' }}>
-              <div className="shipment-detail-section-title"><FileText size={16} /> Notes</div>
-              {isEditing ? (
-                <textarea 
-                  className="ui-input" 
-                  style={{ width: '100%', minHeight: '80px', padding: '12px' }}
-                  value={editData.notes}
-                  onChange={(e) => setEditData(p => ({ ...p, notes: e.target.value }))}
-                  placeholder="Additional shipping notes, instructions, or updates..."
-                />
-              ) : (
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)', minHeight: '60px' }}>
-                  {shipment.notes || 'No additional notes provided.'}
-                </div>
-              )}
+            <div className="glass-panel" style={{ padding: 14 }}>
+              <Field label="Notes" value={shipment.notes} editing={isEditing}>
+                <textarea className="ui-input" rows={3}
+                  style={{ resize: 'vertical', fontSize: '0.84rem', width: '100%' }}
+                  placeholder="Shipping notes, remarks…"
+                  value={ed.notes} onChange={e => set('notes', e.target.value)} />
+              </Field>
             </div>
 
+            {isSuperAdmin && !isEditing && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-glass" style={{ color: '#ef4444', fontSize: '0.8rem' }} onClick={handleDelete}>
+                  <Trash2 size={13} /> Delete Shipment
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
+
+      {showAdd && (
+        <AddEventModal
+          shipmentId={shipment.id}
+          destination={shipment.destination}
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); refreshEvents(); }}
+        />
+      )}
+    </>
   );
 };
 
