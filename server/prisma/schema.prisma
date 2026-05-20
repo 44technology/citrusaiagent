@@ -64,6 +64,7 @@ model Shipment {
   status          String    @default("Pending")
   notes           String?
   contactId       String
+  orderId         String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   origin          String?
@@ -88,8 +89,25 @@ model Shipment {
   co2Level         Float?    // CO2 % (optional, controlled atmosphere)
 
   contact          Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  order            Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
   documents        Document[]
   events           ShipmentEvent[]
+  expenses         ShipmentExpense[]
+}
+
+model ShipmentExpense {
+  id            String   @id @default(uuid())
+  shipmentId    String
+  type          String   // Tariff | Customs | TerminalExamFee | PurchaseOfGoods | USDAExamFee | Revenue | Other
+  description   String?
+  amount        Float    @default(0)
+  boxQuantity   Int?
+  boxPrice      Float?
+  tariffPercent Float?   @default(10)
+  invoiceNumber String?
+  isRevenue     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  shipment      Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 }
 
 model ShipmentEvent {
@@ -120,26 +138,31 @@ model User {
 }
 
 model Order {
-  id          String   @id @default(uuid())
-  referenceId String
-  shipper     String
-  product     String
-  label       String
-  variety     String
-  boxType     String
-  boxQuantity Int
-  receiver    String
-  week        String
-  status      String   @default("pending")
-  userId      String?
-  contactId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User?    @relation(fields: [userId], references: [id])
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  referenceId   String   @unique
+  grower        String?
+  shipper       String?
+  product       String
+  label         String?
+  variety       String
+  boxType       String?
+  boxQuantity   Int
+  purchasePrice Float?
+  salePrice     Float?
+  expense       Float?
+  receiver      String?
+  week          String?
+  status        String   @default("pending")
+  userId        String?
+  contactId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User?    @relation(fields: [userId], references: [id])
+  contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
-  invoices    Invoice[]
-  documents   Document[]
+  invoices      Invoice[]
+  documents     Document[]
+  shipments     Shipment[]
 }
 
 model PurchaseOrder {

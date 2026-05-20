@@ -89,6 +89,11 @@ export const shipmentsApi = {
   createEvent: (id, data) => request(`/shipments/${id}/events`, { method: 'POST', body: JSON.stringify(data) }),
   updateEvent: (id, eventId, data) => request(`/shipments/${id}/events/${eventId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteEvent: (id, eventId) => request(`/shipments/${id}/events/${eventId}`, { method: 'DELETE' }),
+  // Expenses & Revenue
+  getExpenses: (id) => request(`/shipments/${id}/expenses`),
+  createExpense: (id, data) => request(`/shipments/${id}/expenses`, { method: 'POST', body: JSON.stringify(data) }),
+  updateExpense: (id, expenseId, data) => request(`/shipments/${id}/expenses/${expenseId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteExpense: (id, expenseId) => request(`/shipments/${id}/expenses/${expenseId}`, { method: 'DELETE' }),
 };
 // ─── Orders ──────────────────────────────────────────
 export const ordersApi = {

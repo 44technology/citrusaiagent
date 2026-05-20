@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3 } from 'lucide-react';
-import { contactsApi } from '../services/api';
+import { contactsApi, ordersApi } from '../services/api';
 import { formatFullDateUTC } from '../utils/dateUtils';
 
 const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLabelManual, setIsLabelManual] = useState(false);
+  const [orders, setOrders] = useState([]);
   const [form, setForm] = useState({
-    contactId: '', label: '', origin: 'Morocco', destination: '',
+    contactId: '', orderId: '', label: '', origin: 'Morocco', destination: '',
     vesselName: '', containerNumber: '', bolNumber: '',
     vesselEta: '', vesselDeparture: '', vesselArrival: '',
     shippingLine: '', status: 'Pending', notes: '',
@@ -21,6 +22,12 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
     // New customer
     customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      ordersApi.getAll().then(setOrders).catch(() => {});
+    }
+  }, [isOpen]);
 
   // Auto-generate label logic
   useEffect(() => {
@@ -67,8 +74,8 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
         finalContactId = newContact.id;
       }
 
-      if (!finalContactId || !form.destination) {
-        alert('Check customer and destination.');
+      if (!finalContactId) {
+        alert('Please select a customer.');
         setLoading(false);
         return;
       }
@@ -113,6 +120,24 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ gap: '14px', paddingBottom: '20px' }}>
+
+            {/* Order Link */}
+            <div>
+              <label className="shipment-label">Link to Order (Ref ID)</label>
+              <select
+                className="ui-input"
+                value={form.orderId}
+                onChange={(e) => handleChange('orderId', e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="">— No order link —</option>
+                {orders.map(o => (
+                  <option key={o.id} value={o.id}>
+                    #{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Shipment Label (Manual/Auto) */}
             <div>

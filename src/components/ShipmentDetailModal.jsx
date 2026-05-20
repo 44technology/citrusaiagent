@@ -3,7 +3,7 @@ import {
   X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
-  ShieldCheck, FileSearch, Building2, Snowflake
+  ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown
 } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -424,6 +424,233 @@ const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
   );
 };
 
+// ─── Expenses & Revenue Panel ────────────────────────────────────────────────
+
+const EXPENSE_TYPES = [
+  { value: 'PurchaseOfGoods', label: 'Purchase of Goods', desc: 'Box Qty × Box Price' },
+  { value: 'Tariff',          label: 'Tariff (10%)',       desc: '% of Purchase of Goods' },
+  { value: 'Customs',         label: 'Customs',            desc: 'Manual entry' },
+  { value: 'TerminalExamFee', label: 'Terminal Exam Fee',  desc: '' },
+  { value: 'USDAExamFee',     label: 'USDA Exam Fee',      desc: 'Invoice number required' },
+  { value: 'Revenue',         label: 'Revenue',            desc: 'Income entry' },
+  { value: 'Other',           label: 'Other',              desc: '' },
+];
+
+const AddExpenseModal = ({ shipmentId, expenses, onClose, onSaved }) => {
+  const [type, setType]         = useState('PurchaseOfGoods');
+  const [description, setDesc]  = useState('');
+  const [amount, setAmount]     = useState('');
+  const [boxQty, setBoxQty]     = useState('');
+  const [boxPrice, setBoxPrice] = useState('');
+  const [tariffPct, setTariffPct] = useState('10');
+  const [invoiceNum, setInvoiceNum] = useState('');
+  const [isRevenue, setIsRevenue] = useState(false);
+  const [saving, setSaving]     = useState(false);
+
+  // Auto-calculate Tariff based on existing PurchaseOfGoods
+  useEffect(() => {
+    if (type === 'Tariff') {
+      const pog = expenses.find(e => e.type === 'PurchaseOfGoods');
+      if (pog) {
+        const calc = ((pog.amount || 0) * (parseFloat(tariffPct) || 10) / 100).toFixed(2);
+        setAmount(calc);
+      }
+    }
+    if (type === 'Revenue') setIsRevenue(true);
+    else if (type !== 'Other') setIsRevenue(false);
+  }, [type, tariffPct]);
+
+  useEffect(() => {
+    if (type === 'PurchaseOfGoods' && boxQty && boxPrice) {
+      setAmount((parseFloat(boxQty) * parseFloat(boxPrice)).toFixed(2));
+    }
+  }, [boxQty, boxPrice, type]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await shipmentsApi.createExpense(shipmentId, {
+        type, description, amount, boxQuantity: boxQty, boxPrice,
+        tariffPercent: tariffPct, invoiceNumber: invoiceNum, isRevenue
+      });
+      onSaved();
+    } catch (err) { alert(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const sel = EXPENSE_TYPES.find(t => t.value === type);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <DollarSign size={16} className="text-orange" /> Add Expense / Revenue
+          </h4>
+          <button className="icon-btn-small" onClick={onClose}><X size={16} /></button>
+        </div>
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>TYPE</label>
+            <select className="ui-select" value={type} onChange={e => setType(e.target.value)} style={{ width: '100%' }}>
+              {EXPENSE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}{t.desc ? ` — ${t.desc}` : ''}</option>)}
+            </select>
+          </div>
+
+          {type === 'PurchaseOfGoods' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>BOX QTY</label>
+                <input type="number" className="ui-input" placeholder="0" value={boxQty} onChange={e => setBoxQty(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>BOX PRICE ($)</label>
+                <input type="number" className="ui-input" placeholder="0.00" step="0.01" value={boxPrice} onChange={e => setBoxPrice(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          {type === 'Tariff' && (
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>TARIFF %</label>
+              <input type="number" className="ui-input" value={tariffPct} onChange={e => setTariffPct(e.target.value)} style={{ width: '100%' }} />
+            </div>
+          )}
+
+          {type === 'USDAExamFee' && (
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>INVOICE NUMBER</label>
+              <input className="ui-input" placeholder="Invoice #" value={invoiceNum} onChange={e => setInvoiceNum(e.target.value)} style={{ width: '100%' }} />
+            </div>
+          )}
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>
+              AMOUNT ($){type === 'PurchaseOfGoods' ? ' (auto-calculated)' : type === 'Tariff' ? ' (auto-calculated)' : ''}
+            </label>
+            <input type="number" className="ui-input" placeholder="0.00" step="0.01"
+              value={amount} onChange={e => setAmount(e.target.value)}
+              style={{ width: '100%', background: (type === 'PurchaseOfGoods' || type === 'Tariff') ? 'rgba(255,107,0,0.06)' : undefined }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>DESCRIPTION (optional)</label>
+            <input className="ui-input" placeholder="Notes..." value={description} onChange={e => setDesc(e.target.value)} style={{ width: '100%' }} />
+          </div>
+
+          {type === 'Other' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.84rem', cursor: 'pointer' }}>
+              <input type="checkbox" checked={isRevenue} onChange={e => setIsRevenue(e.target.checked)} />
+              Mark as Revenue (income)
+            </label>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving…' : 'Add Entry'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ExpensesPanel = ({ shipment, canEdit }) => {
+  const [expenses, setExpenses] = useState(shipment.expenses || []);
+  const [showAdd, setShowAdd]   = useState(false);
+
+  const reload = async () => {
+    try {
+      const fresh = await shipmentsApi.getExpenses(shipment.id);
+      setExpenses(fresh);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDelete = async (expId) => {
+    if (!window.confirm('Delete this entry?')) return;
+    try { await shipmentsApi.deleteExpense(shipment.id, expId); setExpenses(p => p.filter(e => e.id !== expId)); }
+    catch (err) { alert(err.message); }
+  };
+
+  const totalExpenses = expenses.filter(e => !e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
+  const totalRevenue  = expenses.filter(e => e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
+  const netProfit     = totalRevenue - totalExpenses;
+
+  const typeLabel = (t) => EXPENSE_TYPES.find(x => x.value === t)?.label || t;
+
+  return (
+    <div className="glass-panel" style={{ padding: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <DollarSign size={14} style={{ color: 'var(--orange-primary)' }} />
+          Expenses & Revenue
+        </h4>
+        {canEdit && (
+          <button className="btn btn-primary" style={{ padding: '5px 10px', fontSize: '0.76rem' }} onClick={() => setShowAdd(true)}>
+            <Plus size={12} /> Add Entry
+          </button>
+        )}
+      </div>
+
+      {/* Summary */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+        {[
+          { label: 'Total Expenses', value: totalExpenses, color: '#ef4444', icon: TrendingDown },
+          { label: 'Total Revenue',  value: totalRevenue,  color: '#22c55e', icon: TrendingUp },
+          { label: 'Net Profit',     value: netProfit,     color: netProfit >= 0 ? '#22c55e' : '#ef4444', icon: DollarSign },
+        ].map(({ label, value, color, icon: Icon }) => (
+          <div key={label} style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color }}>${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+          </div>
+        ))}
+      </div>
+
+      {expenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No entries yet.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {expenses.map(exp => (
+            <div key={exp.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: exp.isRevenue ? '#22c55e' : '#f59e0b', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{typeLabel(exp.type)}</div>
+                {exp.type === 'PurchaseOfGoods' && exp.boxQuantity && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{exp.boxQuantity} boxes × ${exp.boxPrice}</div>
+                )}
+                {exp.type === 'USDAExamFee' && exp.invoiceNumber && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Invoice: {exp.invoiceNumber}</div>
+                )}
+                {exp.description && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{exp.description}</div>}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: exp.isRevenue ? '#22c55e' : 'var(--text-primary)', flexShrink: 0 }}>
+                {exp.isRevenue ? '+' : ''} ${(exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              {canEdit && (
+                <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4, opacity: 0.6 }}>
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAdd && (
+        <AddExpenseModal
+          shipmentId={shipment.id}
+          expenses={expenses}
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); reload(); }}
+        />
+      )}
+    </div>
+  );
+};
+
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
 const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) => {
@@ -619,6 +846,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
               onDelete={handleDeleteEvent}
               canEdit={canEdit}
             />
+
+            {/* Expenses & Revenue */}
+            <ExpensesPanel shipment={shipment} canEdit={canEdit} />
 
             {/* Notes */}
             <div className="glass-panel" style={{ padding: 14 }}>

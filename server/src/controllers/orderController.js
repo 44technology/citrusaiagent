@@ -35,16 +35,49 @@ export const getContactOrders = async (req, res) => {
   }
 };
 
+const generateRefId = async () => {
+  const START = 260001;
+  const last = await prisma.order.findFirst({
+    where: { referenceId: { gte: String(START) } },
+    orderBy: { referenceId: 'desc' },
+    select: { referenceId: true }
+  });
+  if (!last) return String(START);
+  const num = parseInt(last.referenceId, 10);
+  return String(isNaN(num) ? START : num + 1);
+};
+
 export const createOrder = async (req, res) => {
   try {
     const { userId } = req.user || {};
-    const orderData = {
-      ...req.body,
-      userId: userId || null
-    };
+    const {
+      grower, shipper, product, label, variety, boxType,
+      boxQuantity, purchasePrice, salePrice, expense,
+      receiver, week, status, contactId
+    } = req.body;
+
+    const referenceId = await generateRefId();
 
     const order = await prisma.order.create({
-      data: orderData
+      data: {
+        referenceId,
+        grower: grower || null,
+        shipper: shipper || null,
+        product,
+        label: label || null,
+        variety,
+        boxType: boxType || null,
+        boxQuantity: parseInt(boxQuantity) || 0,
+        purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
+        salePrice: salePrice ? parseFloat(salePrice) : null,
+        expense: expense ? parseFloat(expense) : null,
+        receiver: receiver || null,
+        week: week || null,
+        status: status || 'pending',
+        userId: userId || null,
+        contactId
+      },
+      include: { contact: true }
     });
     res.status(201).json(order);
   } catch (error) {
@@ -57,14 +90,21 @@ export const updateOrder = async (req, res) => {
   const { role } = req.user || {};
 
   try {
-    // If trying to update status, check if user is admin/op
-    if (req.body.status && role !== 'admin' && role !== 'operation') {
+    if (req.body.status && role !== 'admin' && role !== 'operation' && role !== 'super admin') {
       return res.status(403).json({ error: 'Only operation team can update order status' });
     }
 
+    const data = { ...req.body };
+    delete data.referenceId; // never allow overwriting referenceId
+    if (data.purchasePrice !== undefined) data.purchasePrice = data.purchasePrice ? parseFloat(data.purchasePrice) : null;
+    if (data.salePrice !== undefined) data.salePrice = data.salePrice ? parseFloat(data.salePrice) : null;
+    if (data.expense !== undefined) data.expense = data.expense ? parseFloat(data.expense) : null;
+    if (data.boxQuantity !== undefined) data.boxQuantity = parseInt(data.boxQuantity) || 0;
+
     const order = await prisma.order.update({
       where: { id },
-      data: req.body
+      data,
+      include: { contact: true }
     });
     res.json(order);
   } catch (error) {

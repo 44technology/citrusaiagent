@@ -19,7 +19,9 @@ const parseDateUTC = (dateStr) => {
 
 const SHIPMENT_INCLUDE = {
   contact: { select: { id: true, name: true, company: true } },
-  events: { orderBy: { eventDate: 'asc' } }
+  order: { select: { id: true, referenceId: true, product: true, variety: true } },
+  events: { orderBy: { eventDate: 'asc' } },
+  expenses: { orderBy: { createdAt: 'asc' } }
 };
 
 // ─── Shipments ────────────────────────────────────────────────
@@ -75,13 +77,13 @@ export const createShipment = async (req, res) => {
       reeferTempSet, reeferTempActual, humidity, ventilation, co2Level
     } = req.body;
 
-    if (!label || !destination || !contactId) {
-      return res.status(400).json({ error: 'Label, destination, and contactId are required' });
+    if (!label || !contactId) {
+      return res.status(400).json({ error: 'Label and contactId are required' });
     }
 
     const shipment = await prisma.shipment.create({
       data: {
-        label, origin: origin || null, destination,
+        label, origin: origin || null, destination: destination || portOfDischarge || 'TBD',
         vesselName: vesselName || null, containerNumber: containerNumber || null,
         bolNumber: bolNumber || null,
         vesselEta: parseDateUTC(vesselEta),
@@ -91,6 +93,7 @@ export const createShipment = async (req, res) => {
         status: status || 'Pending',
         notes: notes || null,
         contactId,
+        orderId: req.body.orderId || null,
         // Port
         portOfLoading: portOfLoading || null,
         portOfDischarge: portOfDischarge || null,
