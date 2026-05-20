@@ -14,7 +14,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
     vesselEta: '', vesselDeparture: '', vesselArrival: '',
     shippingLine: '', status: 'Pending', notes: '',
     // Ports
-    portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: 'Port of Algeciras',
+    portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
     // Container & cargo
     containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
     // Reefer
@@ -89,7 +89,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
         vesselName: '', containerNumber: '', bolNumber: '',
         vesselEta: '', vesselDeparture: '', vesselArrival: '',
         shippingLine: '', status: 'Pending', notes: '',
-        portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: 'Port of Algeciras',
+        portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
         containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
         reeferTempSet: '', humidity: '', ventilation: '',
         customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
@@ -348,8 +348,8 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
                   value={form.portOfLoading} onChange={e => handleChange('portOfLoading', e.target.value)} />
               </div>
               <div>
-                <label className="shipment-label">Transshipment Port</label>
-                <input type="text" className="ui-input" placeholder="e.g. Port of Algeciras"
+                <label className="shipment-label">Transshipment Port <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.75em' }}>(optional)</span></label>
+                <input type="text" className="ui-input" placeholder="e.g. Port of Algeciras (optional)"
                   value={form.transshipmentPort} onChange={e => handleChange('transshipmentPort', e.target.value)} />
               </div>
               <div>
