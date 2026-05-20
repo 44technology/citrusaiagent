@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package, Calculator } from 'lucide-react';
 import { ordersApi, contactsApi, accountingApi } from '../services/api';
 import OrderModal from '../components/OrderModal';
+import ProfitCalculator from '../components/ProfitCalculator';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -10,6 +11,7 @@ const OrdersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCalc, setShowCalc] = useState(false);
 
   const currentUser = (() => {
     try {
@@ -93,12 +95,15 @@ const OrdersPage = () => {
     setIsModalOpen(true);
   };
 
-  const filteredOrders = orders.filter(o => 
-    o.referenceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.shipper.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.contact?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders.filter(o => {
+    const q = searchTerm.toLowerCase();
+    return (
+      (o.referenceId || '').toLowerCase().includes(q) ||
+      (o.grower || o.shipper || '').toLowerCase().includes(q) ||
+      (o.product || '').toLowerCase().includes(q) ||
+      (o.contact?.name || '').toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="orders-page animate-fade-in" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
@@ -110,9 +115,19 @@ const OrdersPage = () => {
           </h1>
           <p className="text-muted mt-2">Manage customer orders, box quantities, and shipping details.</p>
         </div>
-        <button className="btn btn-primary" onClick={openAddModal}>
-          <Plus size={20} /> New Order
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className={`btn ${showCalc ? 'btn-primary' : 'btn-glass'}`}
+            onClick={() => setShowCalc(p => !p)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            title="Profit Calculator"
+          >
+            <Calculator size={18} /> P&L Calc
+          </button>
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <Plus size={20} /> New Order
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -255,7 +270,9 @@ const OrdersPage = () => {
         </table>
       </div>
 
-      <OrderModal 
+      {showCalc && <ProfitCalculator onClose={() => setShowCalc(false)} />}
+
+      <OrderModal
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onAdd={handleAddOrder}
