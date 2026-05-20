@@ -149,25 +149,30 @@ const ShipmentsListPage = () => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel
+  // Export to Excel — same column format as the import template
   const handleExport = () => {
     const rows = filtered.map(s => ({
-      'BOL #':          s.bolNumber || '',
-      'Container #':    s.containerNumber || '',
+      'BOL N':          s.bolNumber || '',
+      'Container N':    s.containerNumber || '',
       'Status':         s.status || '',
       'Type':           s.containerType || '',
-      'Grower':         s.order?.grower || '',
-      'Client':         s.contact?.name || '',
-      'Variety':        s.order?.variety || '',
-      'Vessel':         s.vesselName || '',
+      'Grower':         s.grower || s.order?.grower || '',
+      'Client':         s.contact?.name || s.contact?.company || '',
+      'Vessel Name':    s.vesselName || '',
       'Shipping Co.':   s.shippingLine || '',
       'ETD':            s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-      'W (DEP)':        getWeek(s.vesselDeparture),
-      'POL':            s.portOfLoading || '',
+      'W (Dep)':        getWeek(s.vesselDeparture),
+      'POL':            s.portOfLoading || s.origin || '',
       'ETA':            s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-      'W (ARR)':        getWeek(s.vesselEta),
-      'POD':            s.portOfDischarge || '',
-      'Destination':    s.destination || '',
+      'W (Arr)':        getWeek(s.vesselEta),
+      'POD':            s.portOfDischarge || s.destination || '',
+      'Arrival Date':   s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
+      'Variety':        s.variety || s.order?.variety || '',
+      'Boxes':          s.numberOfBoxes || '',
+      'Pallets':        s.pallets || '',
+      'Pack':           s.packType || '',
+      'Sizes/Specs':    s.notes || '',
+      'Temp Rec. Ref':  s.reeferTempSet || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 18 }));
@@ -325,14 +330,14 @@ const ShipmentsListPage = () => {
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
                   <td style={{ padding: '10px 12px' }}><StatusBadge status={s.status} /></td>
                   <td style={{ padding: '10px 12px' }}><TypeBadge type={s.containerType} /></td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.order?.grower || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>
                     {s.contact?.company && s.contact.company !== 'N/A' && (
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.contact.company}</div>
                     )}
                   </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.order?.variety || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
