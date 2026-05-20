@@ -98,7 +98,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
 
-        if (raw.length < 2) { setError('Excel dosyası boş görünüyor.'); return; }
+        if (raw.length < 2) { setError('Excel file appears to be empty.'); return; }
 
         const headers = raw[0].map(h => (h || '').toString().trim());
         const dataRows = raw.slice(1).filter(r => r.some(c => c !== undefined && c !== ''));
@@ -121,7 +121,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
         setRows(mapped);
         setStep('preview');
       } catch (err) {
-        setError('Excel okunamadı: ' + err.message);
+        setError('Could not read Excel file: ' + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -199,7 +199,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
               fontSize: 13, color: 'var(--text-muted)'
             }}>
               <div style={{ fontWeight: 600, color: 'var(--orange-primary)', marginBottom: 8 }}>
-                📋 Beklenen Excel Kolonları:
+                📋 Expected Excel Columns:
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
                 {Object.keys(COL_MAP).map(col => (
@@ -226,9 +226,9 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
             >
               <Upload size={40} style={{ color: 'var(--orange-primary)', marginBottom: 12 }} />
               <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4 }}>
-                Excel dosyasını buraya sürükle veya tıkla
+                Drag & drop your Excel file here or click to browse
               </p>
-              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>.xlsx veya .xls dosyası</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>.xlsx or .xls files supported</p>
               <input
                 ref={fileRef} type="file" accept=".xlsx,.xls"
                 style={{ display: 'none' }}
@@ -244,9 +244,9 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
 
             <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button className="btn btn-glass" onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Download size={16} /> Template İndir
+                <Download size={16} /> Download Template
               </button>
-              <button className="btn btn-glass" onClick={onClose}>İptal</button>
+              <button className="btn btn-glass" onClick={onClose}>Cancel</button>
             </div>
           </div>
         )}
@@ -256,10 +256,10 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
           <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <p style={{ color: 'var(--text-muted)' }}>
-                <span style={{ color: 'var(--orange-primary)', fontWeight: 700 }}>{rows.length}</span> satır bulundu — <strong>{fileName}</strong>
+                <span style={{ color: 'var(--orange-primary)', fontWeight: 700 }}>{rows.length}</span> rows found — <strong>{fileName}</strong>
               </p>
               <button className="btn btn-glass" onClick={() => setStep('upload')} style={{ fontSize: 13 }}>
-                Değiştir
+                Change File
               </button>
             </div>
 
@@ -307,9 +307,9 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
             )}
 
             <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button className="btn btn-glass" onClick={onClose}>İptal</button>
+              <button className="btn btn-glass" onClick={onClose}>Cancel</button>
               <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
-                {importing ? 'İçe Aktarılıyor...' : `${rows.length} Shipment'ı İçe Aktar`}
+                {importing ? 'Importing...' : `Import ${rows.length} Shipments`}
               </button>
             </div>
           </div>
@@ -319,17 +319,17 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
         {step === 'result' && result && (
           <div style={{ padding: 32, textAlign: 'center' }}>
             <CheckCircle2 size={56} style={{ color: '#22c55e', marginBottom: 16 }} />
-            <h3 style={{ color: 'var(--text-primary)', fontSize: 22, marginBottom: 8 }}>Import Tamamlandı!</h3>
+            <h3 style={{ color: 'var(--text-primary)', fontSize: 22, marginBottom: 8 }}>Import Complete!</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>
-              <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 18 }}>{result.created}</span> shipment başarıyla eklendi.
+              <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 18 }}>{result.created}</span> shipments imported successfully.
               {result.failed?.length > 0 && (
-                <span style={{ color: '#f59e0b', fontWeight: 600 }}> {result.failed.length} satır atlandı.</span>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}> {result.failed.length} rows skipped.</span>
               )}
             </p>
 
             {result.failed?.length > 0 && (
               <div style={{ textAlign: 'left', background: 'var(--bg-secondary)', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-                <p style={{ color: '#f59e0b', fontWeight: 600, marginBottom: 8 }}>Atlanan Satırlar:</p>
+                <p style={{ color: '#f59e0b', fontWeight: 600, marginBottom: 8 }}>Skipped Rows:</p>
                 {result.failed.map((f, i) => (
                   <p key={i} style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 4 }}>
                     • <strong>{f.row}</strong>: {f.reason}
@@ -338,7 +338,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
               </div>
             )}
 
-            <button className="btn btn-primary" onClick={onClose}>Kapat</button>
+            <button className="btn btn-primary" onClick={onClose}>Close</button>
           </div>
         )}
       </div>

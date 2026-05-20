@@ -211,12 +211,15 @@ export const importShipments = async (req, res) => {
       const key = (clientName || 'Unknown').toLowerCase().trim();
       if (contactMap[key]) return contactMap[key];
 
-      // Create a new contact on the fly
+      // Create a new contact on the fly (phone required by schema)
       const created = await prisma.contact.create({
         data: {
-          name: clientName || 'Unknown',
-          type: 'Customer',
-          status: 'Active',
+          name:    clientName || 'Unknown',
+          phone:   'N/A',
+          email:   'N/A',
+          company: clientName || 'Unknown',
+          type:    'Customer',
+          status:  'Active',
         }
       });
       contactMap[key] = created.id;

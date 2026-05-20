@@ -93,7 +93,7 @@ const ShipmentsListPage = () => {
       setCustomers(c.filter(x => x.type?.toLowerCase() === 'customer'));
     } catch (e) {
       console.error('loadData error:', e);
-      setLoadError(e.message || 'Veriler yüklenemedi');
+      setLoadError(e.message || 'Failed to load data');
     }
     finally { setLoading(false); }
   };
@@ -294,9 +294,9 @@ const ShipmentsListPage = () => {
           background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
           color: '#f87171', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10
         }}>
-          ⚠️ Veriler yüklenirken hata oluştu: <strong>{loadError}</strong>
+          ⚠️ Error loading data: <strong>{loadError}</strong>
           <button className="btn btn-glass" onClick={loadData} style={{ marginLeft: 'auto', fontSize: '0.78rem' }}>
-            Tekrar Dene
+            Retry
           </button>
         </div>
       )}
@@ -308,10 +308,10 @@ const ShipmentsListPage = () => {
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
             <List size={40} style={{ opacity: 0.2, marginBottom: 12 }} />
-            <p>{shipments.length > 0 ? 'Filtrelerle eşleşen shipment bulunamadı.' : 'Henüz shipment yok.'}</p>
+            <p>{shipments.length > 0 ? 'No shipments match your filters.' : 'No shipments yet.'}</p>
             {shipments.length > 0 && hasFilters && (
               <button className="btn btn-glass" onClick={resetFilters} style={{ marginTop: 12, fontSize: '0.8rem' }}>
-                Filtreleri Temizle
+                Clear Filters
               </button>
             )}
           </div>
