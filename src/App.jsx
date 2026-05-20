@@ -11,6 +11,7 @@ import OrdersPage from './pages/OrdersPage';
 import AccountingPage from './pages/AccountingPage';
 import SettingsPage from './pages/SettingsPage';
 import DocumentsPage from './pages/DocumentsPage';
+import GrowersPage from './pages/GrowersPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -82,6 +83,7 @@ function App() {
             {activeTab === 'orders' && <OrdersPage />}
             {activeTab === 'accounting' && <AccountingPage />}
             {activeTab === 'documents' && <DocumentsPage />}
+            {activeTab === 'growers' && <GrowersPage />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <SettingsPage />}
           </div>
