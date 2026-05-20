@@ -61,7 +61,7 @@ const PHASE_LABELS = {
 };
 
 const CONTAINER_TYPES = ['40RF', '40HC-RF', '20RF', '40DRY', '40HC-DRY', '20DRY'];
-const STATUS_OPTIONS  = ['Pending', 'Departed', 'In Transit', 'Arrived'];
+const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Delivered'];
 
 const isReefer = (type) => type && type.includes('RF');
 
@@ -88,14 +88,6 @@ const Sel = ({ opts, ...props }) => (
 // ─── Reefer Panel ─────────────────────────────────────────────────────────────
 
 const ReeferPanel = ({ s, editing, ed, set }) => {
-  const fields = [
-    { k: 'reeferTempSet',    label: 'Set Temp',    unit: '°C',     icon: Thermometer, color: '#38bdf8', hint: '6.0' },
-    { k: 'reeferTempActual', label: 'Actual Temp', unit: '°C',     icon: Thermometer, color: '#f87171', hint: '5.8' },
-    { k: 'humidity',         label: 'Humidity',    unit: '%',      icon: Droplets,    color: '#a78bfa', hint: '85'  },
-    { k: 'ventilation',      label: 'Ventilation', unit: ' cbm/h', icon: Wind,        color: '#22c55e', hint: '25'  },
-    { k: 'co2Level',         label: 'CO₂',         unit: '%',      icon: Wind,        color: '#fbbf24', hint: '0.5' },
-  ];
-
   const diff = s.reeferTempActual != null && s.reeferTempSet != null
     ? +(s.reeferTempActual - s.reeferTempSet).toFixed(1) : null;
   const tempOk = diff !== null && Math.abs(diff) <= 1.5;
@@ -104,7 +96,7 @@ const ReeferPanel = ({ s, editing, ed, set }) => {
     <div className="glass-panel" style={{ padding: 14, borderLeft: '3px solid #38bdf8' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Snowflake size={14} style={{ color: '#38bdf8' }} />
-        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Reefer Settings</span>
+        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Reefer Temperature</span>
         {diff !== null && (
           <span style={{
             marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: 10,
@@ -116,31 +108,29 @@ const ReeferPanel = ({ s, editing, ed, set }) => {
         )}
       </div>
       {editing ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {fields.map(f => (
-            <div key={f.k}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>{f.label} ({f.unit.trim()})</div>
-              <Inp type="number" step="0.1" placeholder={f.hint} value={ed[f.k] ?? ''} onChange={e => set(f.k, e.target.value)} />
-            </div>
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, maxWidth: 320 }}>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>Set Temp (°C)</div>
+            <Inp type="number" step="0.1" placeholder="e.g. 6.0" value={ed.reeferTempSet ?? ''} onChange={e => set('reeferTempSet', e.target.value)} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>Actual Temp (°C)</div>
+            <Inp type="number" step="0.1" placeholder="e.g. 5.8" value={ed.reeferTempActual ?? ''} onChange={e => set('reeferTempActual', e.target.value)} />
+          </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-          {fields.map(f => {
-            const Icon = f.icon;
-            const val  = s[f.k];
-            return (
-              <div key={f.k} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 10px 8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                  <Icon size={10} style={{ color: f.color }} />
-                  <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</span>
-                </div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: f.color }}>
-                  {val != null ? `${val}${f.unit}` : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>—</span>}
-                </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          {[
+            { label: 'Set Temp', val: s.reeferTempSet,    unit: '°C', color: '#38bdf8' },
+            { label: 'Actual',   val: s.reeferTempActual, unit: '°C', color: '#f87171' },
+          ].map(f => (
+            <div key={f.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 16px' }}>
+              <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{f.label}</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: f.color }}>
+                {f.val != null ? `${f.val}${f.unit}` : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>—</span>}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -749,8 +739,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
             {!isEditing && (
               <span style={{
                 padding: '3px 12px', borderRadius: 20, fontSize: '0.74rem', fontWeight: 600, flexShrink: 0,
-                background: shipment.status === 'Arrived' ? 'rgba(34,197,94,0.15)' : shipment.status === 'In Transit' ? 'rgba(56,189,248,0.15)' : shipment.status === 'Departed' ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.07)',
-                color: shipment.status === 'Arrived' ? '#22c55e' : shipment.status === 'In Transit' ? '#38bdf8' : shipment.status === 'Departed' ? '#fbbf24' : 'var(--text-muted)',
+                background: shipment.status === 'Delivered' ? 'rgba(34,197,94,0.2)' : shipment.status === 'Arrived' ? 'rgba(16,185,129,0.15)' : shipment.status === 'Customs' ? 'rgba(249,115,22,0.15)' : shipment.status === 'In Transit' ? 'rgba(6,182,212,0.15)' : shipment.status === 'Transshipment' ? 'rgba(139,92,246,0.15)' : shipment.status === 'Departed' ? 'rgba(59,130,246,0.15)' : shipment.status === 'Loading' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.07)',
+                color: shipment.status === 'Delivered' ? '#22c55e' : shipment.status === 'Arrived' ? '#10b981' : shipment.status === 'Customs' ? '#f97316' : shipment.status === 'In Transit' ? '#06b6d4' : shipment.status === 'Transshipment' ? '#8b5cf6' : shipment.status === 'Departed' ? '#3b82f6' : shipment.status === 'Loading' ? '#f59e0b' : 'var(--text-muted)',
               }}>{shipment.status}</span>
             )}
             {canEdit && (isEditing ? (

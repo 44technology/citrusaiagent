@@ -19,13 +19,15 @@ const getWeek = (dateStr) => {
 };
 
 const STATUS_COLORS = {
-  'Pending':    { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
-  'Active':     { bg: 'rgba(56,189,248,0.15)',  color: '#38bdf8' },
-  'Departed':   { bg: 'rgba(251,191,36,0.15)',  color: '#fbbf24' },
-  'In Transit': { bg: 'rgba(56,189,248,0.15)',  color: '#38bdf8' },
-  'Arrived':    { bg: 'rgba(34,197,94,0.15)',   color: '#22c55e' },
-  'Delivered':  { bg: 'rgba(34,197,94,0.15)',   color: '#22c55e' },
-  'On Hold':    { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
+  'Pending':       { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
+  'Loading':       { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
+  'Departed':      { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
+  'Transshipment': { bg: 'rgba(139,92,246,0.15)',  color: '#8b5cf6' },
+  'In Transit':    { bg: 'rgba(6,182,212,0.15)',   color: '#06b6d4' },
+  'Arrived':       { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
+  'Customs':       { bg: 'rgba(249,115,22,0.15)',  color: '#f97316' },
+  'Delivered':     { bg: 'rgba(34,197,94,0.2)',    color: '#22c55e' },
+  'On Hold':       { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
 };
 
 const StatusBadge = ({ status }) => {

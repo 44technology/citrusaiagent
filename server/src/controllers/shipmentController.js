@@ -271,15 +271,19 @@ export const createEvent = async (req, res) => {
 
     // Auto-update shipment status based on event type
     const statusMap = {
+      'Pre-Cooling':                  'Loading',
+      'Stuffing':                     'Loading',
+      'Gate In':                      'Loading',
+      'Customs Cleared':              'Loading',
       'Vessel Departed':              'Departed',
-      'Transshipment Arrived':        'In Transit',
+      'Transshipment Arrived':        'Transshipment',
       'Transshipment Departed':       'In Transit',
       'Vessel Arrived':               'Arrived',
-      'USDA / APHIS Inspection':      'Arrived',
-      'CBP Customs Clearance':        'Arrived',
-      'FDA Hold':                     'Arrived',
-      'Released - Out for Delivery':  'Arrived',
-      'Delivered to Warehouse':       'Arrived',
+      'USDA / APHIS Inspection':      'Customs',
+      'CBP Customs Clearance':        'Customs',
+      'FDA Hold':                     'Customs',
+      'Released - Out for Delivery':  'Delivered',
+      'Delivered to Warehouse':       'Delivered',
     };
     if (statusMap[eventType]) {
       await prisma.shipment.update({
