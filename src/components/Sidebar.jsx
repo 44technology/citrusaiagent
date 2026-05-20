@@ -1,11 +1,12 @@
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen, Leaf } from 'lucide-react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen, Leaf, List, Navigation } from 'lucide-react';
 import '../index.css';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
   const menuItems = [
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'customers', label: 'Customers', icon: CheckCircle2 },
-    { id: 'shipments', label: 'Shipments', icon: Truck },
+    { id: 'shipments', label: 'Shipments', icon: List },
+    { id: 'tracking', label: 'Tracking', icon: Navigation },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'growers', label: 'Growers', icon: Leaf },
     { id: 'accounting', label: 'Accounting', icon: Receipt },

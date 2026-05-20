@@ -12,6 +12,7 @@ import AccountingPage from './pages/AccountingPage';
 import SettingsPage from './pages/SettingsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
+import ShipmentsListPage from './pages/ShipmentsListPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -79,7 +80,8 @@ function App() {
           <Header />
           <div className="scroll-content">
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} />}
-            {activeTab === 'shipments' && <ShipmentTracking />}
+            {activeTab === 'shipments' && <ShipmentsListPage />}
+            {activeTab === 'tracking' && <ShipmentTracking />}
             {activeTab === 'orders' && <OrdersPage />}
             {activeTab === 'accounting' && <AccountingPage />}
             {activeTab === 'documents' && <DocumentsPage />}
