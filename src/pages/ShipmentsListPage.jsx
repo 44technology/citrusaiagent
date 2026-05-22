@@ -125,7 +125,8 @@ const ShipmentsListPage = () => {
         (s.contact?.name || '').toLowerCase().includes(q) ||
         (s.order?.variety || '').toLowerCase().includes(q) ||
         (s.portOfLoading || '').toLowerCase().includes(q) ||
-        (s.portOfDischarge || '').toLowerCase().includes(q);
+        (s.portOfDischarge || '').toLowerCase().includes(q) ||
+        (s.order?.referenceId ? String(s.order.referenceId) : '').includes(q);
 
       if (!matchSearch) return false;
       if (filters.status    && s.status !== filters.status) return false;
@@ -319,6 +320,7 @@ const ShipmentsListPage = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-secondary)' }}>
               <tr>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>REF ID</th>
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />
@@ -350,6 +352,9 @@ const ShipmentsListPage = () => {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.06)'}
                   onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
                 >
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--orange-primary)', fontWeight: 700 }}>
+                    {s.order?.referenceId ? `#${s.order.referenceId}` : '—'}
+                  </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
                   <td style={{ padding: '10px 12px' }}><StatusBadge status={s.status} /></td>

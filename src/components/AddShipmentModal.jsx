@@ -46,6 +46,23 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
   const handleChange = (field, value) => {
     if (field === 'label') setIsLabelManual(true);
+
+    // Auto-fill fields from selected order
+    if (field === 'orderId') {
+      const order = orders.find(o => o.id === value);
+      if (order) {
+        setForm(prev => ({
+          ...prev,
+          orderId: value,
+          contactId: order.contactId || prev.contactId,
+          cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
+          numberOfBoxes:    order.boxQuantity ? String(order.boxQuantity) : prev.numberOfBoxes,
+          grower:           order.grower || prev.grower,
+        }));
+        return;
+      }
+    }
+
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
@@ -107,7 +124,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content shipment-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px' }}>
+      <div className="modal-content shipment-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div className="flex-center gap-2">
             <Ship size={20} className="text-orange" />
@@ -320,22 +337,10 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
             {form.containerType && form.containerType.includes('RF') && (
               <div style={{ background: 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 10, padding: '12px 14px' }}>
                 <label className="shipment-label" style={{ color: '#38bdf8', marginBottom: 10 }}>❄ Reefer Settings</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label className="shipment-label">Set Temp (°C)</label>
-                    <input type="number" step="0.1" className="ui-input" placeholder="e.g. 6.0"
-                      value={form.reeferTempSet} onChange={e => handleChange('reeferTempSet', e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="shipment-label">Humidity (%)</label>
-                    <input type="number" step="1" className="ui-input" placeholder="e.g. 85"
-                      value={form.humidity} onChange={e => handleChange('humidity', e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="shipment-label">Ventilation (cbm/h)</label>
-                    <input type="number" step="1" className="ui-input" placeholder="e.g. 25"
-                      value={form.ventilation} onChange={e => handleChange('ventilation', e.target.value)} />
-                  </div>
+                <div style={{ maxWidth: 180 }}>
+                  <label className="shipment-label">Set Temp (°C)</label>
+                  <input type="number" step="0.1" className="ui-input" placeholder="e.g. 6.0"
+                    value={form.reeferTempSet} onChange={e => handleChange('reeferTempSet', e.target.value)} />
                 </div>
               </div>
             )}
