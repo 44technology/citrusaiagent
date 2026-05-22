@@ -5,7 +5,7 @@ import {
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown
 } from 'lucide-react';
-import { shipmentsApi } from '../services/api';
+import { shipmentsApi, ordersApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 
 // ─── Journey config (Morocco → USA) ──────────────────────────────────────────
@@ -649,12 +649,17 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
   const [events, setEvents]       = useState([]);
   const [loading, setLoading]     = useState(false);
   const [showAdd, setShowAdd]     = useState(false);
+  const [orders, setOrders]       = useState([]);
 
   const currentUser = (() => {
     try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
   })();
   const canEdit    = ['admin', 'operation', 'super admin'].includes(currentUser.role);
   const isSuperAdmin = currentUser.role === 'super admin';
+
+  useEffect(() => {
+    ordersApi.getAll().then(setOrders).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!shipment) return;
@@ -676,6 +681,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
+      orderId: shipment.orderId || '',
     });
     setEvents(shipment.events || []);
     setIsEditing(false);
@@ -732,8 +738,13 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
               <div style={{ fontWeight: 700, fontSize: '0.94rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {shipment.label}
               </div>
-              <div style={{ fontSize: '0.71rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.71rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {[shipment.containerNumber, shipment.containerType, shipment.shippingLine].filter(Boolean).join(' · ')}
+                {shipment.order?.referenceId && (
+                  <span style={{ background: 'rgba(255,107,0,0.15)', color: 'var(--orange-primary)', borderRadius: 6, padding: '1px 8px', fontWeight: 700, fontSize: '0.72rem' }}>
+                    REF #{shipment.order.referenceId}
+                  </span>
+                )}
               </div>
             </div>
             {!isEditing && (
@@ -765,6 +776,25 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
             {/* Container & Cargo */}
             <div className="glass-panel" style={{ padding: 14 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Container & Cargo</div>
+
+              {/* Linked Order */}
+              <div style={{ marginBottom: 12 }}>
+                <Field
+                  label="Linked Order (Ref ID)"
+                  value={shipment.order ? `#${shipment.order.referenceId} — ${[shipment.order.product, shipment.order.variety].filter(Boolean).join(' ')} (${shipment.order.boxQuantity || 0} boxes)` : null}
+                  editing={isEditing}
+                >
+                  <select className="ui-input" value={ed.orderId} onChange={e => set('orderId', e.target.value)} style={{ padding: '6px 10px', fontSize: '0.84rem' }}>
+                    <option value="">— No order link —</option>
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>
+                        #{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 <Field label="Container #" value={shipment.containerNumber} editing={isEditing}>
                   <Inp placeholder="e.g. CMAU1234567" value={ed.containerNumber} onChange={e => set('containerNumber', e.target.value)} />

@@ -640,7 +640,8 @@ h3 { font-size: 1.1rem; font-weight: 500; }
   appearance: auto;
 }
 
-.ui-select option {
+.ui-select option,
+.ui-input option {
   background: #1a1a2e;
   color: white;
 }
