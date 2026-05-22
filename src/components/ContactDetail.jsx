@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag, Users, Trash2, Check } from 'lucide-react';
 import CampaignSettings from './CampaignSettings';
 import AddShipmentModal from './AddShipmentModal';
 import OrderModal from './OrderModal';
@@ -19,13 +19,57 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [isShipmentModalOpen, setIsShipmentModalOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [persons, setPersons] = useState([]);
+  const [showAddPerson, setShowAddPerson] = useState(false);
+  const [personForm, setPersonForm] = useState({ name: '', title: '', email: '', phone: '' });
+  const [editingPersonId, setEditingPersonId] = useState(null);
+  const [editPersonForm, setEditPersonForm] = useState({});
+  const [savingPerson, setSavingPerson] = useState(false);
 
   useEffect(() => {
     setLocalContact(contact);
     loadNotes();
     loadShipments();
     loadOrders();
+    loadPersons();
   }, [contact]);
+
+  const loadPersons = async () => {
+    try {
+      const data = await contactsApi.getPersons(contact.id);
+      setPersons(data);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleAddPerson = async () => {
+    if (!personForm.name.trim()) return;
+    setSavingPerson(true);
+    try {
+      const p = await contactsApi.createPerson(contact.id, personForm);
+      setPersons(prev => [...prev, p]);
+      setPersonForm({ name: '', title: '', email: '', phone: '' });
+      setShowAddPerson(false);
+    } catch (e) { console.error(e); }
+    finally { setSavingPerson(false); }
+  };
+
+  const handleSavePerson = async (pid) => {
+    setSavingPerson(true);
+    try {
+      const updated = await contactsApi.updatePerson(contact.id, pid, editPersonForm);
+      setPersons(prev => prev.map(p => p.id === pid ? updated : p));
+      setEditingPersonId(null);
+    } catch (e) { console.error(e); }
+    finally { setSavingPerson(false); }
+  };
+
+  const handleDeletePerson = async (pid) => {
+    if (!window.confirm('Delete this contact?')) return;
+    try {
+      await contactsApi.deletePerson(contact.id, pid);
+      setPersons(prev => prev.filter(p => p.id !== pid));
+    } catch (e) { console.error(e); }
+  };
 
   const loadOrders = async () => {
     try {
@@ -430,6 +474,100 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                   </div>
                 ) )
               )}
+            </div>
+          </div>
+
+          {/* People / Contacts within this company */}
+          <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Users size={18} className="text-orange" /> People
+              </h3>
+              <button className="btn btn-text-action" style={{ color: 'var(--orange-primary)' }} onClick={() => setShowAddPerson(p => !p)}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+
+            {/* Add person form */}
+            {showAddPerson && (
+              <div style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(255,107,0,0.06)', borderRadius: 10, border: '1px dashed rgba(255,107,0,0.3)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', marginBottom: 10 }}>NEW CONTACT</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                  {[['name','Name *'],['title','Title / Role'],['email','Email'],['phone','Phone']].map(([k,l]) => (
+                    <input key={k} className="ui-input" placeholder={l}
+                      value={personForm[k]} onChange={e => setPersonForm(p => ({ ...p, [k]: e.target.value }))}
+                      style={{ padding: '8px 12px', fontSize: '0.82rem' }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={handleAddPerson} disabled={savingPerson || !personForm.name.trim()}
+                    style={{ padding: '6px 16px', borderRadius: 8, background: 'var(--orange-primary)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>
+                    {savingPerson ? 'Adding...' : 'Add'}
+                  </button>
+                  <button onClick={() => setShowAddPerson(false)}
+                    style={{ padding: '6px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', fontSize: '0.82rem' }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {persons.length === 0 && !showAddPerson ? (
+                <div className="text-muted" style={{ textAlign: 'center', margin: 'auto', fontSize: '0.85rem' }}>
+                  No contacts yet. Click + Add to add people from this company.
+                </div>
+              ) : persons.map(p => (
+                <div key={p.id} style={{ borderRadius: 8, border: '1px solid var(--border-glass)', overflow: 'hidden' }}>
+                  {editingPersonId === p.id ? (
+                    <div style={{ padding: '10px 12px', background: 'rgba(255,107,0,0.06)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                        {[['name','Name *'],['title','Title'],['email','Email'],['phone','Phone']].map(([k,l]) => (
+                          <input key={k} className="ui-input" placeholder={l}
+                            value={editPersonForm[k] || ''} onChange={e => setEditPersonForm(f => ({ ...f, [k]: e.target.value }))}
+                            style={{ padding: '7px 10px', fontSize: '0.8rem' }} />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => handleSavePerson(p.id)} disabled={savingPerson}
+                          style={{ padding: '5px 14px', borderRadius: 6, background: 'var(--orange-primary)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
+                          {savingPerson ? '...' : 'Save'}
+                        </button>
+                        <button onClick={() => setEditingPersonId(null)}
+                          style={{ padding: '5px 14px', borderRadius: 6, background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', fontSize: '0.78rem' }}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,107,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--orange-primary)', fontSize: '0.85rem', flexShrink: 0 }}>
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                          {p.name}
+                          {p.title && <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.78rem', marginLeft: 6 }}>· {p.title}</span>}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
+                          {p.email && <span style={{ color: '#38bdf8' }}>✉ {p.email}</span>}
+                          {p.phone && <span>📞 {p.phone}</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                        <button onClick={() => { setEditingPersonId(p.id); setEditPersonForm({ name: p.name, title: p.title || '', email: p.email || '', phone: p.phone || '' }); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+                          <Pencil size={13} />
+                        </button>
+                        <button onClick={() => handleDeletePerson(p.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
