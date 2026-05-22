@@ -165,3 +165,11 @@ export const documentsApi = {
   },
   delete: (id) => request(`/documents/${id}`, { method: 'DELETE' }),
 };
+
+// ─── Email ────────────────────────────────────────────
+export const emailApi = {
+  getSettings:  ()     => request('/email/settings'),
+  saveSettings: (data) => request('/email/settings', { method: 'POST', body: JSON.stringify(data) }),
+  send:         (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
+  test:         ()     => request('/email/test',     { method: 'POST' }),
+};

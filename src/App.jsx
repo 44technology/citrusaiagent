@@ -13,6 +13,7 @@ import SettingsPage from './pages/SettingsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
 import ShipmentsListPage from './pages/ShipmentsListPage';
+import OutreachPage from './pages/OutreachPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -86,6 +87,7 @@ function App() {
             {activeTab === 'accounting' && <AccountingPage />}
             {activeTab === 'documents' && <DocumentsPage />}
             {activeTab === 'growers' && <GrowersPage />}
+            {activeTab === 'outreach' && <OutreachPage />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <SettingsPage />}
           </div>
