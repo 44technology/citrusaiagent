@@ -37,6 +37,10 @@ async function request(url, options = {}) {
 // ─── Contacts ────────────────────────────────────────
 export const contactsApi = {
   getAll: (type) => request(`/contacts${type ? `?type=${type}` : ''}`),
+  getPersons: (id)           => request(`/contacts/${id}/persons`),
+  createPerson: (id, data)   => request(`/contacts/${id}/persons`, { method: 'POST', body: JSON.stringify(data) }),
+  updatePerson: (id, pid, data) => request(`/contacts/${id}/persons/${pid}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePerson: (id, pid)    => request(`/contacts/${id}/persons/${pid}`, { method: 'DELETE' }),
   getOne: (id) => request(`/contacts/${id}`),
   create: (data) => request('/contacts', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -168,8 +172,9 @@ export const documentsApi = {
 
 // ─── Email ────────────────────────────────────────────
 export const emailApi = {
-  getSettings:  ()     => request('/email/settings'),
-  saveSettings: (data) => request('/email/settings', { method: 'POST', body: JSON.stringify(data) }),
-  send:         (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
-  test:         ()     => request('/email/test',     { method: 'POST' }),
+  getSettings:    ()     => request('/email/settings'),
+  saveSettings:   (data) => request('/email/settings', { method: 'POST', body: JSON.stringify(data) }),
+  send:           (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
+  sendToPersons:  (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
+  test:           ()     => request('/email/test',     { method: 'POST' }),
 };

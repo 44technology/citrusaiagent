@@ -75,22 +75,29 @@ const createTransporter = (settings) => {
 
 export const sendEmails = async (req, res) => {
   try {
-    const { contactIds, subject, body, replyTo } = req.body;
+    // Support both contactIds (old) and persons (new direct person list)
+    const { contactIds, persons: directPersons, subject, body, replyTo } = req.body;
 
-    if (!contactIds?.length) return res.status(400).json({ error: 'No recipients selected' });
-    if (!subject)            return res.status(400).json({ error: 'Subject is required' });
-    if (!body)               return res.status(400).json({ error: 'Body is required' });
+    if (!subject) return res.status(400).json({ error: 'Subject is required' });
+    if (!body)    return res.status(400).json({ error: 'Body is required' });
 
     const settings = await getSettings();
-
     if (!settings.email_user || !settings.email_pass) {
       return res.status(400).json({ error: 'Email not configured. Please set up SMTP in Settings.' });
     }
 
-    const contacts = await prisma.contact.findMany({
-      where: { id: { in: contactIds } },
-      select: { id: true, name: true, email: true, company: true }
-    });
+    // Build recipient list — either direct persons or look up contacts by id
+    let contacts;
+    if (directPersons?.length) {
+      contacts = directPersons; // { id, name, email, company? }
+    } else if (contactIds?.length) {
+      contacts = await prisma.contact.findMany({
+        where: { id: { in: contactIds } },
+        select: { id: true, name: true, email: true, company: true }
+      });
+    } else {
+      return res.status(400).json({ error: 'No recipients selected' });
+    }
 
     const transporter = createTransporter(settings);
     const fromName    = settings.email_from_name || settings.email_user;

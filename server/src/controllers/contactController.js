@@ -163,3 +163,44 @@ export const getNotes = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch notes' });
   }
 };
+
+// ─── Contact Persons ──────────────────────────────────────────
+
+export const getPersons = async (req, res) => {
+  try {
+    const persons = await prisma.contactPerson.findMany({
+      where: { contactId: req.params.id },
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json(persons);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const createPerson = async (req, res) => {
+  try {
+    const { name, title, email, phone } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    const person = await prisma.contactPerson.create({
+      data: { contactId: req.params.id, name, title, email, phone }
+    });
+    res.status(201).json(person);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const updatePerson = async (req, res) => {
+  try {
+    const { name, title, email, phone } = req.body;
+    const person = await prisma.contactPerson.update({
+      where: { id: req.params.pid },
+      data: { name, title, email, phone }
+    });
+    res.json(person);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const deletePerson = async (req, res) => {
+  try {
+    await prisma.contactPerson.delete({ where: { id: req.params.pid } });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};

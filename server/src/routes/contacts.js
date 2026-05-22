@@ -1,14 +1,8 @@
 import { Router } from 'express';
 import {
-  getContacts,
-  getContact,
-  createContact,
-  createContactsBulk,
-  updateContact,
-  deleteContact,
-  promoteContact,
-  addNote,
-  getNotes
+  getContacts, getContact, createContact, createContactsBulk,
+  updateContact, deleteContact, promoteContact, addNote, getNotes,
+  getPersons, createPerson, updatePerson, deletePerson
 } from '../controllers/contactController.js';
 
 const router = Router();
@@ -22,5 +16,11 @@ router.delete('/:id', deleteContact);
 router.post('/:id/promote', promoteContact);
 router.post('/:id/notes', addNote);
 router.get('/:id/notes', getNotes);
+
+// Contact persons (people within a company)
+router.get('/:id/persons',          getPersons);
+router.post('/:id/persons',         createPerson);
+router.patch('/:id/persons/:pid',   updatePerson);
+router.delete('/:id/persons/:pid',  deletePerson);
 
 export default router;

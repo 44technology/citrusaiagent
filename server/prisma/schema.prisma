@@ -27,6 +27,18 @@ model Contact {
   users      User[]
   purchaseOrders PurchaseOrder[]
   documents      Document[]
+  persons    ContactPerson[]
+}
+
+model ContactPerson {
+  id        String   @id @default(uuid())
+  contactId String
+  name      String
+  title     String?
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 model Note {
