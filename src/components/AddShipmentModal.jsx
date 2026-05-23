@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3 } from 'lucide-react';
+import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3, Search, CheckCircle2, AlertCircle } from 'lucide-react';
 import { contactsApi, ordersApi } from '../services/api';
 import { formatFullDateUTC } from '../utils/dateUtils';
 
@@ -8,6 +8,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
   const [loading, setLoading] = useState(false);
   const [isLabelManual, setIsLabelManual] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [refIdInput, setRefIdInput] = useState('');
+  const [matchedOrder, setMatchedOrder] = useState(null);
+  const [showManualSelect, setShowManualSelect] = useState(false);
   const [form, setForm] = useState({
     contactId: '', orderId: '', label: '', origin: 'Morocco', destination: '',
     vesselName: '', containerNumber: '', bolNumber: '',
@@ -44,23 +47,44 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
 
   if (!isOpen) return null;
 
+  // Auto-fill from a matched/selected order
+  const applyOrder = (order) => {
+    setMatchedOrder(order);
+    setRefIdInput(String(order.referenceId || ''));
+    setForm(prev => ({
+      ...prev,
+      orderId: order.id,
+      contactId: order.contactId || prev.contactId,
+      cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
+      numberOfBoxes: order.boxQuantity ? String(order.boxQuantity) : prev.numberOfBoxes,
+      grower: order.grower || prev.grower,
+    }));
+  };
+
+  const clearOrder = () => {
+    setMatchedOrder(null);
+    setRefIdInput('');
+    setForm(prev => ({ ...prev, orderId: '' }));
+  };
+
+  // REF ID search — auto-match by referenceId
+  const handleRefIdSearch = (val) => {
+    setRefIdInput(val);
+    setMatchedOrder(null);
+    setForm(prev => ({ ...prev, orderId: '' }));
+    if (!val.trim()) return;
+    const found = orders.find(o => String(o.referenceId).toLowerCase() === val.trim().toLowerCase());
+    if (found) applyOrder(found);
+  };
+
   const handleChange = (field, value) => {
     if (field === 'label') setIsLabelManual(true);
 
-    // Auto-fill fields from selected order
+    // Manual order dropdown selection
     if (field === 'orderId') {
+      if (!value) { clearOrder(); return; }
       const order = orders.find(o => o.id === value);
-      if (order) {
-        setForm(prev => ({
-          ...prev,
-          orderId: value,
-          contactId: order.contactId || prev.contactId,
-          cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
-          numberOfBoxes:    order.boxQuantity ? String(order.boxQuantity) : prev.numberOfBoxes,
-          grower:           order.grower || prev.grower,
-        }));
-        return;
-      }
+      if (order) { applyOrder(order); return; }
     }
 
     setForm(prev => ({ ...prev, [field]: value }));
@@ -113,6 +137,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
       });
       setIsLabelManual(false);
       setIsNewCustomer(false);
+      setRefIdInput('');
+      setMatchedOrder(null);
+      setShowManualSelect(false);
       onClose();
     } catch (err) {
       console.error('Failed to process shipment creation:', err);
@@ -138,22 +165,70 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ gap: '14px', paddingBottom: '20px' }}>
 
-            {/* Order Link */}
+            {/* REF ID / Order Link */}
             <div>
-              <label className="shipment-label">Link to Order (Ref ID)</label>
-              <select
-                className="ui-input"
-                value={form.orderId}
-                onChange={(e) => handleChange('orderId', e.target.value)}
-                style={{ width: '100%' }}
+              <label className="shipment-label">Reference ID (Order Link)</label>
+
+              {/* REF ID auto-search */}
+              <div style={{ position: 'relative', marginBottom: 6 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  className="ui-input"
+                  placeholder="Type REF ID to auto-link order…"
+                  value={refIdInput}
+                  onChange={e => handleRefIdSearch(e.target.value)}
+                  style={{ paddingLeft: 34, width: '100%' }}
+                />
+                {matchedOrder && (
+                  <button type="button" onClick={clearOrder}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', lineHeight: 1 }}>
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Match result */}
+              {refIdInput && matchedOrder && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, fontSize: '0.78rem', color: '#22c55e', marginBottom: 6 }}>
+                  <CheckCircle2 size={13} />
+                  <strong>#{matchedOrder.referenceId}</strong>
+                  <span style={{ color: 'var(--text-muted)' }}>—</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{[matchedOrder.product, matchedOrder.variety].filter(Boolean).join(' ')} · {matchedOrder.boxQuantity} boxes</span>
+                  <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>Auto-filled ✓</span>
+                </div>
+              )}
+              {refIdInput && !matchedOrder && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: '0.78rem', color: '#f87171', marginBottom: 6 }}>
+                  <AlertCircle size={13} />
+                  No order found for REF "{refIdInput}" — select manually below or leave blank
+                </div>
+              )}
+
+              {/* Manual override toggle */}
+              <button
+                type="button"
+                onClick={() => setShowManualSelect(v => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.72rem', padding: '2px 0', textDecoration: 'underline' }}
               >
-                <option value="">— No order link —</option>
-                {orders.map(o => (
-                  <option key={o.id} value={o.id}>
-                    #{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)
-                  </option>
-                ))}
-              </select>
+                {showManualSelect ? '▲ Hide manual select' : '▼ Or select order from list'}
+              </button>
+
+              {showManualSelect && (
+                <select
+                  className="ui-input"
+                  value={form.orderId}
+                  onChange={e => handleChange('orderId', e.target.value)}
+                  style={{ width: '100%', marginTop: 6 }}
+                >
+                  <option value="">— No order link —</option>
+                  {orders.map(o => (
+                    <option key={o.id} value={o.id}>
+                      #{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Shipment Label (Manual/Auto) */}
