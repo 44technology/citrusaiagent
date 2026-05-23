@@ -55,7 +55,7 @@ const LoginPage = ({ onLogin }) => {
           <div className="login-logo-icon">
             🍊
           </div>
-          <h1 className="login-title">Citrus AI Caller</h1>
+          <h1 className="login-title">Citrus World</h1>
           <p className="text-sec" style={{ fontSize: '0.9rem' }}>Sign in to access your dashboard</p>
         </div>
 

@@ -20,7 +20,7 @@ const CampaignSettings = ({ onStart, isRunning, contactCount, isDetailView }) =>
           Campaign Setup
         </h3>
         <p className="text-sec mt-2" style={{ fontSize: '0.9rem' }}>
-          Configure your Citrus AI Agent's behavior before starting the calls.
+          Configure your Citrus World Agent's behavior before starting the calls.
         </p>
       </div>
 

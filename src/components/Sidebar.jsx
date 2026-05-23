@@ -32,7 +32,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
           <Citrus className="logo-icon" size={28} />
         </div>
         <div className="logo-text">
-          <span className="text-gradient">Citrus</span>AI
+          <span className="text-gradient">Citrus</span> World
         </div>
       </div>
 
