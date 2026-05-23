@@ -128,6 +128,7 @@ export const accountingApi = {
 // ─── Users ───────────────────────────────────────────
 export const usersApi = {
   getAll: () => request('/users'),
+  create: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateRole: (id, role) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };

@@ -1,5 +1,33 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
+
+export const ROLES = [
+  'super admin', 'admin', 'sales', 'logistics', 'operation', 'grower support', 'accounting', 'customer'
+];
+
+export const createUser = async (req, res) => {
+  const { role: callerRole } = req.user || {};
+  if (callerRole !== 'super admin') return res.status(403).json({ error: 'Only Super Admin can create users' });
+
+  const { username, password, role, contactId } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password are required' });
+  if (!ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) return res.status(400).json({ error: 'Username already exists' });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { username, password: hashed, role, contactId: contactId || null },
+      select: { id: true, username: true, role: true, createdAt: true }
+    });
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 export const getAllUsers = async (req, res) => {
   try {
