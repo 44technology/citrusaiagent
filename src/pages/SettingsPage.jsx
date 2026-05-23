@@ -54,7 +54,7 @@ const RoleBadge = ({ role }) => {
 
 // ─── Create User Form ─────────────────────────────────────────────────────────
 
-const CreateUserForm = ({ onCreated }) => {
+const CreateUserForm = ({ onCreated, callerIsSuperAdmin }) => {
   const [form, setForm] = useState({ username: '', password: '', role: 'operation' });
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -119,7 +119,7 @@ const CreateUserForm = ({ onCreated }) => {
         <div>
           <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>ROLE</label>
           <select className="ui-input" value={form.role} onChange={e => set('role', e.target.value)}>
-            {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            {ROLES.filter(r => callerIsSuperAdmin || r.value !== 'super admin').map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </div>
 
@@ -206,6 +206,7 @@ const SettingsPage = () => {
     try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
   })();
   const isSuperAdmin = currentUser?.role === 'super admin';
+  const isAdmin = ['super admin', 'admin'].includes(currentUser?.role);
 
   useEffect(() => {
     loadUsers();
@@ -237,12 +238,12 @@ const SettingsPage = () => {
     } catch (err) { alert('Failed: ' + err.message); }
   };
 
-  if (!isSuperAdmin) {
+  if (!isAdmin) {
     return (
       <div className="flex-center" style={{ height: '80vh', flexDirection: 'column', gap: 16 }}>
         <Shield size={64} style={{ opacity: 0.15, color: 'var(--text-muted)' }} />
         <h2 style={{ color: 'var(--text-muted)' }}>Access Restricted</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Only Super Admins can access settings.</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Only Admin and Super Admin can access settings.</p>
       </div>
     );
   }
@@ -298,7 +299,7 @@ const SettingsPage = () => {
               <Key size={17} style={{ color: 'var(--orange-primary)' }} />
               <h3 style={{ margin: 0, fontSize: '1rem' }}>Create New User</h3>
             </div>
-            <CreateUserForm onCreated={u => setUsers(p => [u, ...p])} />
+            <CreateUserForm onCreated={u => setUsers(p => [u, ...p])} callerIsSuperAdmin={isSuperAdmin} />
           </div>
 
           {/* User List */}
@@ -339,30 +340,38 @@ const SettingsPage = () => {
                           : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.82rem' }}>System / Admin</span>}
                       </td>
                       <td>
-                        <select
-                          className="ui-input"
-                          value={u.role}
-                          onChange={e => handleUpdateRole(u.id, e.target.value)}
-                          disabled={saving === u.id || u.id === currentUser.id}
-                          style={{ padding: '4px 8px', fontSize: '0.82rem', width: 150 }}
-                        >
-                          {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                        </select>
-                        {saving === u.id && <Loader2 size={13} className="animate-spin" style={{ marginLeft: 6, color: 'var(--orange-primary)', verticalAlign: 'middle' }} />}
+                        {isSuperAdmin ? (
+                          <>
+                            <select
+                              className="ui-input"
+                              value={u.role}
+                              onChange={e => handleUpdateRole(u.id, e.target.value)}
+                              disabled={saving === u.id || u.id === currentUser.id}
+                              style={{ padding: '4px 8px', fontSize: '0.82rem', width: 150 }}
+                            >
+                              {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            </select>
+                            {saving === u.id && <Loader2 size={13} className="animate-spin" style={{ marginLeft: 6, color: 'var(--orange-primary)', verticalAlign: 'middle' }} />}
+                          </>
+                        ) : (
+                          <RoleBadge role={u.role} />
+                        )}
                       </td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                         {new Date(u.createdAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          className="btn btn-glass"
-                          onClick={() => handleDeleteUser(u.id)}
-                          disabled={u.id === currentUser.id}
-                          style={{ padding: '5px 7px', color: u.id === currentUser.id ? 'var(--text-muted)' : '#ef4444' }}
-                          title="Delete User"
-                        >
-                          <UserX size={16} />
-                        </button>
+                        {isSuperAdmin && (
+                          <button
+                            className="btn btn-glass"
+                            onClick={() => handleDeleteUser(u.id)}
+                            disabled={u.id === currentUser.id}
+                            style={{ padding: '5px 7px', color: u.id === currentUser.id ? 'var(--text-muted)' : '#ef4444' }}
+                            title="Delete User"
+                          >
+                            <UserX size={16} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

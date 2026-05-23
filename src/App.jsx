@@ -4,7 +4,6 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
-import SignupPage from './components/SignupPage';
 import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 import OrdersPage from './pages/OrdersPage';
@@ -100,8 +99,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignupPage />} />
-        <Route 
+<Route 
           path="/dashboard" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
