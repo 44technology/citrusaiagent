@@ -66,8 +66,9 @@ const createTransporter = (settings) => {
     host,
     port,
     secure: port === 465,
+    requireTLS: port === 587,
     auth: { user, pass },
-    tls: { ciphers: 'SSLv3', rejectUnauthorized: false }
+    tls: { rejectUnauthorized: false, minVersion: 'TLSv1.2' }
   });
 };
 
