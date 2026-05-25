@@ -9,17 +9,31 @@ datasource db {
 
 model Contact {
   id         String     @id @default(uuid())
-  name       String
-  phone      String
+  name       String     // Company name (primary identifier)
+  phone      String     @default("N/A")
   email      String     @default("N/A")
   company    String     @default("N/A")
   department String     @default("N/A")
   language   String     @default("English")
   credit     Float      @default(0)
-  status     String     @default("Pending")
+  status     String     @default("Active")
   type       String     @default("Lead")
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  // ── Company details ──────────────────────────────
+  city           String?
+  state          String?
+  zip            String?
+  country        String?
+  address        String?
+  companyPhone   String?
+  website        String?
+
+  // ── Business profile (stored as JSON arrays) ──────
+  classifications Json?   // ["Importer","Receiver","Jobber"]
+  commodities     Json?   // ["Citrus","Clementine Mandarin"]
+
   calls      CallLog[]
   notes      Note[]
   shipments  Shipment[]
@@ -31,14 +45,17 @@ model Contact {
 }
 
 model ContactPerson {
-  id        String   @id @default(uuid())
-  contactId String
-  name      String
-  title     String?
-  email     String?
-  phone     String?
-  createdAt DateTime @default(now())
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  contactId   String
+  name        String   // full name (auto: firstName + lastName)
+  firstName   String?
+  lastName    String?
+  title       String?
+  email       String?
+  phone       String?
+  linkedinUrl String?
+  createdAt   DateTime @default(now())
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 model Note {

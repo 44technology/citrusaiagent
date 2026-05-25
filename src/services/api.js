@@ -46,6 +46,7 @@ export const contactsApi = {
   update: (id, data) => request(`/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/contacts/${id}`, { method: 'DELETE' }),
   promote: (id) => request(`/contacts/${id}/promote`, { method: 'POST' }),
+  importLeads: (rows, type) => request('/contacts/import-leads', { method: 'POST', body: JSON.stringify({ rows, type }) }),
   addNote: (id, text, isSystem = false) =>
     request(`/contacts/${id}/notes`, { method: 'POST', body: JSON.stringify({ text, isSystem }) }),
   getNotes: (id) => request(`/contacts/${id}/notes`),

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getContacts, getContact, createContact, createContactsBulk,
   updateContact, deleteContact, promoteContact, addNote, getNotes,
-  getPersons, createPerson, updatePerson, deletePerson
+  getPersons, createPerson, updatePerson, deletePerson, importLeads
 } from '../controllers/contactController.js';
 
 const router = Router();
@@ -10,6 +10,7 @@ const router = Router();
 router.get('/', getContacts);
 router.post('/', createContact);
 router.post('/bulk', createContactsBulk);
+router.post('/import-leads', importLeads);
 router.get('/:id', getContact);
 router.patch('/:id', updateContact);
 router.delete('/:id', deleteContact);
