@@ -170,6 +170,24 @@ export const deleteShipment = async (req, res) => {
 
 // ─── Bulk Import ─────────────────────────────────────────────
 
+// Map raw Excel status strings → system status
+const IMPORT_STATUS_MAP = {
+  'SHIPPED ON BOARD':   'In Transit',
+  'GATE IN EMPTY':      'Loading',
+  'GATE IN':            'Loading',
+  'LOADED ON BOARD':    'Departed',
+  'VESSEL DEPARTED':    'Departed',
+  'ARRIVED':            'Arrived',
+  'DELIVERED':          'Delivered',
+  'PENDING':            'Pending',
+};
+
+const resolveStatus = (raw) => {
+  if (!raw) return 'Pending';
+  const upper = String(raw).toUpperCase().trim();
+  return IMPORT_STATUS_MAP[upper] || 'Pending';
+};
+
 export const importShipments = async (req, res) => {
   try {
     const { rows } = req.body;
@@ -177,54 +195,78 @@ export const importShipments = async (req, res) => {
       return res.status(400).json({ error: 'No rows provided' });
     }
 
-    // Build customer lookup map: name/company → id
+    // Build contact lookup: name/company → id (case-insensitive)
     const contacts = await prisma.contact.findMany({
       select: { id: true, name: true, company: true }
     });
     const contactMap = {};
     contacts.forEach(c => {
-      if (c.name) contactMap[c.name.toLowerCase().trim()] = c.id;
+      if (c.name)    contactMap[c.name.toLowerCase().trim()]    = c.id;
       if (c.company) contactMap[c.company.toLowerCase().trim()] = c.id;
     });
+
+    // Find or create a default "Unknown" contact for rows with no match
+    let fallbackContactId = null;
+    const getOrCreateFallback = async (clientName) => {
+      const key = (clientName || 'Unknown').toLowerCase().trim();
+      if (contactMap[key]) return contactMap[key];
+
+      // Create a new contact on the fly (phone required by schema)
+      const created = await prisma.contact.create({
+        data: {
+          name:    clientName || 'Unknown',
+          phone:   'N/A',
+          email:   'N/A',
+          company: clientName || 'Unknown',
+          type:    'Customer',
+          status:  'Active',
+        }
+      });
+      contactMap[key] = created.id;
+      return created.id;
+    };
 
     const results = { created: 0, failed: [], skipped: 0 };
 
     for (const row of rows) {
       try {
-        // Resolve customer
-        const customerKey = (row.customerName || '').toLowerCase().trim();
-        const contactId = contactMap[customerKey] || null;
+        const containerNumber = row.containerNumber || null;
+        const bolNumber       = row.bolNumber || null;
 
-        if (!row.label) { results.failed.push({ row: row.label || '?', reason: 'Missing Shipment Number' }); continue; }
+        // Use BOL N or Container N as label (required field)
+        const label = bolNumber || containerNumber || row.vesselName || 'Import';
+
+        const contactId = await getOrCreateFallback(row.customerName);
 
         await prisma.shipment.create({
           data: {
-            label: String(row.label),
-            status: row.status || 'Pending',
-            vesselName: row.vesselName || null,
-            containerNumber: row.containerNumber || null,
+            label,
+            bolNumber,
+            containerNumber,
+            status:          resolveStatus(row.statusRaw),
+            containerType:   row.containerType || null,
+            grower:          row.grower || null,
+            vesselName:      row.vesselName || null,
+            shippingLine:    row.shippingLine || null,
             vesselDeparture: parseDateUTC(row.etd),
-            vesselEta: parseDateUTC(row.eta),
-            portOfLoading: row.portOfLoading || null,
-            transshipmentPort: row.transshipmentPort || null,
+            vesselEta:       parseDateUTC(row.eta),
+            vesselArrival:   parseDateUTC(row.arrivalDate),
+            portOfLoading:   row.portOfLoading || null,
             portOfDischarge: row.portOfDischarge || null,
-            destination: row.portOfDischarge || row.destination || 'TBD',
-            origin: row.portOfLoading || null,
-            containerType: row.containerType || null,
-            sealNumber: row.sealNumber || null,
-            cargoDescription: row.cargoDescription || null,
-            grossWeight: row.grossWeight ? parseFloat(row.grossWeight) : null,
-            numberOfBoxes: row.numberOfBoxes ? parseInt(row.numberOfBoxes) : null,
-            reeferTempSet: row.reeferTempSet !== undefined && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
-            humidity: row.humidity !== undefined && row.humidity !== '' ? parseFloat(row.humidity) : null,
-            ventilation: row.ventilation !== undefined && row.ventilation !== '' ? parseFloat(row.ventilation) : null,
-            co2Level: row.co2Level !== undefined && row.co2Level !== '' ? parseFloat(row.co2Level) : null,
-            contactId: contactId || null,
+            origin:          row.portOfLoading || null,
+            destination:     row.portOfDischarge || 'TBD',
+            variety:         row.variety || null,
+            numberOfBoxes:   row.numberOfBoxes ? parseInt(row.numberOfBoxes) : null,
+            pallets:         row.pallets ? parseInt(row.pallets) : null,
+            packType:        row.packType || null,
+            notes:           row.notes || null,
+            reeferTempSet:   row.reeferTempSet && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
+            contactId,
           }
         });
         results.created++;
       } catch (err) {
-        results.failed.push({ row: row.label || '?', reason: err.message });
+        results.failed.push({ row: row.containerNumber || row.bolNumber || '?', reason: err.message });
       }
     }
 

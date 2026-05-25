@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -55,7 +54,7 @@ const LoginPage = ({ onLogin }) => {
           <div className="login-logo-icon">
             🍊
           </div>
-          <h1 className="login-title">Citrus AI Caller</h1>
+          <h1 className="login-title">Citrus World</h1>
           <p className="text-sec" style={{ fontSize: '0.9rem' }}>Sign in to access your dashboard</p>
         </div>
 
@@ -130,12 +129,9 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', textAlign: 'center' }}>
-          <p className="text-muted" style={{ fontSize: '0.9rem' }}>
-            Don't have an account? <Link to="/signup" className="btn btn-text-action">Sign Up</Link>
-          </p>
-          <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '16px' }}>
-            Citrus Co. Internal Platform
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <div className="text-muted" style={{ fontSize: '0.8rem' }}>
+            Citrus World — Internal Platform
           </div>
         </div>
       </div>

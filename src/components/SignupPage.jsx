@@ -63,7 +63,7 @@ const SignupPage = () => {
             🍊
           </div>
           <h1 className="login-title">Create Account</h1>
-          <p className="text-sec" style={{ fontSize: '0.9rem' }}>Join Citrus AI Caller platform</p>
+          <p className="text-sec" style={{ fontSize: '0.9rem' }}>Join Citrus World platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

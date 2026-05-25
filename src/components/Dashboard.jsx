@@ -3,12 +3,15 @@ import ExcelUpload from './ExcelUpload';
 import CustomerTable from './CustomerTable';
 import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
+import ImportLeadsModal from './ImportLeadsModal';
 import { contactsApi } from '../services/api';
+import { FileSpreadsheet } from 'lucide-react';
 import '../index.css';
 
 const Dashboard = ({ activeTab }) => {
   const [contacts, setContacts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -133,10 +136,11 @@ const Dashboard = ({ activeTab }) => {
             </div>
           ) : filteredContacts.length === 0 && activeTab === 'leads' ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
-              <ExcelUpload onDataParsed={handleDataParsed} />
-              <div className="flex-center gap-2">
-                <span className="text-muted">or</span>
-                <button className="btn btn-glass" onClick={() => setIsModalOpen(true)}>Add Contact Manually</button>
+              <div className="flex-center gap-3">
+                <button className="btn btn-primary" onClick={() => setShowImport(true)}>
+                  <FileSpreadsheet size={15} /> Import from Excel
+                </button>
+                <button className="btn btn-glass" onClick={() => setIsModalOpen(true)}>+ Add Manually</button>
               </div>
             </div>
           ) : filteredContacts.length === 0 && activeTab === 'customers' ? (
@@ -151,14 +155,22 @@ const Dashboard = ({ activeTab }) => {
                   {filteredContacts.length} {activeTab === 'leads' ? 'Leads' : 'Customers'}
                 </span>
                 <div className="flex-center gap-2">
-                  <button 
+                  {activeTab === 'leads' && (
+                    <button
+                      className="btn btn-glass"
+                      onClick={() => setShowImport(true)}
+                    >
+                      <FileSpreadsheet size={14} /> Import Excel
+                    </button>
+                  )}
+                  <button
                     className="btn btn-glass"
                     onClick={() => setIsModalOpen(true)}
                   >
                     {activeTab === 'leads' ? '+ Add Lead' : '+ Add Customer'}
                   </button>
                   {isSuperAdmin && (
-                    <button 
+                    <button
                       className="btn btn-glass"
                       onClick={handleClearList}
                     >
@@ -176,11 +188,18 @@ const Dashboard = ({ activeTab }) => {
             </div>
           )}
 
-          <AddContactModal 
-            isOpen={isModalOpen} 
-            onClose={() => setIsModalOpen(false)} 
-            onAdd={handleAddContact} 
+          <AddContactModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onAdd={handleAddContact}
             defaultType={activeTab === 'customers' ? 'Customer' : 'Lead'}
+          />
+
+          <ImportLeadsModal
+            isOpen={showImport}
+            onClose={() => setShowImport(false)}
+            onImported={fetchContacts}
+            importType={activeTab === 'customers' ? 'Customer' : 'Lead'}
           />
 
         </div>

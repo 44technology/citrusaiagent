@@ -40,12 +40,21 @@ export const getContact = async (req, res) => {
 // POST /api/contacts
 export const createContact = async (req, res) => {
   try {
-    const { name, phone, email, company, department, language, credit, type } = req.body;
-    if (!name || !phone) {
-      return res.status(400).json({ error: 'Name and phone are required' });
-    }
+    const {
+      name, phone, email, company, department, language, credit, type, status,
+      city, state, zip, country, address, companyPhone, website,
+      classifications, commodities
+    } = req.body;
+    if (!name) return res.status(400).json({ error: 'Company name is required' });
     const contact = await prisma.contact.create({
-      data: { name, phone, email, company, department, language, credit: credit || 0, type: type || 'Lead' }
+      data: {
+        name, phone: phone || 'N/A', email: email || 'N/A',
+        company: company || name, department, language, credit: credit || 0,
+        type: type || 'Lead', status: status || 'Active',
+        city, state, zip, country, address, companyPhone, website,
+        classifications: classifications || [],
+        commodities: commodities || [],
+      }
     });
     res.status(201).json(contact);
   } catch (error) {
@@ -161,5 +170,146 @@ export const getNotes = async (req, res) => {
   } catch (error) {
     console.error('Error fetching notes:', error);
     res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+};
+
+// ─── Contact Persons ──────────────────────────────────────────
+
+export const getPersons = async (req, res) => {
+  try {
+    const persons = await prisma.contactPerson.findMany({
+      where: { contactId: req.params.id },
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json(persons);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const createPerson = async (req, res) => {
+  try {
+    const { firstName, lastName, name, title, email, phone, linkedinUrl } = req.body;
+    const fullName = name || [firstName, lastName].filter(Boolean).join(' ') || '';
+    if (!fullName) return res.status(400).json({ error: 'Name is required' });
+    const person = await prisma.contactPerson.create({
+      data: { contactId: req.params.id, name: fullName, firstName, lastName, title, email, phone, linkedinUrl }
+    });
+    res.status(201).json(person);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const updatePerson = async (req, res) => {
+  try {
+    const { firstName, lastName, name, title, email, phone, linkedinUrl } = req.body;
+    const fullName = name || [firstName, lastName].filter(Boolean).join(' ') || undefined;
+    const person = await prisma.contactPerson.update({
+      where: { id: req.params.pid },
+      data: { name: fullName, firstName, lastName, title, email, phone, linkedinUrl }
+    });
+    res.json(person);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+export const deletePerson = async (req, res) => {
+  try {
+    await prisma.contactPerson.delete({ where: { id: req.params.pid } });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+};
+
+// POST /api/contacts/import-leads
+// Body: { rows: [{ CompanyName, FirstName, LastName, Title, City, State, ZipCode, Country, CompanyPhone, BusinessPhone, Email, Classifications, Commodities, LinkedInURL, WebSite }] }
+export const importLeads = async (req, res) => {
+  try {
+    const { rows, type = 'Lead' } = req.body;
+    if (!rows?.length) return res.status(400).json({ error: 'No rows provided' });
+
+    // Group by company name
+    const companies = {};
+    for (const row of rows) {
+      const key = (row.CompanyName || 'Unknown').trim();
+      if (!companies[key]) {
+        companies[key] = { info: row, people: [] };
+      }
+      if (row.FirstName || row.LastName || row.Email) {
+        companies[key].people.push(row);
+      }
+    }
+
+    let created = 0, skipped = 0, peopleCreated = 0;
+
+    for (const [companyName, { info, people }] of Object.entries(companies)) {
+      // Check if company already exists
+      const existing = await prisma.contact.findFirst({ where: { name: companyName } });
+      let contactId;
+
+      const parseArr = (val) => {
+        if (!val || val === 'N/A') return [];
+        return String(val).split(',').map(s => s.trim()).filter(Boolean);
+      };
+
+      if (existing) {
+        contactId = existing.id;
+        skipped++;
+      } else {
+        const contact = await prisma.contact.create({
+          data: {
+            name: companyName,
+            company: companyName,
+            phone: info.CompanyPhone || info.BusinessPhone || 'N/A',
+            email: 'N/A',
+            type,
+            status: 'Active',
+            city: info.City || null,
+            state: info.State || null,
+            zip: info['Zip Code'] || info.ZipCode || null,
+            country: info.Country || null,
+            companyPhone: info.CompanyPhone || null,
+            website: info.WebSite || null,
+            classifications: parseArr(info.Classifications),
+            commodities: parseArr(info.Commodities),
+          }
+        });
+        contactId = contact.id;
+        created++;
+      }
+
+      // Add people
+      for (const p of people) {
+        const firstName = p.FirstName || '';
+        const lastName = p.LastName || '';
+        const fullName = [firstName, lastName].filter(Boolean).join(' ');
+        if (!fullName) continue;
+
+        // Skip duplicate person
+        const existingPerson = await prisma.contactPerson.findFirst({
+          where: { contactId, name: fullName }
+        });
+        if (existingPerson) continue;
+
+        await prisma.contactPerson.create({
+          data: {
+            contactId,
+            name: fullName,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            title: p.Title || null,
+            email: p.Email || null,
+            phone: p.BusinessPhone || p.CompanyPhone || null,
+            linkedinUrl: p.LinkedInURL || null,
+          }
+        });
+        peopleCreated++;
+      }
+    }
+
+    res.json({
+      ok: true,
+      companiesCreated: created,
+      companiesSkipped: skipped,
+      peopleCreated,
+    });
+  } catch (err) {
+    console.error('Import leads error:', err);
+    res.status(500).json({ error: err.message });
   }
 };

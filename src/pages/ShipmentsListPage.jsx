@@ -70,6 +70,7 @@ const ShipmentsListPage = () => {
   const [shipments, setShipments]       = useState([]);
   const [customers, setCustomers]       = useState([]);
   const [loading, setLoading]           = useState(true);
+  const [loadError, setLoadError]       = useState('');
   const [selected, setSelected]         = useState(null);
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
@@ -85,11 +86,15 @@ const ShipmentsListPage = () => {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const [s, c] = await Promise.all([shipmentsApi.getAll(), contactsApi.getAll()]);
-      setShipments(s);
+      setShipments(Array.isArray(s) ? s : []);
       setCustomers(c.filter(x => x.type?.toLowerCase() === 'customer'));
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error('loadData error:', e);
+      setLoadError(e.message || 'Failed to load data');
+    }
     finally { setLoading(false); }
   };
 
@@ -102,8 +107,8 @@ const ShipmentsListPage = () => {
   const pods       = uniq(shipments, 'portOfDischarge');
 
   // Grower names from linked orders
-  const growers = [...new Set(shipments.map(s => s.order?.grower || s.grower || null).filter(Boolean))].sort();
-  const varieties = [...new Set(shipments.map(s => s.order?.variety || null).filter(Boolean))].sort();
+  const growers   = [...new Set(shipments.map(s => s.grower || s.order?.grower || null).filter(Boolean))].sort();
+  const varieties = [...new Set(shipments.map(s => s.variety || s.order?.variety || null).filter(Boolean))].sort();
 
   const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
   const resetFilters = () => setFilters({ status: '', grower: '', bol: '', container: '', vessel: '', pol: '', pod: '', variety: '', etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
@@ -120,7 +125,8 @@ const ShipmentsListPage = () => {
         (s.contact?.name || '').toLowerCase().includes(q) ||
         (s.order?.variety || '').toLowerCase().includes(q) ||
         (s.portOfLoading || '').toLowerCase().includes(q) ||
-        (s.portOfDischarge || '').toLowerCase().includes(q);
+        (s.portOfDischarge || '').toLowerCase().includes(q) ||
+        (s.order?.referenceId ? String(s.order.referenceId) : '').includes(q);
 
       if (!matchSearch) return false;
       if (filters.status    && s.status !== filters.status) return false;
@@ -129,8 +135,8 @@ const ShipmentsListPage = () => {
       if (filters.vessel    && !(s.vesselName || '').toLowerCase().includes(filters.vessel.toLowerCase())) return false;
       if (filters.pol       && s.portOfLoading !== filters.pol) return false;
       if (filters.pod       && s.portOfDischarge !== filters.pod) return false;
-      if (filters.variety   && s.order?.variety !== filters.variety) return false;
-      if (filters.grower    && (s.order?.grower || '') !== filters.grower) return false;
+      if (filters.variety   && (s.variety || s.order?.variety) !== filters.variety) return false;
+      if (filters.grower    && (s.grower || s.order?.grower || '') !== filters.grower) return false;
       if (filters.etdFrom   && s.vesselDeparture && s.vesselDeparture < filters.etdFrom) return false;
       if (filters.etdTo     && s.vesselDeparture && s.vesselDeparture > filters.etdTo) return false;
       if (filters.etaFrom   && s.vesselEta && s.vesselEta < filters.etaFrom) return false;
@@ -149,25 +155,30 @@ const ShipmentsListPage = () => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel
+  // Export to Excel — same column format as the import template
   const handleExport = () => {
     const rows = filtered.map(s => ({
-      'BOL #':          s.bolNumber || '',
-      'Container #':    s.containerNumber || '',
+      'BOL N':          s.bolNumber || '',
+      'Container N':    s.containerNumber || '',
       'Status':         s.status || '',
       'Type':           s.containerType || '',
-      'Grower':         s.order?.grower || '',
-      'Client':         s.contact?.name || '',
-      'Variety':        s.order?.variety || '',
-      'Vessel':         s.vesselName || '',
+      'Grower':         s.grower || s.order?.grower || '',
+      'Client':         s.contact?.name || s.contact?.company || '',
+      'Vessel Name':    s.vesselName || '',
       'Shipping Co.':   s.shippingLine || '',
       'ETD':            s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-      'W (DEP)':        getWeek(s.vesselDeparture),
-      'POL':            s.portOfLoading || '',
+      'W (Dep)':        getWeek(s.vesselDeparture),
+      'POL':            s.portOfLoading || s.origin || '',
       'ETA':            s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-      'W (ARR)':        getWeek(s.vesselEta),
-      'POD':            s.portOfDischarge || '',
-      'Destination':    s.destination || '',
+      'W (Arr)':        getWeek(s.vesselEta),
+      'POD':            s.portOfDischarge || s.destination || '',
+      'Arrival Date':   s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
+      'Variety':        s.variety || s.order?.variety || '',
+      'Boxes':          s.numberOfBoxes || '',
+      'Pallets':        s.pallets || '',
+      'Pack':           s.packType || '',
+      'Sizes/Specs':    s.notes || '',
+      'Temp Rec. Ref':  s.reeferTempSet || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 18 }));
@@ -277,6 +288,20 @@ const ShipmentsListPage = () => {
         </div>
       )}
 
+      {/* Error banner */}
+      {loadError && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 10, marginBottom: 8,
+          background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
+          color: '#f87171', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 10
+        }}>
+          ⚠️ Error loading data: <strong>{loadError}</strong>
+          <button className="btn btn-glass" onClick={loadData} style={{ marginLeft: 'auto', fontSize: '0.78rem' }}>
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '1px solid var(--border-glass-light)' }}>
         {loading ? (
@@ -284,12 +309,18 @@ const ShipmentsListPage = () => {
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
             <List size={40} style={{ opacity: 0.2, marginBottom: 12 }} />
-            <p>No shipments found.</p>
+            <p>{shipments.length > 0 ? 'No shipments match your filters.' : 'No shipments yet.'}</p>
+            {shipments.length > 0 && hasFilters && (
+              <button className="btn btn-glass" onClick={resetFilters} style={{ marginTop: 12, fontSize: '0.8rem' }}>
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-secondary)' }}>
               <tr>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>REF ID</th>
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />
@@ -321,18 +352,21 @@ const ShipmentsListPage = () => {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.06)'}
                   onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
                 >
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--orange-primary)', fontWeight: 700 }}>
+                    {s.order?.referenceId ? `#${s.order.referenceId}` : '—'}
+                  </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
                   <td style={{ padding: '10px 12px' }}><StatusBadge status={s.status} /></td>
                   <td style={{ padding: '10px 12px' }}><TypeBadge type={s.containerType} /></td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.order?.grower || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>
                     {s.contact?.company && s.contact.company !== 'N/A' && (
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.contact.company}</div>
                     )}
                   </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.order?.variety || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
@@ -359,8 +393,8 @@ const ShipmentsListPage = () => {
       )}
       {showImport && (
         <ImportShipmentsModal
-          onClose={() => setShowImport(false)}
-          onImported={() => { loadData(); setShowImport(false); }}
+          onClose={() => { setShowImport(false); loadData(); }}
+          onImported={() => { loadData(); }}
         />
       )}
       {selected && (

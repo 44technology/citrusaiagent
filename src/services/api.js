@@ -37,11 +37,16 @@ async function request(url, options = {}) {
 // ─── Contacts ────────────────────────────────────────
 export const contactsApi = {
   getAll: (type) => request(`/contacts${type ? `?type=${type}` : ''}`),
+  getPersons: (id)           => request(`/contacts/${id}/persons`),
+  createPerson: (id, data)   => request(`/contacts/${id}/persons`, { method: 'POST', body: JSON.stringify(data) }),
+  updatePerson: (id, pid, data) => request(`/contacts/${id}/persons/${pid}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePerson: (id, pid)    => request(`/contacts/${id}/persons/${pid}`, { method: 'DELETE' }),
   getOne: (id) => request(`/contacts/${id}`),
   create: (data) => request('/contacts', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/contacts/${id}`, { method: 'DELETE' }),
   promote: (id) => request(`/contacts/${id}/promote`, { method: 'POST' }),
+  importLeads: (rows, type) => request('/contacts/import-leads', { method: 'POST', body: JSON.stringify({ rows, type }) }),
   addNote: (id, text, isSystem = false) =>
     request(`/contacts/${id}/notes`, { method: 'POST', body: JSON.stringify({ text, isSystem }) }),
   getNotes: (id) => request(`/contacts/${id}/notes`),
@@ -124,6 +129,7 @@ export const accountingApi = {
 // ─── Users ───────────────────────────────────────────
 export const usersApi = {
   getAll: () => request('/users'),
+  create: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateRole: (id, role) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };
@@ -164,4 +170,13 @@ export const documentsApi = {
     return res.json();
   },
   delete: (id) => request(`/documents/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Email ────────────────────────────────────────────
+export const emailApi = {
+  getSettings:    ()     => request('/email/settings'),
+  saveSettings:   (data) => request('/email/settings', { method: 'POST', body: JSON.stringify(data) }),
+  send:           (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
+  sendToPersons:  (data) => request('/email/send',     { method: 'POST', body: JSON.stringify(data) }),
+  test:           ()     => request('/email/test',     { method: 'POST' }),
 };

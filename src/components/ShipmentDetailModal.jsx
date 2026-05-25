@@ -3,9 +3,10 @@ import {
   X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
-  ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown
+  ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
+  Search
 } from 'lucide-react';
-import { shipmentsApi } from '../services/api';
+import { shipmentsApi, ordersApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 
 // ─── Journey config (Morocco → USA) ──────────────────────────────────────────
@@ -649,12 +650,19 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
   const [events, setEvents]       = useState([]);
   const [loading, setLoading]     = useState(false);
   const [showAdd, setShowAdd]     = useState(false);
+  const [orders, setOrders]       = useState([]);
+  const [refIdInput, setRefIdInput] = useState('');
+  const [matchedOrder, setMatchedOrder] = useState(null);
 
   const currentUser = (() => {
     try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
   })();
   const canEdit    = ['admin', 'operation', 'super admin'].includes(currentUser.role);
   const isSuperAdmin = currentUser.role === 'super admin';
+
+  useEffect(() => {
+    ordersApi.getAll().then(setOrders).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!shipment) return;
@@ -676,7 +684,10 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
+      orderId: shipment.orderId || '',
     });
+    setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : '');
+    setMatchedOrder(shipment.order || null);
     setEvents(shipment.events || []);
     setIsEditing(false);
   }, [shipment]);
@@ -684,6 +695,18 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
   if (!isOpen || !shipment || !ed) return null;
 
   const set = (k, v) => setEd(p => ({ ...p, [k]: v }));
+
+  const handleRefIdSearch = (val) => {
+    setRefIdInput(val);
+    setMatchedOrder(null);
+    setEd(p => ({ ...p, orderId: '' }));
+    if (!val.trim()) return;
+    const found = orders.find(o => String(o.referenceId).toLowerCase() === val.trim().toLowerCase());
+    if (found) {
+      setMatchedOrder(found);
+      setEd(p => ({ ...p, orderId: found.id }));
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -732,8 +755,13 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
               <div style={{ fontWeight: 700, fontSize: '0.94rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {shipment.label}
               </div>
-              <div style={{ fontSize: '0.71rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.71rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {[shipment.containerNumber, shipment.containerType, shipment.shippingLine].filter(Boolean).join(' · ')}
+                {shipment.order?.referenceId && (
+                  <span style={{ background: 'rgba(255,107,0,0.15)', color: 'var(--orange-primary)', borderRadius: 6, padding: '1px 8px', fontWeight: 700, fontSize: '0.72rem' }}>
+                    REF #{shipment.order.referenceId}
+                  </span>
+                )}
               </div>
             </div>
             {!isEditing && (
@@ -765,6 +793,65 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
             {/* Container & Cargo */}
             <div className="glass-panel" style={{ padding: 14 }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Container & Cargo</div>
+
+              {/* Linked Order — REF ID */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Linked Order (Ref ID)</div>
+                {isEditing ? (
+                  <div>
+                    {/* REF ID search input */}
+                    <div style={{ position: 'relative', marginBottom: 6 }}>
+                      <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                      <input
+                        type="text"
+                        className="ui-input"
+                        placeholder="Type REF ID to auto-link…"
+                        value={refIdInput}
+                        onChange={e => handleRefIdSearch(e.target.value)}
+                        style={{ paddingLeft: 30, padding: '6px 10px 6px 30px', fontSize: '0.84rem', width: '100%' }}
+                      />
+                    </div>
+                    {/* Match feedback */}
+                    {refIdInput && matchedOrder && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 7, fontSize: '0.74rem', color: '#22c55e', marginBottom: 6 }}>
+                        <CheckCircle2 size={12} /> <strong>#{matchedOrder.referenceId}</strong> — {[matchedOrder.product, matchedOrder.variety].filter(Boolean).join(' ')} · {matchedOrder.boxQuantity} boxes
+                      </div>
+                    )}
+                    {refIdInput && !matchedOrder && (
+                      <div style={{ fontSize: '0.74rem', color: '#f87171', marginBottom: 6 }}>No order found — select from list:</div>
+                    )}
+                    {/* Manual dropdown fallback */}
+                    <select className="ui-input" value={ed.orderId}
+                      onChange={e => {
+                        const o = orders.find(x => x.id === e.target.value);
+                        if (o) { setMatchedOrder(o); setRefIdInput(String(o.referenceId)); }
+                        else { setMatchedOrder(null); setRefIdInput(''); }
+                        set('orderId', e.target.value);
+                      }}
+                      style={{ padding: '6px 10px', fontSize: '0.84rem', width: '100%' }}>
+                      <option value="">— No order link —</option>
+                      {orders.map(o => (
+                        <option key={o.id} value={o.id}>#{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.88rem', fontWeight: 500 }}>
+                    {shipment.order
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ background: 'rgba(255,107,0,0.15)', color: 'var(--orange-primary)', borderRadius: 6, padding: '2px 10px', fontWeight: 700, fontSize: '0.82rem', fontFamily: 'monospace' }}>
+                            REF #{shipment.order.referenceId}
+                          </span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                            {[shipment.order.product, shipment.order.variety].filter(Boolean).join(' ')} · {shipment.order.boxQuantity} boxes
+                          </span>
+                        </span>
+                      : <span style={{ color: 'var(--text-muted)' }}>—</span>
+                    }
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 <Field label="Container #" value={shipment.containerNumber} editing={isEditing}>
                   <Inp placeholder="e.g. CMAU1234567" value={ed.containerNumber} onChange={e => set('containerNumber', e.target.value)} />

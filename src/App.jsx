@@ -4,7 +4,6 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
-import SignupPage from './components/SignupPage';
 import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 import OrdersPage from './pages/OrdersPage';
@@ -13,6 +12,7 @@ import SettingsPage from './pages/SettingsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
 import ShipmentsListPage from './pages/ShipmentsListPage';
+import OutreachPage from './pages/OutreachPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -86,6 +86,7 @@ function App() {
             {activeTab === 'accounting' && <AccountingPage />}
             {activeTab === 'documents' && <DocumentsPage />}
             {activeTab === 'growers' && <GrowersPage />}
+            {activeTab === 'outreach' && <OutreachPage />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <SettingsPage />}
           </div>
@@ -98,8 +99,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignupPage />} />
-        <Route 
+<Route 
           path="/dashboard" 
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
