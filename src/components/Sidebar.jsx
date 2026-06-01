@@ -133,15 +133,21 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const color = activeCompany.color;
           return (
             <button
               key={item.id}
               className={`nav-item ${isActive ? 'active' : ''}`}
               onClick={() => { setDropdownOpen(false); setActiveTab(item.id); }}
+              style={isActive ? {
+                background: `${color}18`,
+                borderColor: `${color}30`,
+                color: color,
+              } : {}}
             >
-              <Icon size={20} className={isActive ? 'icon-active' : 'icon-inactive'} />
+              <Icon size={20} style={isActive ? { color } : {}} />
               <span>{item.label}</span>
-              {isActive && <div className="active-indicator" />}
+              {isActive && <div className="active-indicator" style={{ background: color }} />}
             </button>
           );
         })}
