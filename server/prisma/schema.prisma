@@ -50,7 +50,7 @@ model Contact {
   commodities     Json?   // ["Citrus","Clementine Mandarin"]
 
   companyId  String?
-  company    Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant     Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   calls      CallLog[]
   notes      Note[]
@@ -221,7 +221,7 @@ model Order {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   companyId     String?
-  company       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   user          User?    @relation(fields: [userId], references: [id])
   contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -241,7 +241,7 @@ model PurchaseOrder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   order       Order    @relation(fields: [orderId], references: [id])
   supplier    Contact  @relation(fields: [supplierId], references: [id])
@@ -262,7 +262,7 @@ model Invoice {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   companyId     String?
-  company       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   order         Order?    @relation(fields: [orderId], references: [id])
   purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id])
@@ -297,7 +297,7 @@ model Document {
   invoiceId   String?
   uploadedBy  String?
   createdAt   DateTime @default(now())
-  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
