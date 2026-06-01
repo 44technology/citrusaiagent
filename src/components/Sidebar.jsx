@@ -1,28 +1,41 @@
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen, Leaf, List, Navigation, Mail, ArrowLeftRight } from 'lucide-react';
+import { useState } from 'react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown } from 'lucide-react';
 import '../index.css';
 
+const COMPANIES = [
+  { id: 'cmp-sweetfresh-0001', name: 'Sweet Fresh', slug: 'sweet-fresh', color: '#ff6b00' },
+  { id: 'cmp-wft-0001',        name: 'WFT',         slug: 'wft',         color: '#3b82f6' },
+];
+
 const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const menuItems = [
-    { id: 'leads', label: 'Leads', icon: Users },
-    { id: 'customers', label: 'Customers', icon: CheckCircle2 },
-    { id: 'tracking', label: 'Tracking', icon: Navigation },
-    { id: 'orders', label: 'Orders', icon: ShoppingBag },
-    { id: 'growers', label: 'Growers', icon: Leaf },
+    { id: 'leads',      label: 'Leads',      icon: Users },
+    { id: 'customers',  label: 'Customers',  icon: CheckCircle2 },
+    { id: 'tracking',   label: 'Tracking',   icon: Navigation },
+    { id: 'orders',     label: 'Orders',     icon: ShoppingBag },
+    { id: 'growers',    label: 'Growers',    icon: Leaf },
     { id: 'accounting', label: 'Accounting', icon: Receipt },
-    { id: 'outreach', label: 'Outreach', icon: Mail },
-    { id: 'documents', label: 'Documents', icon: FolderOpen },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'outreach',   label: 'Outreach',   icon: Mail },
+    { id: 'documents',  label: 'Documents',  icon: FolderOpen },
+    { id: 'analytics',  label: 'Analytics',  icon: BarChart3 },
+    { id: 'settings',   label: 'Settings',   icon: Settings },
   ];
 
   const username = (() => {
     try {
       const uStr = localStorage.getItem('citrus_user');
       return uStr ? (JSON.parse(uStr).username || uStr) : 'Admin';
-    } catch (e) {
-      return localStorage.getItem('citrus_user') || 'Admin';
-    }
+    } catch { return 'Admin'; }
   })();
+
+  const activeCompany = company || COMPANIES[0];
+
+  const handleSelect = (co) => {
+    setDropdownOpen(false);
+    if (onSwitchCompany) onSwitchCompany(co);
+  };
 
   return (
     <aside className="sidebar glass-panel">
@@ -35,40 +48,75 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
         </div>
       </div>
 
-      {/* Company badge */}
-      {company && (
-        <div style={{
-          margin: '0 12px 8px',
-          padding: '8px 12px',
-          borderRadius: 10,
-          background: `${company.color || '#ff6b00'}15`,
-          border: `1px solid ${company.color || '#ff6b00'}30`,
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
+      {/* Company switcher */}
+      <div style={{ margin: '0 12px 8px', position: 'relative' }}>
+        <button
+          onClick={() => setDropdownOpen(v => !v)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: 10,
+            background: `${activeCompany.color}15`,
+            border: `1px solid ${activeCompany.color}40`,
+            display: 'flex', alignItems: 'center', gap: 8,
+            cursor: 'pointer',
+          }}
+        >
           <div style={{
             width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-            background: `${company.color || '#ff6b00'}25`,
-            border: `1px solid ${company.color || '#ff6b00'}50`,
+            background: `${activeCompany.color}25`,
+            border: `1px solid ${activeCompany.color}60`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.6rem', fontWeight: 800, color: company.color || '#ff6b00',
+            fontSize: '0.6rem', fontWeight: 800, color: activeCompany.color,
             fontFamily: 'monospace',
           }}>
-            {company.name?.slice(0,2).toUpperCase()}
+            {activeCompany.name.slice(0, 2).toUpperCase()}
           </div>
-          <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 600, color: company.color || '#ff6b00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {company.name}
+          <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 700, color: activeCompany.color, textAlign: 'left' }}>
+            {activeCompany.name}
           </span>
-          {onSwitchCompany && (
-            <button
-              onClick={onSwitchCompany}
-              title="Switch company"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--text-muted)', display: 'flex' }}
-            >
-              <ArrowLeftRight size={13} />
-            </button>
-          )}
-        </div>
-      )}
+          <ChevronDown size={13} style={{ color: activeCompany.color, transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'none' }} />
+        </button>
+
+        {dropdownOpen && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 100,
+            background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
+            borderRadius: 10, padding: '4px 0',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          }}>
+            {COMPANIES.map(co => {
+              const isActive = co.id === activeCompany.id;
+              return (
+                <button
+                  key={co.id}
+                  onClick={() => handleSelect(co)}
+                  style={{
+                    width: '100%', textAlign: 'left', background: isActive ? `${co.color}12` : 'none',
+                    border: 'none', padding: '9px 14px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontSize: '0.83rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? co.color : 'var(--text-primary)',
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${co.color}0a`; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none'; }}
+                >
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 6,
+                    background: `${co.color}20`, border: `1px solid ${co.color}50`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.58rem', fontWeight: 800, color: co.color, fontFamily: 'monospace',
+                  }}>
+                    {co.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  {co.name}
+                  {isActive && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: co.color }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => {
@@ -78,7 +126,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
             <button
               key={item.id}
               className={`nav-item ${isActive ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => { setDropdownOpen(false); setActiveTab(item.id); }}
             >
               <Icon size={20} className={isActive ? 'icon-active' : 'icon-inactive'} />
               <span>{item.label}</span>
@@ -97,11 +145,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
           </div>
         </div>
         {onLogout && (
-          <button 
-            className="logout-btn" 
-            onClick={onLogout}
-            title="Sign Out"
-          >
+          <button className="logout-btn" onClick={onLogout} title="Sign Out">
             <LogOut size={18} />
           </button>
         )}

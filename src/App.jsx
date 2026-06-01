@@ -4,7 +4,6 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
-import CompanyPickerPage from './components/CompanyPickerPage';
 import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 import OrdersPage from './pages/OrdersPage';
@@ -23,8 +22,9 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
 function App() {
   const [activeTab, setActiveTab] = useState('leads');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const DEFAULT_COMPANY = { id: 'cmp-sweetfresh-0001', name: 'Sweet Fresh', slug: 'sweet-fresh', color: '#ff6b00' };
   const [selectedCompany, setSelectedCompany] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('citrus_company') || 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem('citrus_company') || 'null') || DEFAULT_COMPANY; } catch { return DEFAULT_COMPANY; }
   });
   const [checking, setChecking] = useState(true);
 
@@ -64,10 +64,9 @@ function App() {
     setSelectedCompany(company);
   };
 
-  const handleSwitchCompany = () => {
-    localStorage.removeItem('citrus_company');
-    setSelectedCompany(null);
-    setActiveTab('leads');
+  const handleSwitchCompany = (co) => {
+    localStorage.setItem('citrus_company', JSON.stringify(co));
+    setSelectedCompany(co);
   };
 
   const handleLogout = () => {
@@ -84,11 +83,6 @@ function App() {
         Loading...
       </div>
     );
-  }
-
-  // Show company picker if authenticated but no company selected
-  if (isAuthenticated && !selectedCompany) {
-    return <CompanyPickerPage onSelect={handleCompanySelect} />;
   }
 
   const Layout = () => (
