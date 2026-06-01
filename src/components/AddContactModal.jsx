@@ -74,8 +74,9 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
             <UserPlus size={17} style={{ color: 'var(--orange-primary)' }} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Add New Contact</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>{defaultType}</div>
+            <div style={{ fontWeight: 700, fontSize: '1rem' }}>
+              {defaultType === 'Customer' ? 'Add New Customer' : 'Add New Lead'}
+            </div>
           </div>
           <button
             onClick={onClose}
