@@ -241,6 +241,15 @@ export const importShipments = async (req, res) => {
 
         const contactId = await getOrCreateFallback(row.customerName);
 
+        // Auto-link order by referenceId if provided
+        let orderId = null;
+        if (row.referenceId) {
+          const order = await prisma.order.findFirst({
+            where: { referenceId: String(row.referenceId).trim() }
+          });
+          if (order) orderId = order.id;
+        }
+
         await prisma.shipment.create({
           data: {
             label,
@@ -265,6 +274,7 @@ export const importShipments = async (req, res) => {
             notes:           row.notes || null,
             reeferTempSet:   row.reeferTempSet && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
             contactId,
+            orderId:         orderId || null,
             companyId:       req.companyId || null,
           }
         });

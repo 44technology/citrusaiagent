@@ -5,6 +5,8 @@ import { shipmentsApi } from '../services/api';
 
 // Excel column → internal key mapping (matches the user's actual Excel format)
 const COL_MAP = {
+  'Ref ID':       'referenceId',
+  'Ref':          'referenceId',
   'BOL N':        'bolNumber',
   'Container N':  'containerNumber',
   'Status':       'statusRaw',
@@ -26,6 +28,21 @@ const COL_MAP = {
   'Pack':         'packType',
   'Sizes/Specs':  'notes',
   'Temp Rec. Ref':'reeferTempSet',
+};
+
+// Positional header order — used when the file has NO header row
+// (Numbers/Excel exports without headers, first col = Ref ID)
+const POSITIONAL_HEADERS = [
+  'Ref ID', 'BOL N', 'Container N', 'Status', 'Type', 'Grower', 'Client',
+  'Vessel Name', 'Shipping Co.', 'ETD', 'W (Dep)', 'POL', 'ETA', 'W (Arr)',
+  'POD', 'Arrival Date', 'Variety', 'Boxes', 'Pallets', 'Pack', 'Sizes/Specs',
+  'Temp Rec. Ref',
+];
+
+// Detect if first row looks like real headers (≥3 known keys match)
+const isHeaderRow = (row) => {
+  const matches = row.filter(h => COL_MAP[String(h || '').trim()]);
+  return matches.length >= 3;
 };
 
 // Map raw Excel status → system status
@@ -98,10 +115,14 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const raw = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
 
-        if (raw.length < 2) { setError('Excel file appears to be empty.'); return; }
+        if (raw.length < 1) { setError('Excel file appears to be empty.'); return; }
 
-        const headers = raw[0].map(h => (h || '').toString().trim());
-        const dataRows = raw.slice(1).filter(r => r.some(c => c !== undefined && c !== ''));
+        // Auto-detect: does row 0 look like headers or data?
+        const firstRow = raw[0].map(h => (h || '').toString().trim());
+        const hasHeaders = isHeaderRow(firstRow);
+        const headers  = hasHeaders ? firstRow : POSITIONAL_HEADERS;
+        const dataRows = (hasHeaders ? raw.slice(1) : raw)
+          .filter(r => r.some(c => c !== undefined && c !== ''));
 
         const mapped = dataRows.map(row => {
           const obj = {};
