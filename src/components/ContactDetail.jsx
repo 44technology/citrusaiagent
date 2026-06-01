@@ -163,7 +163,10 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
       classifications: localContact.classifications || [],
       commodities: localContact.commodities || [],
       language: localContact.language || 'English',
-      credit: localContact.credit || 0
+      credit: localContact.credit || 0,
+      lineOfCredit: localContact.lineOfCredit ?? '',
+      openBalance:  localContact.openBalance  ?? '',
+      termDays:     localContact.termDays     ?? '',
     });
     setIsEditing(true);
   };
@@ -357,6 +360,57 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
               {renderField('ZIP CODE', 'zip', null)}
               {renderField('COUNTRY', 'country', null)}
             </div>
+            {/* Financial */}
+            <div style={{ marginTop: 4, padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+                Financial
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                {/* Line of Credit */}
+                <div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>LINE OF CREDIT</div>
+                  {isEditing ? (
+                    <input className="ui-input" type="number" step="0.01" placeholder="0.00"
+                      value={editData.lineOfCredit}
+                      onChange={e => handleEditChange('lineOfCredit', e.target.value)}
+                    />
+                  ) : (
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: localContact.lineOfCredit ? '#22c55e' : 'var(--text-muted)' }}>
+                      {localContact.lineOfCredit != null ? `$${Number(localContact.lineOfCredit).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
+                    </div>
+                  )}
+                </div>
+                {/* Open Balance */}
+                <div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>OPEN BALANCE</div>
+                  {isEditing ? (
+                    <input className="ui-input" type="number" step="0.01" placeholder="0.00"
+                      value={editData.openBalance}
+                      onChange={e => handleEditChange('openBalance', e.target.value)}
+                    />
+                  ) : (
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: localContact.openBalance > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                      {localContact.openBalance != null ? `$${Number(localContact.openBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
+                    </div>
+                  )}
+                </div>
+                {/* Term Days */}
+                <div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>TERM DAYS</div>
+                  {isEditing ? (
+                    <input className="ui-input" type="number" placeholder="e.g. 30"
+                      value={editData.termDays}
+                      onChange={e => handleEditChange('termDays', e.target.value)}
+                    />
+                  ) : (
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      {localContact.termDays != null ? `${localContact.termDays} days` : '—'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Classifications & Commodities */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: 4 }}>
               {['classifications', 'commodities'].map(field => {

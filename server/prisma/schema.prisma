@@ -45,6 +45,11 @@ model Contact {
   companyPhone   String?
   website        String?
 
+  // ── Financial ────────────────────────────────────
+  lineOfCredit   Float?   // Credit limit ($)
+  openBalance    Float?   // Current outstanding balance ($)
+  termDays       Int?     // Payment terms (days, e.g. 30)
+
   // ── Business profile (stored as JSON arrays) ──────
   classifications Json?   // ["Importer","Receiver","Jobber"]
   commodities     Json?   // ["Citrus","Clementine Mandarin"]
