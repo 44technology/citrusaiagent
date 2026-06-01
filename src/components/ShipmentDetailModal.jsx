@@ -931,6 +931,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
+      advancePaymentStatus: shipment.advancePaymentStatus || '',
       orderId: shipment.orderId || '',
     });
     setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : '');
@@ -1118,6 +1119,41 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                 <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={isEditing}>
                   <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
                 </Field>
+
+                {/* Advance Payment Status — spans full row */}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field
+                    label="Advance Payment Status"
+                    editing={isEditing}
+                    value={
+                      shipment.advancePaymentStatus
+                        ? <span style={{
+                            padding: '2px 10px', borderRadius: 10, fontSize: '0.78rem', fontWeight: 600,
+                            background: {
+                              'Paid':         'rgba(34,197,94,0.15)',
+                              'Requested':    'rgba(59,130,246,0.15)',
+                              'Pending':      'rgba(245,158,11,0.15)',
+                              'Not Required': 'rgba(255,255,255,0.06)',
+                            }[shipment.advancePaymentStatus] || 'rgba(255,255,255,0.06)',
+                            color: {
+                              'Paid':         '#22c55e',
+                              'Requested':    '#3b82f6',
+                              'Pending':      '#f59e0b',
+                              'Not Required': 'var(--text-muted)',
+                            }[shipment.advancePaymentStatus] || 'var(--text-muted)',
+                          }}>
+                            {shipment.advancePaymentStatus}
+                          </span>
+                        : null
+                    }
+                  >
+                    <Sel
+                      opts={['Pending', 'Requested', 'Paid', 'Not Required']}
+                      value={ed.advancePaymentStatus}
+                      onChange={e => set('advancePaymentStatus', e.target.value)}
+                    />
+                  </Field>
+                </div>
               </div>
             </div>
 

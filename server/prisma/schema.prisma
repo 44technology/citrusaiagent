@@ -132,6 +132,9 @@ model Shipment {
   variety          String?   // e.g. "NADORCOTT", "MAROC LATE"
   grower           String?   // Grower / supplier name
 
+  // ── Payment ──────────────────────────────────────
+  advancePaymentStatus String? // Pending | Requested | Paid | Not Required
+
   // ── Reefer settings ──────────────────────────────
   reeferTempSet    Float?    // Target temperature °C  (e.g. 6.0)
   reeferTempActual Float?    // Last recorded actual °C

@@ -12,7 +12,6 @@ import AccountingPage from './pages/AccountingPage';
 import SettingsPage from './pages/SettingsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
-import ShipmentsListPage from './pages/ShipmentsListPage';
 import OutreachPage from './pages/OutreachPage';
 
 // Protected Route Component
@@ -108,7 +107,6 @@ function App() {
           <Header company={selectedCompany} />
           <div className="scroll-content">
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} />}
-            {activeTab === 'shipments' && <ShipmentsListPage />}
             {activeTab === 'tracking' && <ShipmentTracking />}
             {activeTab === 'orders' && <OrdersPage />}
             {activeTab === 'accounting' && <AccountingPage />}

@@ -5,7 +5,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
   const menuItems = [
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'customers', label: 'Customers', icon: CheckCircle2 },
-    { id: 'shipments', label: 'Shipments', icon: List },
     { id: 'tracking', label: 'Tracking', icon: Navigation },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'growers', label: 'Growers', icon: Leaf },

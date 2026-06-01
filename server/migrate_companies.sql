@@ -35,5 +35,8 @@ UPDATE "Document"      SET "companyId" = 'cmp-sweetfresh-0001' WHERE "companyId"
 UPDATE "Invoice"       SET "companyId" = 'cmp-sweetfresh-0001' WHERE "companyId" IS NULL;
 UPDATE "PurchaseOrder" SET "companyId" = 'cmp-sweetfresh-0001' WHERE "companyId" IS NULL;
 
+-- 5. Advance payment status column
+ALTER TABLE "Shipment" ADD COLUMN IF NOT EXISTS "advancePaymentStatus" TEXT;
+
 -- Done
 SELECT 'Migration complete: ' || COUNT(*) || ' companies' AS result FROM "Company";
