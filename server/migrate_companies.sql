@@ -15,7 +15,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Company_slug_key" ON "Company"("slug");
 
 -- 2. Seed two companies (fixed IDs so we can reference them below)
 INSERT INTO "Company" ("id","name","slug","color") VALUES
-  ('cmp-wft-0001',        'WFT',         'wft',         '#3b82f6'),
+  ('cmp-wft-0001',        'WFT',         'wft',         '#59b031'),
   ('cmp-sweetfresh-0001', 'Sweet Fresh', 'sweet-fresh', '#ff6b00')
 ON CONFLICT DO NOTHING;
 

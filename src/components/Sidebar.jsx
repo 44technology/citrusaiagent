@@ -4,7 +4,7 @@ import '../index.css';
 
 const COMPANIES = [
   { id: 'cmp-sweetfresh-0001', name: 'Sweet Fresh', slug: 'sweet-fresh', color: '#ff6b00' },
-  { id: 'cmp-wft-0001',        name: 'WFT',         slug: 'wft',         color: '#3b82f6' },
+  { id: 'cmp-wft-0001',        name: 'WFT',         slug: 'wft',         color: '#59b031' },
 ];
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }) => {

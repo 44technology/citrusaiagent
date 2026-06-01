@@ -6,7 +6,7 @@ const COMPANIES = [
     id:    'cmp-wft-0001',
     name:  'WFT',
     slug:  'wft',
-    color: '#3b82f6',
+    color: '#59b031',
     description: 'World Fruit Trading operations, contacts & shipments',
     initials: 'WFT',
   },
