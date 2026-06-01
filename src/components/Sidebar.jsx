@@ -48,8 +48,16 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
         </div>
       </div>
 
+      {/* Backdrop to close dropdown */}
+      {dropdownOpen && (
+        <div
+          onClick={() => setDropdownOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 98 }}
+        />
+      )}
+
       {/* Company switcher */}
-      <div style={{ margin: '0 12px 8px', position: 'relative' }}>
+      <div style={{ margin: '0 12px 8px', position: 'relative', zIndex: 99 }}>
         <button
           onClick={() => setDropdownOpen(v => !v)}
           style={{
@@ -80,10 +88,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
 
         {dropdownOpen && (
           <div style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 100,
-            background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
-            borderRadius: 10, padding: '4px 0',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 100,
+            background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12, padding: '6px',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
           }}>
             {COMPANIES.map(co => {
               const isActive = co.id === activeCompany.id;
@@ -92,14 +100,17 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
                   key={co.id}
                   onClick={() => handleSelect(co)}
                   style={{
-                    width: '100%', textAlign: 'left', background: isActive ? `${co.color}12` : 'none',
-                    border: 'none', padding: '9px 14px', cursor: 'pointer',
+                    width: '100%', textAlign: 'left',
+                    background: isActive ? `${co.color}18` : 'transparent',
+                    border: `1px solid ${isActive ? co.color + '40' : 'transparent'}`,
+                    borderRadius: 8, padding: '10px 12px', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: 10,
-                    fontSize: '0.83rem', fontWeight: isActive ? 700 : 500,
+                    fontSize: '0.84rem', fontWeight: isActive ? 700 : 500,
                     color: isActive ? co.color : 'var(--text-primary)',
+                    marginBottom: 2, transition: 'all 0.15s',
                   }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${co.color}0a`; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none'; }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = `${co.color}10`; e.currentTarget.style.borderColor = `${co.color}25`; }}}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}}
                 >
                   <div style={{
                     width: 22, height: 22, borderRadius: 6,
