@@ -15,10 +15,11 @@ export const getAllDocuments = async (req, res) => {
   const { contactId, orderId, shipmentId, invoiceId } = req.query;
   try {
     const where = {};
-    if (contactId) where.contactId = contactId;
-    if (orderId) where.orderId = orderId;
-    if (shipmentId) where.shipmentId = shipmentId;
-    if (invoiceId) where.invoiceId = invoiceId;
+    if (contactId)     where.contactId  = contactId;
+    if (orderId)       where.orderId    = orderId;
+    if (shipmentId)    where.shipmentId = shipmentId;
+    if (invoiceId)     where.invoiceId  = invoiceId;
+    if (req.companyId) where.companyId  = req.companyId;
 
     const docs = await prisma.document.findMany({
       where,
@@ -49,10 +50,11 @@ export const uploadDocument = async (req, res) => {
         size: req.file.size,
         path: filePath,
         category: category || 'General',
-        contactId: contactId || null,
-        orderId: orderId || null,
+        contactId:  contactId  || null,
+        orderId:    orderId    || null,
         shipmentId: shipmentId || null,
-        invoiceId: invoiceId || null,
+        invoiceId:  invoiceId  || null,
+        companyId:  req.companyId || null,
         uploadedBy: req.user?.username || null
       },
       include: { contact: { select: { id: true, name: true, company: true } }, order: { select: { id: true, referenceId: true } }, shipment: { select: { id: true, label: true, containerNumber: true } }, invoice: { select: { id: true, invoiceNumber: true } } }

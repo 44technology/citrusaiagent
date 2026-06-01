@@ -7,6 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  color     String   @default("#ff6b00")
+  createdAt DateTime @default(now())
+
+  contacts      Contact[]
+  orders        Order[]
+  shipments     Shipment[]
+  documents     Document[]
+  invoices      Invoice[]
+  purchaseOrders PurchaseOrder[]
+}
+
 model Contact {
   id         String     @id @default(uuid())
   name       String     // Company name (primary identifier)
@@ -33,6 +48,9 @@ model Contact {
   // ── Business profile (stored as JSON arrays) ──────
   classifications Json?   // ["Importer","Receiver","Jobber"]
   commodities     Json?   // ["Citrus","Clementine Mandarin"]
+
+  companyId  String?
+  company    Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   calls      CallLog[]
   notes      Note[]
@@ -121,6 +139,9 @@ model Shipment {
   ventilation      Float?    // Ventilation setting cbm/h (e.g. 25)
   co2Level         Float?    // CO2 % (optional, controlled atmosphere)
 
+  companyId        String?
+  company          Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
   contact          Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
   order            Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
   documents        Document[]
@@ -196,6 +217,9 @@ model Order {
   contactId     String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
   user          User?    @relation(fields: [userId], references: [id])
   contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
@@ -213,6 +237,9 @@ model PurchaseOrder {
   status      String   @default("Draft")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
   order       Order    @relation(fields: [orderId], references: [id])
   supplier    Contact  @relation(fields: [supplierId], references: [id])
   invoices    Invoice[]
@@ -231,6 +258,9 @@ model Invoice {
   poId          String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
   order         Order?    @relation(fields: [orderId], references: [id])
   purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id])
   payments      Payment[]
@@ -257,12 +287,14 @@ model Document {
   size        Int
   path        String
   category    String   @default("General") // BOL | Phytosanitary | Invoice | Certificate | General
+  companyId   String?
   contactId   String?
   orderId     String?
   shipmentId  String?
   invoiceId   String?
   uploadedBy  String?
   createdAt   DateTime @default(now())
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)

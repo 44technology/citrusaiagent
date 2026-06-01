@@ -4,15 +4,21 @@ function getToken() {
   return localStorage.getItem('citrus_token');
 }
 
+export function getCompany() {
+  try {
+    return JSON.parse(localStorage.getItem('citrus_company') || 'null');
+  } catch { return null; }
+}
+
 async function request(url, options = {}) {
-  const token = getToken();
+  const token   = getToken();
+  const company = getCompany();
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  if (token)          headers['Authorization'] = `Bearer ${token}`;
+  if (company?.id)    headers['X-Company-Id']  = company.id;
 
   const res = await fetch(`${API_BASE}${url}`, {
     headers,
@@ -55,11 +61,13 @@ export const contactsApi = {
 // ─── Upload ──────────────────────────────────────────
 export const uploadApi = {
   excel: async (file) => {
-    const token = getToken();
+    const token   = getToken();
+    const company = getCompany();
     const formData = new FormData();
     formData.append('file', file);
     const headers = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token)       headers['Authorization'] = `Bearer ${token}`;
+    if (company?.id) headers['X-Company-Id']  = company.id;
     const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData, headers });
     if (res.status === 401) {
       localStorage.removeItem('citrus_token');
@@ -151,12 +159,14 @@ export const documentsApi = {
     return request(`/documents${params ? `?${params}` : ''}`);
   },
   upload: async (file, meta = {}) => {
-    const token = getToken();
+    const token   = getToken();
+    const company = getCompany();
     const formData = new FormData();
     formData.append('file', file);
     Object.entries(meta).forEach(([k, v]) => { if (v) formData.append(k, v); });
     const headers = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token)       headers['Authorization'] = `Bearer ${token}`;
+    if (company?.id) headers['X-Company-Id']  = company.id;
     const res = await fetch(`${API_BASE}/documents`, { method: 'POST', body: formData, headers });
     if (res.status === 401) {
       localStorage.removeItem('citrus_token');

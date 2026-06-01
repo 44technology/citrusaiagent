@@ -7,6 +7,7 @@ export const getContacts = async (req, res) => {
   try {
     const { type } = req.query;
     const where = type ? { type } : {};
+    if (req.companyId) where.companyId = req.companyId;
     const contacts = await prisma.contact.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -54,6 +55,7 @@ export const createContact = async (req, res) => {
         city, state, zip, country, address, companyPhone, website,
         classifications: classifications || [],
         commodities: commodities || [],
+        companyId: req.companyId || null,
       }
     });
     res.status(201).json(contact);
@@ -80,7 +82,8 @@ export const createContactsBulk = async (req, res) => {
         language: c.language || 'English',
         credit: c.credit || 0,
         status: 'Pending',
-        type: 'Lead'
+        type: 'Lead',
+        companyId: req.companyId || null,
       }))
     });
     // Return the created contacts
@@ -267,6 +270,7 @@ export const importLeads = async (req, res) => {
             website: info.WebSite || null,
             classifications: parseArr(info.Classifications),
             commodities: parseArr(info.Commodities),
+            companyId: req.companyId || null,
           }
         });
         contactId = contact.id;

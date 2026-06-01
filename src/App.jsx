@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
+import CompanyPickerPage from './components/CompanyPickerPage';
 import ShipmentTracking from './components/ShipmentTracking';
 import './index.css';
 import OrdersPage from './pages/OrdersPage';
@@ -23,6 +24,9 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
 function App() {
   const [activeTab, setActiveTab] = useState('leads');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('citrus_company') || 'null'); } catch { return null; }
+  });
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -36,16 +40,15 @@ function App() {
           if (res.ok) {
             const userData = await res.json();
             setIsAuthenticated(true);
-            // Refresh user info from verify response
             localStorage.setItem('citrus_user', JSON.stringify({
               username: userData.username,
               role: userData.role,
               contactId: userData.contactId
             }));
-          }
-          else {
+          } else {
             localStorage.removeItem('citrus_token');
             localStorage.removeItem('citrus_user');
+            localStorage.removeItem('citrus_company');
           }
         })
         .catch(() => {})
@@ -56,10 +59,24 @@ function App() {
   }, []);
 
   const handleLogin = () => setIsAuthenticated(true);
+
+  const handleCompanySelect = (company) => {
+    localStorage.setItem('citrus_company', JSON.stringify(company));
+    setSelectedCompany(company);
+  };
+
+  const handleSwitchCompany = () => {
+    localStorage.removeItem('citrus_company');
+    setSelectedCompany(null);
+    setActiveTab('leads');
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('citrus_token');
     localStorage.removeItem('citrus_user');
+    localStorage.removeItem('citrus_company');
     setIsAuthenticated(false);
+    setSelectedCompany(null);
   };
 
   if (checking) {
@@ -70,14 +87,25 @@ function App() {
     );
   }
 
+  // Show company picker if authenticated but no company selected
+  if (isAuthenticated && !selectedCompany) {
+    return <CompanyPickerPage onSelect={handleCompanySelect} />;
+  }
+
   const Layout = () => (
     <>
       <div className="bg-glow-orange"></div>
       <div className="bg-glow-green"></div>
       <div className="app-container">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+          company={selectedCompany}
+          onSwitchCompany={handleSwitchCompany}
+        />
         <main className="main-content">
-          <Header />
+          <Header company={selectedCompany} />
           <div className="scroll-content">
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} />}
             {activeTab === 'shipments' && <ShipmentsListPage />}

@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 export const getAllPurchaseOrders = async (req, res) => {
   try {
+    const where = req.companyId ? { companyId: req.companyId } : {};
     const pos = await prisma.purchaseOrder.findMany({
+      where,
       include: { order: true, supplier: true, invoices: true },
       orderBy: { createdAt: 'desc' }
     });
@@ -28,7 +30,8 @@ export const createPurchaseOrder = async (req, res) => {
         orderId,
         supplierId,
         totalAmount: parseFloat(totalAmount) || 0,
-        status: 'Draft'
+        status: 'Draft',
+        companyId: req.companyId || null,
       },
       include: { order: true, supplier: true }
     });
@@ -56,7 +59,9 @@ export const updatePurchaseOrder = async (req, res) => {
 
 export const getAllInvoices = async (req, res) => {
   try {
+    const where = req.companyId ? { companyId: req.companyId } : {};
     const invoices = await prisma.invoice.findMany({
+      where,
       include: {
         order: { include: { contact: { select: { id: true, name: true, company: true } } } },
         purchaseOrder: { include: { supplier: { select: { id: true, name: true, company: true } } } },
@@ -83,7 +88,8 @@ export const createInvoice = async (req, res) => {
         poId,
         issueDate: issueDate ? new Date(issueDate) : new Date(),
         dueDate: dueDate ? new Date(dueDate) : null,
-        status: 'Unpaid'
+        status: 'Unpaid',
+        companyId: req.companyId || null,
       }
     });
     res.status(201).json(invoice);

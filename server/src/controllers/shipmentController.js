@@ -28,7 +28,9 @@ const SHIPMENT_INCLUDE = {
 
 export const getShipments = async (req, res) => {
   try {
+    const where = req.companyId ? { companyId: req.companyId } : {};
     const shipments = await prisma.shipment.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: SHIPMENT_INCLUDE
     });
@@ -110,6 +112,7 @@ export const createShipment = async (req, res) => {
         humidity: humidity !== undefined && humidity !== '' ? parseFloat(humidity) : null,
         ventilation: ventilation !== undefined && ventilation !== '' ? parseFloat(ventilation) : null,
         co2Level: co2Level !== undefined && co2Level !== '' ? parseFloat(co2Level) : null,
+        companyId: req.companyId || null,
       },
       include: SHIPMENT_INCLUDE
     });
@@ -262,6 +265,7 @@ export const importShipments = async (req, res) => {
             notes:           row.notes || null,
             reeferTempSet:   row.reeferTempSet && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
             contactId,
+            companyId:       req.companyId || null,
           }
         });
         results.created++;

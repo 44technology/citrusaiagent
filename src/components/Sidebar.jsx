@@ -1,7 +1,7 @@
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen, Leaf, List, Navigation, Mail } from 'lucide-react';
+import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, Truck, ShoppingBag, Receipt, FolderOpen, Leaf, List, Navigation, Mail, ArrowLeftRight } from 'lucide-react';
 import '../index.css';
 
-const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
+const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }) => {
   const menuItems = [
     { id: 'leads', label: 'Leads', icon: Users },
     { id: 'customers', label: 'Customers', icon: CheckCircle2 },
@@ -35,6 +35,41 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
           <span className="text-gradient">Citrus</span> World
         </div>
       </div>
+
+      {/* Company badge */}
+      {company && (
+        <div style={{
+          margin: '0 12px 8px',
+          padding: '8px 12px',
+          borderRadius: 10,
+          background: `${company.color || '#ff6b00'}15`,
+          border: `1px solid ${company.color || '#ff6b00'}30`,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+            background: `${company.color || '#ff6b00'}25`,
+            border: `1px solid ${company.color || '#ff6b00'}50`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.6rem', fontWeight: 800, color: company.color || '#ff6b00',
+            fontFamily: 'monospace',
+          }}>
+            {company.name?.slice(0,2).toUpperCase()}
+          </div>
+          <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 600, color: company.color || '#ff6b00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {company.name}
+          </span>
+          {onSwitchCompany && (
+            <button
+              onClick={onSwitchCompany}
+              title="Switch company"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--text-muted)', display: 'flex' }}
+            >
+              <ArrowLeftRight size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       <nav className="sidebar-nav">
         {menuItems.map((item) => {

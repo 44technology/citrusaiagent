@@ -10,6 +10,7 @@ export const getAllOrders = async (req, res) => {
     if (role === 'customer' && userId) {
       where = { userId };
     }
+    if (req.companyId) where.companyId = req.companyId;
 
     const orders = await prisma.order.findMany({
       where,
@@ -75,7 +76,8 @@ export const createOrder = async (req, res) => {
         week: week || null,
         status: status || 'pending',
         userId: userId || null,
-        contactId
+        contactId,
+        companyId: req.companyId || null,
       },
       include: { contact: true }
     });

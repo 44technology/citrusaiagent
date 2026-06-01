@@ -1,13 +1,260 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
-  Search
+  Search, Paperclip, Upload, Download
 } from 'lucide-react';
-import { shipmentsApi, ordersApi } from '../services/api';
+import { shipmentsApi, ordersApi, documentsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
+
+// ─── Shipment Documents ───────────────────────────────────────────────────────
+
+const fmtSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const DOC_TYPES = [
+  { key: 'SWB',      label: 'Sea Waybill' },
+  { key: 'BOL',      label: 'Bill of Lading' },
+  { key: 'PL',       label: 'Packing List' },
+  { key: 'INV',      label: 'Invoice' },
+  { key: 'PO',       label: 'Purchase Order' },
+  { key: 'ISF',      label: 'ISF Filing' },
+  { key: 'Manifest', label: 'Cargo Manifest' },
+  { key: 'Phyto',    label: 'Phytosanitary' },
+  { key: 'FA',       label: 'Freight Agreement' },
+  { key: 'REL/SWB',  label: 'Release / SWB' },
+  { key: 'Photo',    label: 'Container Photo' },
+  { key: 'Other',    label: 'Other Document' },
+];
+
+const ShipmentDocuments = ({ shipment, canEdit }) => {
+  const [docs, setDocs]             = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [pendingType, setPendingType] = useState(null);
+  const [uploading, setUploading]   = useState(false);
+  const fileInputRef  = useRef();
+  const dropdownRef   = useRef();
+
+  // close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setShowDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const load = async () => {
+    try {
+      const data = await documentsApi.getAll({ shipmentId: shipment.id });
+      setDocs(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [shipment.id]);
+
+  const handleTypeSelect = (typeKey) => {
+    setPendingType(typeKey);
+    setShowDropdown(false);
+    fileInputRef.current.value = '';
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !pendingType) return;
+    setUploading(true);
+    try {
+      await documentsApi.upload(file, { shipmentId: shipment.id, category: pendingType });
+      await load();
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+      setPendingType(null);
+    }
+  };
+
+  const handleDelete = async (docId) => {
+    if (!window.confirm('Delete this document?')) return;
+    try {
+      await documentsApi.delete(docId);
+      setDocs(prev => prev.filter(d => d.id !== docId));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDownload = (doc) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token   = localStorage.getItem('citrus_token');
+    fetch(`${apiBase}/documents/${doc.id}/download`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = doc.originalName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(err => alert('Download failed: ' + err.message));
+  };
+
+  const uploadedTypes = new Set(docs.map(d => d.category));
+
+  return (
+    <div className="glass-panel" style={{ padding: 14 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: docs.length > 0 ? 14 : 0 }}>
+        <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Paperclip size={14} style={{ color: 'var(--orange-primary)' }} />
+          Documents
+          {docs.length > 0 && (
+            <span style={{
+              background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)',
+              padding: '1px 8px', borderRadius: 10, fontSize: '0.7rem', marginLeft: 4
+            }}>
+              {docs.length}/{DOC_TYPES.length} uploaded
+            </span>
+          )}
+        </h4>
+
+        {canEdit && (
+          <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <button
+              className="btn btn-primary"
+              style={{ padding: '5px 10px', fontSize: '0.76rem' }}
+              onClick={() => setShowDropdown(v => !v)}
+              disabled={uploading}
+            >
+              <Upload size={12} />
+              {uploading ? 'Uploading…' : 'Upload'}
+            </button>
+
+            {showDropdown && (
+              <div style={{
+                position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 200,
+                background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
+                borderRadius: 10, padding: '4px 0', minWidth: 210,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}>
+                {DOC_TYPES.map(t => {
+                  const done = uploadedTypes.has(t.key);
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => handleTypeSelect(t.key)}
+                      style={{
+                        width: '100%', textAlign: 'left', background: 'none', border: 'none',
+                        padding: '7px 14px', cursor: 'pointer', fontSize: '0.82rem',
+                        color: done ? 'var(--text-muted)' : 'var(--text-primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <span>
+                        <span style={{
+                          fontWeight: 700, fontFamily: 'monospace', fontSize: '0.76rem',
+                          marginRight: 8, color: 'var(--orange-primary)'
+                        }}>{t.key}</span>
+                        {t.label}
+                      </span>
+                      {done && <CheckCircle2 size={12} style={{ color: '#22c55e', flexShrink: 0 }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Hidden file input */}
+      <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
+
+      {/* Content */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+          Loading…
+        </div>
+      ) : docs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '14px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+          No documents uploaded yet.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {docs.map(doc => {
+            const typeInfo = DOC_TYPES.find(t => t.key === doc.category) || { key: doc.category, label: doc.category };
+            return (
+              <div key={doc.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px', background: 'rgba(255,255,255,0.03)',
+                borderRadius: 8, border: '1px solid var(--border-glass)',
+              }}>
+                {/* Type badge */}
+                <span style={{
+                  fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
+                  background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)',
+                  padding: '2px 8px', borderRadius: 6,
+                }}>{typeInfo.key}</span>
+
+                {/* File info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '0.83rem', fontWeight: 500,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }} title={doc.originalName}>
+                    {doc.originalName}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                    {fmtSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <button
+                  className="btn btn-glass"
+                  style={{ padding: '5px 8px', flexShrink: 0 }}
+                  onClick={() => handleDownload(doc)}
+                  title="Download"
+                >
+                  <Download size={13} />
+                </button>
+                {canEdit && (
+                  <button
+                    className="btn btn-glass"
+                    style={{ padding: '5px 8px', color: '#ef4444', flexShrink: 0 }}
+                    onClick={() => handleDelete(doc.id)}
+                    title="Delete"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ─── Journey config (Morocco → USA) ──────────────────────────────────────────
 
@@ -926,6 +1173,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
 
             {/* Expenses & Revenue */}
             <ExpensesPanel shipment={shipment} canEdit={canEdit} />
+
+            {/* Documents */}
+            <ShipmentDocuments shipment={shipment} canEdit={canEdit} />
 
             {/* Notes */}
             <div className="glass-panel" style={{ padding: 14 }}>
