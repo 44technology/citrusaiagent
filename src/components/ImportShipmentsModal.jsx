@@ -5,6 +5,29 @@ import { shipmentsApi } from '../services/api';
 
 // Excel column → internal key mapping (matches the user's actual Excel format)
 const COL_MAP = {
+  // Uppercase export format
+  'REF_ID':                 'referenceId',
+  'BOL_N':                  'bolNumber',
+  'CONTAINER_N':            'containerNumber',
+  'STATUS':                 'statusRaw',
+  'TYPE':                   'containerType',
+  'GROWER':                 'grower',
+  'CLIENT':                 'customerName',
+  'VESSEL_NAME':            'vesselName',
+  'SHIPPING_CO':            'shippingLine',
+  'W_DEP':                  'wDep',
+  'POL':                    'portOfLoading',
+  'W_ARR':                  'wArr',
+  'POD':                    'portOfDischarge',
+  'ARRIVAL_DATE':           'arrivalDate',
+  'VARIETY':                'variety',
+  'BOXES':                  'numberOfBoxes',
+  'PALLETS':                'pallets',
+  'PACK':                   'packType',
+  'SIZES_SPECS':            'notes',
+  'TEMP_REC_REF':           'reeferTempSet',
+  'ADVANCE_PAYMENT_STATUS': 'advancePaymentStatus',
+  // Legacy lowercase format (backward compat)
   'Ref ID':       'referenceId',
   'Ref':          'referenceId',
   'BOL N':        'bolNumber',

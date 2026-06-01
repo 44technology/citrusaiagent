@@ -155,36 +155,46 @@ const ShipmentsListPage = () => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel — same column format as the import template
+  // Export to Excel
   const handleExport = () => {
-    const rows = filtered.map(s => ({
-      'BOL N':          s.bolNumber || '',
-      'Container N':    s.containerNumber || '',
-      'Status':         s.status || '',
-      'Type':           s.containerType || '',
-      'Grower':         s.grower || s.order?.grower || '',
-      'Client':         s.contact?.name || s.contact?.company || '',
-      'Vessel Name':    s.vesselName || '',
-      'Shipping Co.':   s.shippingLine || '',
-      'ETD':            s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-      'W (Dep)':        getWeek(s.vesselDeparture),
-      'POL':            s.portOfLoading || s.origin || '',
-      'ETA':            s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-      'W (Arr)':        getWeek(s.vesselEta),
-      'POD':            s.portOfDischarge || s.destination || '',
-      'Arrival Date':   s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
-      'Variety':        s.variety || s.order?.variety || '',
-      'Boxes':          s.numberOfBoxes || '',
-      'Pallets':        s.pallets || '',
-      'Pack':           s.packType || '',
-      'Sizes/Specs':    s.notes || '',
-      'Temp Rec. Ref':  s.reeferTempSet || '',
-    }));
+    const rows = filtered.map(s => {
+      const expenses   = s.expenses || [];
+      const purchaseAmt = expenses.filter(e => !e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
+      const salesAmt    = expenses.filter(e =>  e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
+
+      return {
+        'REF_ID':                   s.order?.referenceId || '',
+        'BOL_N':                    s.bolNumber || '',
+        'CONTAINER_N':              s.containerNumber || '',
+        'STATUS':                   s.status || '',
+        'TYPE':                     s.containerType || '',
+        'GROWER':                   s.grower || s.order?.grower || '',
+        'CLIENT':                   s.contact?.name || s.contact?.company || '',
+        'VESSEL_NAME':              s.vesselName || '',
+        'SHIPPING_CO':              s.shippingLine || '',
+        'ETD':                      s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
+        'W_DEP':                    getWeek(s.vesselDeparture),
+        'POL':                      s.portOfLoading || s.origin || '',
+        'ETA':                      s.vesselEta ? formatDateUTC(s.vesselEta) : '',
+        'W_ARR':                    getWeek(s.vesselEta),
+        'POD':                      s.portOfDischarge || s.destination || '',
+        'ARRIVAL_DATE':             s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
+        'VARIETY':                  s.variety || s.order?.variety || '',
+        'BOXES':                    s.numberOfBoxes || '',
+        'PALLETS':                  s.pallets || '',
+        'PACK':                     s.packType || '',
+        'SIZES_SPECS':              s.notes || '',
+        'TEMP_REC_REF':             s.reeferTempSet || '',
+        'ADVANCE_PAYMENT_STATUS':   s.advancePaymentStatus || '',
+        'PURCHASE_INV_AMOUNT':      purchaseAmt || '',
+        'SALES_INV_AMOUNT':         salesAmt || '',
+      };
+    });
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 18 }));
+    ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 20 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Shipments');
-    XLSX.writeFile(wb, `Sweet_Fresh_Shipments_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(wb, `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   const handleUpdate = (updated) => {
