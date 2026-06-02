@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   List, Plus, Search, Filter, Download, FileSpreadsheet,
-  ChevronUp, ChevronDown, ChevronsUpDown, X
+  ChevronUp, ChevronDown, ChevronsUpDown, X, Trash2
 } from 'lucide-react';
 import { shipmentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -83,6 +83,9 @@ const ShipmentsListPage = () => {
     vessel: '', pol: '', pod: '', variety: '',
     etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
   });
+
+  const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
+  const isAdmin = ['admin', 'super admin', 'operation'].includes(currentUser.role);
 
   const loadData = async () => {
     setLoading(true);
@@ -208,6 +211,23 @@ const ShipmentsListPage = () => {
     setShipments(p => p.filter(s => s.id !== id));
     setSelected(null);
   };
+
+  const handleDeleteRow = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this shipment?')) return;
+    try {
+      await shipmentsApi.delete(id);
+      setShipments(p => p.filter(s => s.id !== id));
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm(`Delete ALL ${filtered.length} shipments? This cannot be undone.`)) return;
+    try {
+      await Promise.all(filtered.map(s => shipmentsApi.delete(s.id)));
+      setShipments(p => p.filter(s => !filtered.find(f => f.id === s.id)));
+    } catch (err) { alert(err.message); }
+  };
   const handleAdd = async (data) => {
     await shipmentsApi.create(data);
     loadData();
@@ -248,6 +268,15 @@ const ShipmentsListPage = () => {
           <button className="btn btn-glass" onClick={handleExport} style={{ gap: 8 }}>
             <Download size={16} /> Export
           </button>
+          {isAdmin && filtered.length > 0 && (
+            <button
+              className="btn btn-glass"
+              onClick={handleDeleteAll}
+              style={{ gap: 8, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}
+            >
+              <Trash2 size={15} /> Delete All ({filtered.length})
+            </button>
+          )}
           <button className="btn btn-primary" onClick={() => setShowAdd(true)} style={{ gap: 8 }}>
             <Plus size={16} /> Add Shipment
           </button>
@@ -349,6 +378,7 @@ const ShipmentsListPage = () => {
                 <SortTh label="ETA"          field="vesselEta"        sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (ARR)</th>
                 <SortTh label="POD"          field="portOfDischarge"  sort={sort} setSort={setSort} />
+                {isAdmin && <th style={{ padding: '10px 8px', width: 40 }} />}
               </tr>
             </thead>
             <tbody>
@@ -388,6 +418,19 @@ const ShipmentsListPage = () => {
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#22c55e', fontWeight: 600 }}>{s.vesselEta ? formatDateUTC(s.vesselEta) : '—'}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#22c55e' }}>{getWeek(s.vesselEta)}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfDischarge ? s.portOfDischarge.replace('Port of ', '') : '—'}</td>
+                  {isAdmin && (
+                    <td style={{ padding: '10px 8px' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={e => handleDeleteRow(e, s.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.5)', padding: 4, borderRadius: 6, display: 'flex' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(239,68,68,0.5)'}
+                        title="Delete shipment"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
