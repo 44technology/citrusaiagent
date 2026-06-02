@@ -143,9 +143,23 @@ export const updateShipment = async (req, res) => {
       data.numberOfBoxes = data.numberOfBoxes === '' || data.numberOfBoxes === null ? null : parseInt(data.numberOfBoxes);
     }
 
-    // Strip relation objects
-    delete data.id; delete data.contact; delete data.events;
-    delete data.createdAt; delete data.updatedAt; delete data.documents;
+    // Strip relation objects and unknown fields
+    const STRIP = ['id','contact','events','expenses','order','createdAt','updatedAt','documents','companyId'];
+    STRIP.forEach(f => delete data[f]);
+
+    // Only keep known Shipment fields
+    const ALLOWED = new Set([
+      'label','referenceId','origin','destination','vesselName','containerNumber',
+      'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine',
+      'status','notes','contactId','orderId',
+      'portOfLoading','portOfDischarge','transshipmentPort',
+      'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',
+      'pallets','packType','variety','grower',
+      'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
+      'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
+      'advToGrower','qcArrival',
+    ]);
+    Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
 
     const shipment = await prisma.shipment.update({
       where: { id: req.params.id },
