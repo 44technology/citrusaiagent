@@ -932,6 +932,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
       advancePaymentStatus: shipment.advancePaymentStatus || '',
+      referenceId: shipment.referenceId || '',
       orderId: shipment.orderId || '',
     });
     setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : '');
@@ -1101,6 +1102,25 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {/* Reference ID — independent from order */}
+                <Field
+                  label="Reference ID"
+                  editing={isEditing}
+                  value={
+                    (shipment.referenceId || shipment.order?.referenceId)
+                      ? <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--orange-primary)' }}>
+                          #{shipment.referenceId || shipment.order?.referenceId}
+                        </span>
+                      : null
+                  }
+                >
+                  <Inp
+                    placeholder="e.g. 260001"
+                    value={ed.referenceId}
+                    onChange={e => set('referenceId', e.target.value)}
+                  />
+                </Field>
+
                 <Field label="Container #" value={shipment.containerNumber} editing={isEditing}>
                   <Inp placeholder="e.g. CMAU1234567" value={ed.containerNumber} onChange={e => set('containerNumber', e.target.value)} />
                 </Field>

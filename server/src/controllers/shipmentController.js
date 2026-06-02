@@ -69,7 +69,7 @@ export const getShipment = async (req, res) => {
 export const createShipment = async (req, res) => {
   try {
     const {
-      label, origin, destination, vesselName, containerNumber, bolNumber,
+      label, referenceId, origin, destination, vesselName, containerNumber, bolNumber,
       vesselEta, vesselDeparture, vesselArrival, shippingLine, status, notes, contactId,
       // Port details
       portOfLoading, portOfDischarge, transshipmentPort,
@@ -85,7 +85,8 @@ export const createShipment = async (req, res) => {
 
     const shipment = await prisma.shipment.create({
       data: {
-        label, origin: origin || null, destination: destination || portOfDischarge || 'TBD',
+        label, referenceId: referenceId || null,
+        origin: origin || null, destination: destination || portOfDischarge || 'TBD',
         vesselName: vesselName || null, containerNumber: containerNumber || null,
         bolNumber: bolNumber || null,
         vesselEta: parseDateUTC(vesselEta),
@@ -249,6 +250,7 @@ export const importShipments = async (req, res) => {
           });
           if (order) orderId = order.id;
         }
+        const shipmentRefId = row.referenceId ? String(row.referenceId).trim() : null;
 
         await prisma.shipment.create({
           data: {
@@ -281,6 +283,7 @@ export const importShipments = async (req, res) => {
             advancePaymentStatus: row.advancePaymentStatus || null,
             contactId,
             orderId:          orderId || null,
+            referenceId:      shipmentRefId,
             companyId:        req.companyId || null,
           }
         });

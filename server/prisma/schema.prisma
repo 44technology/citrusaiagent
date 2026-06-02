@@ -105,6 +105,7 @@ model CallLog {
 model Shipment {
   id              String    @id @default(uuid())
   label           String
+  referenceId     String?   // Manual ref ID (used when no order is linked)
   destination     String
   vesselName      String?
   containerNumber String?
