@@ -926,6 +926,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       portOfDischarge: shipment.portOfDischarge || '',
       transshipmentPort: shipment.transshipmentPort || '',
       containerType: shipment.containerType || '', sealNumber: shipment.sealNumber || '',
+      grower: shipment.grower || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
@@ -1129,6 +1130,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                 </Field>
                 <Field label="Seal #" value={shipment.sealNumber} editing={isEditing}>
                   <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
+                </Field>
+                <Field label="Grower" value={shipment.grower} editing={isEditing}>
+                  <Inp placeholder="e.g. MAZARIA" value={ed.grower} onChange={e => set('grower', e.target.value)} />
                 </Field>
                 <Field label="Cargo" value={shipment.cargoDescription} editing={isEditing}>
                   <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />
