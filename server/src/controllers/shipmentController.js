@@ -147,9 +147,26 @@ export const updateShipment = async (req, res) => {
     const STRIP = ['id','contact','events','expenses','order','createdAt','updatedAt','documents','companyId'];
     STRIP.forEach(f => delete data[f]);
 
+    // Handle referenceId: try to link to order, else store as shipmentRefId
+    if (data.referenceId !== undefined) {
+      const refId = String(data.referenceId || '').trim();
+      delete data.referenceId;
+      if (refId) {
+        const order = await prisma.order.findFirst({ where: { referenceId: refId } });
+        if (order) {
+          data.orderId = order.id;
+        } else {
+          data.shipmentRefId = refId;
+          data.orderId = null;
+        }
+      } else {
+        data.shipmentRefId = null;
+      }
+    }
+
     // Only keep known Shipment fields
     const ALLOWED = new Set([
-      'label','referenceId','origin','destination','vesselName','containerNumber',
+      'label','shipmentRefId','origin','destination','vesselName','containerNumber',
       'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine',
       'status','notes','contactId','orderId',
       'portOfLoading','portOfDischarge','transshipmentPort',

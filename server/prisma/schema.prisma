@@ -141,6 +141,9 @@ model Shipment {
   // ── Payment ──────────────────────────────────────
   advancePaymentStatus String? // Pending | Requested | Paid | Not Required
 
+  // ── Reference ────────────────────────────────────
+  shipmentRefId    String?   // Manual ref ID when no order is linked
+
   // ── Logistics extra fields ───────────────────────
   transport        String?   // SEA | AIR | ROAD
   countryOfOrigin  String?   // COO (e.g. Morocco)

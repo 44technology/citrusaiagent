@@ -932,10 +932,10 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
       advancePaymentStatus: shipment.advancePaymentStatus || '',
-      referenceId: shipment.referenceId || '',
+      referenceId: shipment.shipmentRefId || shipment.order?.referenceId || '',
       orderId: shipment.orderId || '',
     });
-    setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : '');
+    setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : (shipment.shipmentRefId || ''));
     setMatchedOrder(shipment.order || null);
     setEvents(shipment.events || []);
     setIsEditing(false);
@@ -1107,9 +1107,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                   label="Reference ID"
                   editing={isEditing}
                   value={
-                    (shipment.referenceId || shipment.order?.referenceId)
+                    (shipment.shipmentRefId || shipment.order?.referenceId)
                       ? <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--orange-primary)' }}>
-                          #{shipment.referenceId || shipment.order?.referenceId}
+                          #{shipment.shipmentRefId || shipment.order?.referenceId}
                         </span>
                       : null
                   }
