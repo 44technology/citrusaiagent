@@ -6,7 +6,7 @@ import {
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
   Search, Paperclip, Upload, Download
 } from 'lucide-react';
-import { shipmentsApi, ordersApi, documentsApi } from '../services/api';
+import { shipmentsApi, ordersApi, documentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 
 // ─── Shipment Documents ───────────────────────────────────────────────────────
@@ -250,6 +250,64 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Grower Autocomplete ──────────────────────────────────────────────────────
+
+const GrowerAutocomplete = ({ value, onChange, growers }) => {
+  const [open, setOpen]     = useState(false);
+  const [query, setQuery]   = useState(value || '');
+  const ref                 = useRef();
+
+  useEffect(() => { setQuery(value || ''); }, [value]);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = growers.filter(g =>
+    g.name?.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 8);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <input
+        className="ui-input"
+        style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+        placeholder="Search grower…"
+        value={query}
+        onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+      />
+      {open && (query || growers.length > 0) && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+          background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
+          borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          maxHeight: 200, overflowY: 'auto',
+        }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No growers found</div>
+          ) : filtered.map(g => (
+            <button
+              key={g.id}
+              onMouseDown={e => { e.preventDefault(); onChange(g.name); setQuery(g.name); setOpen(false); }}
+              style={{
+                width: '100%', textAlign: 'left', background: 'none', border: 'none',
+                padding: '8px 12px', cursor: 'pointer', fontSize: '0.83rem',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              {g.name}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -898,6 +956,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
   const [loading, setLoading]     = useState(false);
   const [showAdd, setShowAdd]     = useState(false);
   const [orders, setOrders]       = useState([]);
+  const [growers, setGrowers]     = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
 
@@ -909,6 +968,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
 
   useEffect(() => {
     ordersApi.getAll().then(setOrders).catch(() => {});
+    contactsApi.getAll('Grower').then(setGrowers).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1132,7 +1192,11 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                   <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
                 </Field>
                 <Field label="Grower" value={shipment.grower} editing={isEditing}>
-                  <Inp placeholder="e.g. MAZARIA" value={ed.grower} onChange={e => set('grower', e.target.value)} />
+                  <GrowerAutocomplete
+                    value={ed.grower}
+                    onChange={v => set('grower', v)}
+                    growers={growers}
+                  />
                 </Field>
                 <Field label="Cargo" value={shipment.cargoDescription} editing={isEditing}>
                   <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />
