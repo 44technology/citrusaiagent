@@ -8,7 +8,7 @@ export const ROLES = [
 
 export const createUser = async (req, res) => {
   const { role: callerRole } = req.user || {};
-  if (callerRole !== 'super admin') return res.status(403).json({ error: 'Only Super Admin can create users' });
+  if (!['super admin','admin'].includes(callerRole)) return res.status(403).json({ error: 'Only Admin can create users' });
 
   const { username, password, role, contactId } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password are required' });
