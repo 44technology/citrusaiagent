@@ -129,7 +129,8 @@ const ShipmentsListPage = () => {
         (s.order?.variety || '').toLowerCase().includes(q) ||
         (s.portOfLoading || '').toLowerCase().includes(q) ||
         (s.portOfDischarge || '').toLowerCase().includes(q) ||
-        (s.order?.referenceId ? String(s.order.referenceId) : '').includes(q);
+        (s.order?.referenceId ? String(s.order.referenceId) : '').includes(q) ||
+      (s.shipmentRefId ? String(s.shipmentRefId) : '').includes(q);
 
       if (!matchSearch) return false;
       if (filters.status    && s.status !== filters.status) return false;
@@ -166,7 +167,7 @@ const ShipmentsListPage = () => {
       const invOutAmt   = expenses.filter(e =>  e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
 
       return {
-        'REF_ID':          s.order?.referenceId || s.referenceId || '',
+        'REF_ID':          s.order?.referenceId || s.shipmentRefId || '',
         'PRODUCT':         s.order?.product || '',
         'VARIETY':         s.variety || s.order?.variety || '',
         'LABEL':           s.label || '',
@@ -396,7 +397,7 @@ const ShipmentsListPage = () => {
                   onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
                 >
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--orange-primary)', fontWeight: 700 }}>
-                    {s.order?.referenceId ? `#${s.order.referenceId}` : s.referenceId ? `#${s.referenceId}` : '—'}
+                    {s.order?.referenceId ? `#${s.order.referenceId}` : s.shipmentRefId ? `#${s.shipmentRefId}` : '—'}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
