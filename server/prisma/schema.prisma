@@ -140,6 +140,13 @@ model Shipment {
   // ── Payment ──────────────────────────────────────
   advancePaymentStatus String? // Pending | Requested | Paid | Not Required
 
+  // ── Logistics extra fields ───────────────────────
+  transport        String?   // SEA | AIR | ROAD
+  countryOfOrigin  String?   // COO (e.g. Morocco)
+  oceanFreight     Float?    // Ocean freight cost
+  advToGrower      Float?    // Advance payment to grower
+  qcArrival        String?   // QC status at arrival
+
   // ── Reefer settings ──────────────────────────────
   reeferTempSet    Float?    // Target temperature °C  (e.g. 6.0)
   reeferTempActual Float?    // Last recorded actual °C

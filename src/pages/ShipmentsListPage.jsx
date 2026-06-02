@@ -155,43 +155,46 @@ const ShipmentsListPage = () => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel
+  // Export to Excel — SS format
   const handleExport = () => {
     const rows = filtered.map(s => {
-      const expenses   = s.expenses || [];
-      const purchaseAmt = expenses.filter(e => !e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
-      const salesAmt    = expenses.filter(e =>  e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
+      const expenses    = s.expenses || [];
+      const invInAmt    = expenses.filter(e => !e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
+      const invOutAmt   = expenses.filter(e =>  e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
 
       return {
-        'REF_ID':                   s.order?.referenceId || '',
-        'BOL_N':                    s.bolNumber || '',
-        'CONTAINER_N':              s.containerNumber || '',
-        'STATUS':                   s.status || '',
-        'TYPE':                     s.containerType || '',
-        'GROWER':                   s.grower || s.order?.grower || '',
-        'CLIENT':                   s.contact?.name || s.contact?.company || '',
-        'VESSEL_NAME':              s.vesselName || '',
-        'SHIPPING_CO':              s.shippingLine || '',
-        'ETD':                      s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-        'W_DEP':                    getWeek(s.vesselDeparture),
-        'POL':                      s.portOfLoading || s.origin || '',
-        'ETA':                      s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-        'W_ARR':                    getWeek(s.vesselEta),
-        'POD':                      s.portOfDischarge || s.destination || '',
-        'ARRIVAL_DATE':             s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
-        'VARIETY':                  s.variety || s.order?.variety || '',
-        'BOXES':                    s.numberOfBoxes || '',
-        'PALLETS':                  s.pallets || '',
-        'PACK':                     s.packType || '',
-        'SIZES_SPECS':              s.notes || '',
-        'TEMP_REC_REF':             s.reeferTempSet || '',
-        'ADVANCE_PAYMENT_STATUS':   s.advancePaymentStatus || '',
-        'PURCHASE_INV_AMOUNT':      purchaseAmt || '',
-        'SALES_INV_AMOUNT':         salesAmt || '',
+        'REF_ID':          s.order?.referenceId || '',
+        'PRODUCT':         s.order?.product || '',
+        'VARIETY':         s.variety || s.order?.variety || '',
+        'LABEL':           s.label || '',
+        'TRANSPORT':       s.transport || 'SEA',
+        'COO':             s.countryOfOrigin || '',
+        'SHIPPER_NAME':    s.grower || s.order?.grower || '',
+        'BOX_QTY':         s.numberOfBoxes || '',
+        'PALLET_QTY':      s.pallets || '',
+        'CNTR_No':         s.containerNumber || '',
+        'CARRIER_NAME':    s.shippingLine || '',
+        'VESSEL_NAME':     s.vesselName || '',
+        'AWB_OBL_No':      s.bolNumber || '',
+        'OCEAN_FREIGHT':   s.oceanFreight || '',
+        'INV_IN#':         '',
+        'INV_IN_AMOUNT':   invInAmt || '',
+        'ADV_TO_GROWER':   s.advToGrower || '',
+        'PO_No':           '',
+        'INV_OUT#':        '',
+        'INV_OUT_AMOUNT':  invOutAmt || '',
+        'ADV_FROM_CLIENT': s.advancePaymentStatus || '',
+        'CUSTOMER':        s.contact?.name || s.contact?.company || '',
+        'ETD':             s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
+        'ETA_DEST':        s.vesselEta ? formatDateUTC(s.vesselEta) : '',
+        'ATA_DEST':        s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
+        'ORIGIN_PORT':     s.portOfLoading || s.origin || '',
+        'DEST_PORT':       s.portOfDischarge || s.destination || '',
+        'Q_C_ARRIVAL':     s.qcArrival || '',
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 20 }));
+    ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 18 }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Shipments');
     XLSX.writeFile(wb, `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`);

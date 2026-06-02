@@ -271,11 +271,17 @@ export const importShipments = async (req, res) => {
             numberOfBoxes:   row.numberOfBoxes ? parseInt(row.numberOfBoxes) : null,
             pallets:         row.pallets ? parseInt(row.pallets) : null,
             packType:        row.packType || null,
-            notes:           row.notes || null,
-            reeferTempSet:   row.reeferTempSet && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
+            notes:            row.notes || null,
+            reeferTempSet:    row.reeferTempSet && row.reeferTempSet !== '' ? parseFloat(row.reeferTempSet) : null,
+            transport:        row.transport || null,
+            countryOfOrigin:  row.countryOfOrigin || null,
+            oceanFreight:     row.oceanFreight && row.oceanFreight !== '' ? parseFloat(row.oceanFreight) : null,
+            advToGrower:      row.advToGrower && row.advToGrower !== '' ? parseFloat(row.advToGrower) : null,
+            qcArrival:        row.qcArrival || null,
+            advancePaymentStatus: row.advancePaymentStatus || null,
             contactId,
-            orderId:         orderId || null,
-            companyId:       req.companyId || null,
+            orderId:          orderId || null,
+            companyId:        req.companyId || null,
           }
         });
         results.created++;
