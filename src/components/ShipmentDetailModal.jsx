@@ -256,6 +256,15 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
   );
 };
 
+// ─── Product / Variety options ───────────────────────────────────────────────
+
+const PRODUCTS = {
+  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Maroc Late', 'Other'],
+  'Orange':   ['Navel', 'Valencia', 'Blood Orange', 'Cara Cara', 'Other'],
+  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
+  'Lime':     ['Persian', 'Key Lime', 'Other'],
+};
+
 // ─── Grower Autocomplete ──────────────────────────────────────────────────────
 
 const GrowerAutocomplete = ({ value, onChange, growers }) => {
@@ -987,6 +996,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
       transshipmentPort: shipment.transshipmentPort || '',
       containerType: shipment.containerType || '', sealNumber: shipment.sealNumber || '',
       grower: shipment.grower || '',
+      variety: shipment.variety || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
@@ -1197,6 +1207,21 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
                     onChange={v => set('grower', v)}
                     growers={growers}
                   />
+                </Field>
+                <Field label="Variety" value={shipment.variety} editing={isEditing}>
+                  <select
+                    className="ui-input"
+                    style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                    value={ed.variety}
+                    onChange={e => set('variety', e.target.value)}
+                  >
+                    <option value="">— Select —</option>
+                    {Object.entries(PRODUCTS).map(([product, varieties]) => (
+                      <optgroup key={product} label={product}>
+                        {varieties.map(v => <option key={v} value={v}>{v}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Cargo" value={shipment.cargoDescription} editing={isEditing}>
                   <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />
