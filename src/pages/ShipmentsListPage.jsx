@@ -72,7 +72,8 @@ const ShipmentsListPage = () => {
   const [customers, setCustomers]       = useState([]);
   const [loading, setLoading]           = useState(true);
   const [loadError, setLoadError]       = useState('');
-  const [selected, setSelected]         = useState(null);
+  const [expandedId, setExpandedId]     = useState(null);
+  const [editTarget, setEditTarget]     = useState(null);  // opens full modal
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
   const [showFilters, setShowFilters]   = useState(false);
@@ -356,11 +357,12 @@ const ShipmentsListPage = () => {
 
   const handleUpdate = (updated) => {
     setShipments(p => p.map(s => s.id === updated.id ? updated : s));
-    setSelected(updated);
+    setEditTarget(updated);
   };
   const handleDelete = (id) => {
     setShipments(p => p.filter(s => s.id !== id));
-    setSelected(null);
+    setEditTarget(null);
+    setExpandedId(null);
   };
 
   const handleDeleteRow = async (e, id) => {
@@ -539,18 +541,20 @@ const ShipmentsListPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((s, i) => (
+              {filtered.map((s, i) => {
+                const isExpanded = expandedId === s.id;
+                const colCount = isAdmin ? 17 : 16;
+                return (<React.Fragment key={s.id}>
                 <tr
-                  key={s.id}
-                  onClick={() => setSelected(s)}
+                  onClick={() => setExpandedId(isExpanded ? null : s.id)}
                   style={{
                     borderTop: '1px solid var(--border-glass-light)',
-                    background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+                    background: isExpanded ? 'rgba(255,107,0,0.06)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
                     cursor: 'pointer',
                     transition: 'background 0.15s',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.06)'}
-                  onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
+                  onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'rgba(255,107,0,0.04)'; }}
+                  onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'; }}
                 >
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--orange-primary)', fontWeight: 700 }}>
                     {s.order?.referenceId ? `#${s.order.referenceId}` : s.shipmentRefId ? `#${s.shipmentRefId}` : '—'}
@@ -589,7 +593,49 @@ const ShipmentsListPage = () => {
                     </td>
                   )}
                 </tr>
-              ))}
+
+                {/* Expanded inline detail */}
+                {isExpanded && (
+                  <tr>
+                    <td colSpan={colCount} style={{ padding: 0, borderTop: '1px solid rgba(255,107,0,0.2)' }}>
+                      <div style={{ background: 'rgba(255,107,0,0.03)', padding: '16px 20px', borderBottom: '1px solid rgba(255,107,0,0.15)' }}>
+                        {/* Quick info grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 14 }}>
+                          {[
+                            { label: 'VESSEL', value: s.vesselName },
+                            { label: 'SHIPPING CO.', value: s.shippingLine },
+                            { label: 'BOL #', value: s.bolNumber, mono: true },
+                            { label: 'SEAL #', value: s.sealNumber },
+                            { label: 'CONTAINER TYPE', value: s.containerType },
+                            { label: 'PORT OF LOADING', value: s.portOfLoading },
+                            { label: 'PORT OF DISCHARGE', value: s.portOfDischarge },
+                            { label: 'DEPARTURE', value: s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : null },
+                            { label: 'ETA', value: s.vesselEta ? formatDateUTC(s.vesselEta) : null },
+                            { label: 'ADV. PAYMENT', value: s.advancePaymentStatus },
+                          ].map(f => f.value ? (
+                            <div key={f.label}>
+                              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 2 }}>{f.label}</div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 600, fontFamily: f.mono ? 'monospace' : undefined }}>{f.value}</div>
+                            </div>
+                          ) : null)}
+                        </div>
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button className="btn btn-glass" style={{ fontSize: '0.78rem' }}
+                            onClick={e => { e.stopPropagation(); setEditTarget(s); }}>
+                            ✏️ Edit Full Details
+                          </button>
+                          <button className="btn btn-glass" style={{ fontSize: '0.78rem' }}
+                            onClick={e => { e.stopPropagation(); setExpandedId(null); }}>
+                            ✕ Close
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>);
+              })}
             </tbody>
           </table>
         )}
@@ -610,11 +656,11 @@ const ShipmentsListPage = () => {
           onImported={() => { loadData(); }}
         />
       )}
-      {selected && (
+      {editTarget && (
         <ShipmentDetailModal
-          isOpen={!!selected}
-          onClose={() => setSelected(null)}
-          shipment={selected}
+          isOpen={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          shipment={editTarget}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
         />
