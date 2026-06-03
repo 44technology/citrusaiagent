@@ -958,7 +958,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) => {
+const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, embedded = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [ed, setEd]               = useState(null);
   const [events, setEvents]       = useState([]);
@@ -1060,12 +1060,12 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
 
   return (
     <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}
-          style={{ maxWidth: 800, width: '96%', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}>
+      <div className={embedded ? '' : 'modal-overlay'} onClick={embedded ? undefined : onClose}>
+        <div onClick={e => e.stopPropagation()}
+          style={embedded ? { padding: 0 } : { maxWidth: 800, width: '96%', maxHeight: '92vh', overflowY: 'auto', padding: 0, background: 'var(--bg-card)', borderRadius: 16 }}>
 
-          {/* Sticky header */}
-          <div style={{
+          {/* Sticky header — hidden in embedded mode (drawer has its own) */}
+          {!embedded && <div style={{
             padding: '13px 18px', borderBottom: '1px solid var(--border-glass)',
             display: 'flex', alignItems: 'center', gap: 10,
             position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 20
@@ -1104,11 +1104,11 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete }) 
               </button>
             ))}
             <button className="btn btn-glass" style={{ padding: '5px 7px' }} onClick={onClose}><X size={14} /></button>
-          </div>
+          </div>}
 
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
-            {/* Progress bar */}
-            <RouteProgress shipment={shipment} events={events} />
+            {/* Progress bar — only in non-embedded modal */}
+            {!embedded && <RouteProgress shipment={shipment} events={events} />}
 
             {/* Container & Cargo */}
             <div className="glass-panel" style={{ padding: 14 }}>
