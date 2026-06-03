@@ -73,7 +73,6 @@ const ShipmentsListPage = () => {
   const [loading, setLoading]           = useState(true);
   const [loadError, setLoadError]       = useState('');
   const [expandedId, setExpandedId]     = useState(null);
-  const [editTarget, setEditTarget]     = useState(null);  // opens full modal
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
   const [showFilters, setShowFilters]   = useState(false);
@@ -357,11 +356,9 @@ const ShipmentsListPage = () => {
 
   const handleUpdate = (updated) => {
     setShipments(p => p.map(s => s.id === updated.id ? updated : s));
-    setEditTarget(updated);
   };
   const handleDelete = (id) => {
     setShipments(p => p.filter(s => s.id !== id));
-    setEditTarget(null);
     setExpandedId(null);
   };
 
@@ -594,42 +591,20 @@ const ShipmentsListPage = () => {
                   )}
                 </tr>
 
-                {/* Expanded inline detail */}
+                {/* Expanded inline full detail */}
                 {isExpanded && (
                   <tr>
-                    <td colSpan={colCount} style={{ padding: 0, borderTop: '1px solid rgba(255,107,0,0.2)' }}>
-                      <div style={{ background: 'rgba(255,107,0,0.03)', padding: '16px 20px', borderBottom: '1px solid rgba(255,107,0,0.15)' }}>
-                        {/* Quick info grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 14 }}>
-                          {[
-                            { label: 'VESSEL', value: s.vesselName },
-                            { label: 'SHIPPING CO.', value: s.shippingLine },
-                            { label: 'BOL #', value: s.bolNumber, mono: true },
-                            { label: 'SEAL #', value: s.sealNumber },
-                            { label: 'CONTAINER TYPE', value: s.containerType },
-                            { label: 'PORT OF LOADING', value: s.portOfLoading },
-                            { label: 'PORT OF DISCHARGE', value: s.portOfDischarge },
-                            { label: 'DEPARTURE', value: s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : null },
-                            { label: 'ETA', value: s.vesselEta ? formatDateUTC(s.vesselEta) : null },
-                            { label: 'ADV. PAYMENT', value: s.advancePaymentStatus },
-                          ].map(f => f.value ? (
-                            <div key={f.label}>
-                              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 2 }}>{f.label}</div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 600, fontFamily: f.mono ? 'monospace' : undefined }}>{f.value}</div>
-                            </div>
-                          ) : null)}
-                        </div>
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <button className="btn btn-glass" style={{ fontSize: '0.78rem' }}
-                            onClick={e => { e.stopPropagation(); setEditTarget(s); }}>
-                            ✏️ Edit Full Details
-                          </button>
-                          <button className="btn btn-glass" style={{ fontSize: '0.78rem' }}
-                            onClick={e => { e.stopPropagation(); setExpandedId(null); }}>
-                            ✕ Close
-                          </button>
-                        </div>
+                    <td colSpan={colCount} style={{ padding: 0, borderTop: '2px solid rgba(255,107,0,0.3)' }}>
+                      <div style={{ background: 'var(--bg-secondary)', borderBottom: '2px solid rgba(255,107,0,0.3)' }}
+                        onClick={e => e.stopPropagation()}>
+                        <ShipmentDetailModal
+                          isOpen={true}
+                          onClose={() => setExpandedId(null)}
+                          shipment={s}
+                          onUpdate={u => setShipments(p => p.map(x => x.id === u.id ? u : x))}
+                          onDelete={handleDelete}
+                          embedded={true}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -654,15 +629,6 @@ const ShipmentsListPage = () => {
         <ImportShipmentsModal
           onClose={() => { setShowImport(false); loadData(); }}
           onImported={() => { loadData(); }}
-        />
-      )}
-      {editTarget && (
-        <ShipmentDetailModal
-          isOpen={!!editTarget}
-          onClose={() => setEditTarget(null)}
-          shipment={editTarget}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
         />
       )}
     </div>
