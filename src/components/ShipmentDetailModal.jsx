@@ -1107,6 +1107,25 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
           </div>}
 
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
+
+            {/* Embedded edit bar */}
+            {embedded && canEdit && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                {isEditing ? (
+                  <>
+                    <button className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={() => setIsEditing(false)}>Cancel</button>
+                    <button className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={handleSave} disabled={loading}>
+                      <Save size={13} /> {loading ? 'Saving…' : 'Save'}
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={() => setIsEditing(true)}>
+                    <Edit3 size={13} /> Edit
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Progress bar — only in non-embedded modal */}
             {!embedded && <RouteProgress shipment={shipment} events={events} />}
 
