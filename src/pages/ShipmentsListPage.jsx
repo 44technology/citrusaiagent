@@ -9,6 +9,7 @@ import AddShipmentModal from '../components/AddShipmentModal';
 import ShipmentDetailModal from '../components/ShipmentDetailModal';
 import ImportShipmentsModal from '../components/ImportShipmentsModal';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // ── Helpers ───────────────────────────────────────────────────
 const getWeek = (dateStr) => {
@@ -159,49 +160,197 @@ const ShipmentsListPage = () => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel — SS format
-  const handleExport = () => {
-    const rows = filtered.map(s => {
-      const expenses    = s.expenses || [];
-      const invInAmt    = expenses.filter(e => !e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
-      const invOutAmt   = expenses.filter(e =>  e.isRevenue).reduce((sum, e) => sum + (e.amount || 0), 0);
+  // Export to Excel — styled template
+  const handleExport = async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Shipments');
 
-      return {
-        'REF_ID':          s.order?.referenceId || s.shipmentRefId || '',
-        'PRODUCT':         s.order?.product || '',
-        'VARIETY':         s.variety || s.order?.variety || '',
-        'LABEL':           s.label || '',
-        'TRANSPORT':       s.transport || 'SEA',
-        'COO':             s.countryOfOrigin || '',
-        'SHIPPER_NAME':    s.grower || s.order?.grower || '',
-        'BOX_QTY':         s.numberOfBoxes || '',
-        'PALLET_QTY':      s.pallets || '',
-        'CNTR_No':         s.containerNumber || '',
-        'CARRIER_NAME':    s.shippingLine || '',
-        'VESSEL_NAME':     s.vesselName || '',
-        'AWB_OBL_No':      s.bolNumber || '',
-        'OCEAN_FREIGHT':   s.oceanFreight || '',
-        'INV_IN#':         '',
-        'INV_IN_AMOUNT':   invInAmt || '',
-        'ADV_TO_GROWER':   s.advToGrower || '',
-        'PO_No':           '',
-        'INV_OUT#':        '',
-        'INV_OUT_AMOUNT':  invOutAmt || '',
-        'ADV_FROM_CLIENT': s.advancePaymentStatus || '',
-        'CUSTOMER':        s.contact?.name || s.contact?.company || '',
-        'ETD':             s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-        'ETA_DEST':        s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-        'ATA_DEST':        s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
-        'ORIGIN_PORT':     s.portOfLoading || s.origin || '',
-        'DEST_PORT':       s.portOfDischarge || s.destination || '',
-        'Q_C_ARRIVAL':     s.qcArrival || '',
+    // ── Colours ──────────────────────────────────────
+    const DARK   = '1A1A2E';
+    const ORANGE = 'FF6B00';
+    const HEADER = '16213E';
+    const ALT    = '0F3460';
+    const WHITE  = 'FFFFFF';
+    const MUTED  = 'A0A0B0';
+    const GREEN  = '22C55E';
+
+    // ── Stats ────────────────────────────────────────
+    const totalBoxes   = filtered.reduce((s, sh) => s + (sh.numberOfBoxes || 0), 0);
+    const totalPallets = filtered.reduce((s, sh) => s + (sh.pallets || 0), 0);
+    const onBoard  = filtered.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
+    const discharged = filtered.filter(s => ['Arrived','Delivered'].includes(s.status)).length;
+    const gateIn   = filtered.filter(s => s.status === 'Loading').length;
+    const dateStr  = new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
+
+    // ── Column widths ─────────────────────────────────
+    ws.columns = [
+      { width: 4 },   // A spacer
+      { width: 16 },  // B GROWER
+      { width: 14 },  // C LABEL
+      { width: 18 },  // D CONTAINER NO.
+      { width: 18 },  // E STATUS
+      { width: 22 },  // F VESSEL NAME
+      { width: 14 },  // G SHIPPING CO.
+      { width: 12 },  // H ETD
+      { width: 7 },   // I W(DEP)
+      { width: 12 },  // J POL
+      { width: 12 },  // K ETA
+      { width: 7 },   // L W(ARR)
+      { width: 14 },  // M POD
+      { width: 14 },  // N ARRIVAL DATE
+      { width: 14 },  // O VARIETY
+      { width: 9 },   // P BOXES
+      { width: 9 },   // Q PALLETS
+      { width: 9 },   // R PACK
+    ];
+
+    // Helper: apply fill+font to a cell
+    const style = (cell, { bg, color = WHITE, bold = false, sz = 10, align = 'left', wrap = false } = {}) => {
+      if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + bg } };
+      cell.font = { color: { argb: 'FF' + color }, bold, size: sz, name: 'Calibri' };
+      cell.alignment = { horizontal: align, vertical: 'middle', wrapText: wrap };
+    };
+
+    const border = (cell) => {
+      cell.border = {
+        top:    { style: 'thin', color: { argb: 'FF2A2A4A' } },
+        bottom: { style: 'thin', color: { argb: 'FF2A2A4A' } },
+        left:   { style: 'thin', color: { argb: 'FF2A2A4A' } },
+        right:  { style: 'thin', color: { argb: 'FF2A2A4A' } },
       };
+    };
+
+    // ── Row 1: empty ─────────────────────────────────
+    ws.addRow([]);
+    ws.getRow(1).height = 8;
+
+    // ── Row 2: Title ─────────────────────────────────
+    const titleRow = ws.addRow([]);
+    titleRow.height = 32;
+    const titleCell = ws.getCell('C2');
+    titleCell.value = 'SWEET FRESH PRODUCE  ·  SHIPMENT TRACKER';
+    style(titleCell, { bg: DARK, color: ORANGE, bold: true, sz: 16, align: 'left' });
+    ws.mergeCells('C2:R2');
+    // Fill rest of row
+    ['A2','B2'].forEach(r => { const c = ws.getCell(r); style(c, { bg: DARK }); });
+
+    // ── Row 3: Subtitle ───────────────────────────────
+    const subRow = ws.addRow([]);
+    subRow.height = 20;
+    const subCell = ws.getCell('C3');
+    subCell.value = `Generated: ${dateStr}  |  All Shipments`;
+    style(subCell, { bg: DARK, color: MUTED, sz: 9, align: 'left' });
+    ws.mergeCells('C3:R3');
+    ['A3','B3'].forEach(r => { const c = ws.getCell(r); style(c, { bg: DARK }); });
+
+    // ── Row 4: Stats headers ──────────────────────────
+    ws.addRow([]);
+    ws.getRow(4).height = 20;
+    const statLabels = [
+      { label: 'TOTAL SHIPMENTS', cols: 'B4:D4' },
+      { label: 'SHIPPED ON BOARD', cols: 'E4:G4' },
+      { label: 'DISCHARGED',       cols: 'H4:J4' },
+      { label: 'GATE IN EMPTY',    cols: 'K4:M4' },
+      { label: 'TOTAL BOXES',      cols: 'N4:P4' },
+      { label: 'TOTAL PALLETS',    cols: 'Q4:R4' },
+    ];
+    statLabels.forEach(({ label, cols }) => {
+      const startCell = ws.getCell(cols.split(':')[0]);
+      startCell.value = label;
+      style(startCell, { bg: HEADER, color: MUTED, bold: true, sz: 8, align: 'center' });
+      ws.mergeCells(cols);
     });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 18 }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Shipments');
-    XLSX.writeFile(wb, `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`);
+    ws.getCell('A4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + HEADER } };
+
+    // ── Row 5: Stats values ───────────────────────────
+    ws.addRow([]);
+    ws.getRow(5).height = 28;
+    const statVals = [
+      { val: filtered.length, cols: 'B5:D5' },
+      { val: onBoard,         cols: 'E5:G5' },
+      { val: discharged,      cols: 'H5:J5' },
+      { val: gateIn,          cols: 'K5:M5' },
+      { val: totalBoxes.toLocaleString(), cols: 'N5:P5' },
+      { val: totalPallets,    cols: 'Q5:R5' },
+    ];
+    statVals.forEach(({ val, cols }) => {
+      const startCell = ws.getCell(cols.split(':')[0]);
+      startCell.value = val;
+      style(startCell, { bg: HEADER, color: ORANGE, bold: true, sz: 16, align: 'center' });
+      ws.mergeCells(cols);
+    });
+    ws.getCell('A5').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + HEADER } };
+
+    // ── Row 6: Empty ──────────────────────────────────
+    ws.addRow([]);
+    ws.getRow(6).height = 6;
+
+    // ── Row 7: Column headers ─────────────────────────
+    const hdrs = ['', 'GROWER', 'LABEL', 'CONTAINER NO.', 'STATUS', 'VESSEL NAME', 'SHIPPING CO.', 'ETD', 'W\n(DEP)', 'POL', 'ETA', 'W\n(ARR)', 'POD', 'ARRIVAL DATE', 'VARIETY', 'BOXES', 'PALLETS', 'PACK'];
+    const hdrRow = ws.addRow(hdrs);
+    hdrRow.height = 36;
+    hdrRow.eachCell((cell) => {
+      style(cell, { bg: ORANGE, color: WHITE, bold: true, sz: 9, align: 'center', wrap: true });
+      border(cell);
+    });
+
+    // ── Data rows ─────────────────────────────────────
+    filtered.forEach((s, i) => {
+      const bg = i % 2 === 0 ? '12122A' : DARK;
+      const row = ws.addRow([
+        '',
+        s.grower || s.order?.grower || '',
+        s.label || '',
+        s.containerNumber || '',
+        s.status || '',
+        s.vesselName || '',
+        s.shippingLine || '',
+        s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
+        getWeek(s.vesselDeparture),
+        s.portOfLoading || s.origin || '',
+        s.vesselEta ? formatDateUTC(s.vesselEta) : '',
+        getWeek(s.vesselEta),
+        s.portOfDischarge || s.destination || '',
+        s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
+        s.variety || s.order?.variety || '',
+        s.numberOfBoxes || '',
+        s.pallets || '',
+        s.packType || '',
+      ]);
+      row.height = 18;
+      row.eachCell((cell, colNum) => {
+        style(cell, { bg, color: colNum === 4 ? ORANGE : colNum >= 16 ? GREEN : WHITE, sz: 9, align: colNum >= 8 ? 'center' : 'left' });
+        border(cell);
+      });
+    });
+
+    // ── Totals row ────────────────────────────────────
+    const totRow = ws.addRow(['', 'TOTALS', '', '', '', '', '', '', '', '', '', '', '', '', '',
+      totalBoxes, totalPallets, '']);
+    totRow.height = 22;
+    totRow.eachCell((cell, colNum) => {
+      style(cell, { bg: HEADER, color: colNum >= 16 ? GREEN : ORANGE, bold: true, sz: 10, align: colNum >= 16 ? 'center' : 'left' });
+      border(cell);
+    });
+    ws.mergeCells(`B${totRow.number}:O${totRow.number}`);
+
+    // ── Footer ────────────────────────────────────────
+    ws.addRow([]);
+    const footRow = ws.addRow(['', 'Sweet Fresh Produce  ·  Confidential  ·  All rights reserved']);
+    footRow.height = 18;
+    const footCell = ws.getCell(`B${footRow.number}`);
+    style(footCell, { bg: DARK, color: MUTED, sz: 8, align: 'left' });
+    ws.mergeCells(`B${footRow.number}:R${footRow.number}`);
+
+    // ── Write & download ──────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = url;
+    a.download   = `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleUpdate = (updated) => {
