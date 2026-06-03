@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Ship, MapPin, Anchor, Clock, CheckCircle2, Navigation,
-  Package, FileText, AlertCircle, Loader2, X, Calendar, User
+  Package, FileText, AlertCircle, Loader2, X, Calendar, User,
+  Filter, Search, ChevronDown
 } from 'lucide-react';
-import { shipmentsApi } from '../services/api';
+import { shipmentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 import ShipmentDetailModal from './ShipmentDetailModal';
 
@@ -184,19 +185,57 @@ const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
 // ── Main Tracking page ────────────────────────────────────────
 const ShipmentTracking = () => {
   const [shipments, setShipments]   = useState([]);
+  const [customers, setCustomers]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [selected, setSelected]     = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch]         = useState('');
+  const [filters, setFilters]       = useState({
+    customer: '', grower: '', variety: '', advPayment: '',
+    pol: '', pod: '', etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
+  });
+
+  const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
+  const hasFilters = Object.values(filters).some(Boolean) || search;
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await shipmentsApi.getAll();
+      const [data, c] = await Promise.all([
+        shipmentsApi.getAll(),
+        contactsApi.getAll().catch(() => []),
+      ]);
       setShipments(Array.isArray(data) ? data : []);
+      setCustomers((Array.isArray(c) ? c : []).filter(x => x.type?.toLowerCase() === 'customer'));
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return shipments.filter(s => {
+      if (q && !(
+        (s.containerNumber || '').toLowerCase().includes(q) ||
+        (s.bolNumber || '').toLowerCase().includes(q) ||
+        (s.vesselName || '').toLowerCase().includes(q) ||
+        (s.order?.referenceId || s.shipmentRefId || '').toLowerCase().includes(q) ||
+        (s.contact?.name || '').toLowerCase().includes(q)
+      )) return false;
+      if (filters.customer  && s.contactId !== filters.customer) return false;
+      if (filters.grower    && (s.grower || s.order?.grower || '') !== filters.grower) return false;
+      if (filters.variety   && (s.variety || s.order?.variety || '') !== filters.variety) return false;
+      if (filters.advPayment && (s.advancePaymentStatus || '') !== filters.advPayment) return false;
+      if (filters.pol       && s.portOfLoading !== filters.pol) return false;
+      if (filters.pod       && s.portOfDischarge !== filters.pod) return false;
+      if (filters.etdFrom   && s.vesselDeparture && s.vesselDeparture < filters.etdFrom) return false;
+      if (filters.etdTo     && s.vesselDeparture && s.vesselDeparture > filters.etdTo) return false;
+      if (filters.etaFrom   && s.vesselEta && s.vesselEta < filters.etaFrom) return false;
+      if (filters.etaTo     && s.vesselEta && s.vesselEta > filters.etaTo) return false;
+      return true;
+    });
+  }, [shipments, search, filters]);
 
   const handleUpdate = (updated) => {
     setShipments(p => p.map(s => s.id === updated.id ? updated : s));
@@ -222,17 +261,86 @@ const ShipmentTracking = () => {
             <Navigation size={24} className="text-orange" />
           </div>
           <div>
-            <h1 className="page-title">Shipment Tracking</h1>
-            <p className="page-subtitle">{shipments.length} shipments across {STAGES.filter(s => shipments.some(sh => sh.status === s.id)).length} stages</p>
+            <h1 className="page-title">Tracking</h1>
+            <p className="page-subtitle">{filtered.length} shipments across {STAGES.filter(s => filtered.some(sh => sh.status === s.id)).length} stages</p>
           </div>
         </div>
       </div>
+
+      {/* Search + Filter bar */}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <div className="glass-panel" style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input className="ui-input" style={{ border: 'none', background: 'transparent', flex: 1, fontSize: '0.88rem' }}
+            placeholder="Search container, BOL, vessel, ref ID, customer…"
+            value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>}
+        </div>
+        <button className={`btn ${showFilters ? 'btn-primary' : 'btn-glass'}`} onClick={() => setShowFilters(v => !v)}>
+          <Filter size={15} /> Filters
+          {hasFilters && <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{Object.values(filters).filter(Boolean).length}</span>}
+        </button>
+      </div>
+
+      {/* Filter panel */}
+      {showFilters && (() => {
+        const growers   = [...new Set(shipments.map(s => s.grower || s.order?.grower).filter(Boolean))];
+        const varieties = [...new Set(shipments.map(s => s.variety || s.order?.variety).filter(Boolean))];
+        const pols      = [...new Set(shipments.map(s => s.portOfLoading).filter(Boolean))];
+        const pods      = [...new Set(shipments.map(s => s.portOfDischarge).filter(Boolean))];
+        const Sel = ({ label, value, onChange, opts, placeholder }) => (
+          <div>
+            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
+            <select className="ui-select" value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }}>
+              <option value="">{placeholder}</option>
+              {opts.map(o => typeof o === 'object'
+                ? <option key={o.value} value={o.value}>{o.label}</option>
+                : <option key={o} value={o}>{o}</option>
+              )}
+            </select>
+          </div>
+        );
+        const Inp = ({ label, type = 'text', value, onChange, placeholder }) => (
+          <div>
+            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
+            <input type={type} className="ui-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', fontSize: '0.82rem' }} />
+          </div>
+        );
+        return (
+          <div className="glass-panel" style={{ padding: '18px 20px', border: '1px solid rgba(255,107,0,0.2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px 16px' }}>
+              <Sel label="CUSTOMER"    value={filters.customer}   onChange={v => setF('customer', v)}   opts={customers.map(c => ({ value: c.id, label: c.name || c.company }))} placeholder="All Customers" />
+              <Sel label="GROWER"      value={filters.grower}     onChange={v => setF('grower', v)}     opts={growers}   placeholder="All Growers" />
+              <Sel label="VARIETY"     value={filters.variety}    onChange={v => setF('variety', v)}    opts={varieties} placeholder="All Varieties" />
+              <Sel label="ADV. PAYMENT" value={filters.advPayment} onChange={v => setF('advPayment', v)} opts={['Pending','Requested','Paid','Not Required']} placeholder="All Payments" />
+              <Sel label="POL"         value={filters.pol}        onChange={v => setF('pol', v)}        opts={pols}      placeholder="All POL" />
+              <Sel label="POD"         value={filters.pod}        onChange={v => setF('pod', v)}        opts={pods}      placeholder="All POD" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, gridColumn: 'span 1' }}>
+                <Inp label="ETD FROM" type="date" value={filters.etdFrom} onChange={v => setF('etdFrom', v)} />
+                <Inp label="ETD TO"   type="date" value={filters.etdTo}   onChange={v => setF('etdTo', v)} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <Inp label="ETA FROM" type="date" value={filters.etaFrom} onChange={v => setF('etaFrom', v)} />
+                <Inp label="ETA TO"   type="date" value={filters.etaTo}   onChange={v => setF('etaTo', v)} />
+              </div>
+            </div>
+            {hasFilters && (
+              <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-glass" style={{ fontSize: '0.78rem' }}
+                  onClick={() => { setFilters({ customer:'',grower:'',variety:'',advPayment:'',pol:'',pod:'',etdFrom:'',etdTo:'',etaFrom:'',etaTo:'' }); setSearch(''); }}>
+                  Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Kanban board */}
       <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', gap: 12, paddingBottom: 16, alignItems: 'flex-start' }}>
         {STAGES.map(stage => {
           const Icon = stage.icon;
-          const cards = shipments.filter(s => s.status === stage.id);
+          const cards = filtered.filter(s => s.status === stage.id);
           return (
             <div key={stage.id} style={{ flexShrink: 0, width: 220, display: 'flex', flexDirection: 'column' }}>
               {/* Column header */}
