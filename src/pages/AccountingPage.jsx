@@ -4,7 +4,7 @@ import {
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
   ChevronDown, ChevronRight, Trash2, ArrowLeft
 } from 'lucide-react';
-import { accountingApi, paymentsApi } from '../services/api';
+import { accountingApi, paymentsApi, shipmentsApi } from '../services/api';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -333,8 +333,10 @@ const CreateInvoiceModal = ({ onClose, onSaved }) => {
 const AccountingPage = () => {
   const [invoices, setInvoices] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('invoices');
+  const [advPayFilter, setAdvPayFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -343,12 +345,14 @@ const AccountingPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [allInvoices, allPOs] = await Promise.all([
+      const [allInvoices, allPOs, allShipments] = await Promise.all([
         accountingApi.getAllInvoices(),
-        accountingApi.getAllPOs()
+        accountingApi.getAllPOs(),
+        shipmentsApi.getAll().catch(() => []),
       ]);
       setInvoices(allInvoices);
       setPurchaseOrders(allPOs);
+      setShipments(Array.isArray(allShipments) ? allShipments : []);
       if (selectedInvoice) {
         const updated = allInvoices.find(i => i.id === selectedInvoice.id);
         if (updated) setSelectedInvoice(updated);
@@ -437,6 +441,9 @@ const AccountingPage = () => {
         </button>
         <button className={`btn ${activeTab === 'pos' ? 'btn-primary' : 'btn-glass'}`} onClick={() => setActiveTab('pos')}>
           <ShoppingCart size={16} /> Purchase Orders <span style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '1px 8px', fontSize: '0.75rem', marginLeft: 4 }}>{purchaseOrders.length}</span>
+        </button>
+        <button className={`btn ${activeTab === 'advance' ? 'btn-primary' : 'btn-glass'}`} onClick={() => setActiveTab('advance')}>
+          <CreditCard size={16} /> Advance Payments <span style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '1px 8px', fontSize: '0.75rem', marginLeft: 4 }}>{shipments.length}</span>
         </button>
       </div>
 
@@ -550,6 +557,95 @@ const AccountingPage = () => {
           </table>
         </div>
       )}
+
+      {/* Advance Payments Tab */}
+      {activeTab === 'advance' && (() => {
+        const ADV_STATUSES = ['Pending','Requested','Paid','Not Required'];
+        const ADV_COLORS = { 'Paid': '#22c55e', 'Requested': '#3b82f6', 'Pending': '#f59e0b', 'Not Required': '#94a3b8' };
+        const filtered = advPayFilter === 'All'
+          ? shipments
+          : shipments.filter(s => (s.advancePaymentStatus || 'Pending') === advPayFilter);
+
+        const counts = ADV_STATUSES.reduce((acc, st) => {
+          acc[st] = shipments.filter(s => (s.advancePaymentStatus || 'Pending') === st).length;
+          return acc;
+        }, {});
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+              {ADV_STATUSES.map(st => (
+                <button key={st} onClick={() => setAdvPayFilter(advPayFilter === st ? 'All' : st)}
+                  style={{
+                    padding: '14px 16px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                    background: advPayFilter === st ? `${ADV_COLORS[st]}20` : `${ADV_COLORS[st]}0a`,
+                    border: `1px solid ${advPayFilter === st ? ADV_COLORS[st] : ADV_COLORS[st] + '30'}`,
+                    transition: 'all 0.15s',
+                  }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: ADV_COLORS[st], textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{st}</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: ADV_COLORS[st], lineHeight: 1 }}>{counts[st]}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>shipments</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Filter chips */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Filter:</span>
+              {['All', ...ADV_STATUSES].map(st => (
+                <button key={st} onClick={() => setAdvPayFilter(st)}
+                  style={{
+                    padding: '4px 14px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 600,
+                    background: advPayFilter === st ? (ADV_COLORS[st] ? `${ADV_COLORS[st]}20` : 'rgba(255,107,0,0.15)') : 'transparent',
+                    border: `1px solid ${advPayFilter === st ? (ADV_COLORS[st] || 'var(--orange-primary)') : 'var(--border-glass)'}`,
+                    color: advPayFilter === st ? (ADV_COLORS[st] || 'var(--orange-primary)') : 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}>
+                  {st}
+                </button>
+              ))}
+            </div>
+
+            {/* Shipments table */}
+            <div style={{ borderRadius: 12, border: '1px solid var(--border-glass)', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <thead style={{ background: 'var(--bg-secondary)' }}>
+                  <tr>
+                    {['REF ID','CONTAINER #','CUSTOMER','VESSEL','ETD','ETA','ADVANCE STATUS'].map(h => (
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No shipments found</td></tr>
+                  ) : filtered.map((s, i) => {
+                    const refId = s.order?.referenceId || s.shipmentRefId;
+                    const advStatus = s.advancePaymentStatus || 'Pending';
+                    const color = ADV_COLORS[advStatus] || '#94a3b8';
+                    return (
+                      <tr key={s.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: 'var(--orange-primary)', fontWeight: 700 }}>{refId ? `#${refId}` : '—'}</td>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
+                        <td style={{ padding: '10px 14px' }}>{s.contact?.name || '—'}</td>
+                        <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{s.vesselName || '—'}</td>
+                        <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? new Date(s.vesselDeparture).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—'}</td>
+                        <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#22c55e' }}>{s.vesselEta ? new Date(s.vesselEta).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—'}</td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <span style={{ background: `${color}15`, color, border: `1px solid ${color}40`, borderRadius: 20, padding: '3px 12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                            {advStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
 
       {showCreateModal && <CreateInvoiceModal onClose={() => setShowCreateModal(false)} onSaved={() => { setShowCreateModal(false); loadData(); }} />}
     </div>

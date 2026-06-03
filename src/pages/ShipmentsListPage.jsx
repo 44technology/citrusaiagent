@@ -80,7 +80,7 @@ const ShipmentsListPage = () => {
   const [sort, setSort]                 = useState({ field: 'vesselEta', dir: 'asc' });
 
   const [filters, setFilters] = useState({
-    status: '', customer: '', grower: '', bol: '', container: '',
+    status: '', advPayment: '', customer: '', grower: '', bol: '', container: '',
     vessel: '', pol: '', pod: '', variety: '',
     etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
   });
@@ -134,8 +134,9 @@ const ShipmentsListPage = () => {
       (s.shipmentRefId ? String(s.shipmentRefId) : '').includes(q);
 
       if (!matchSearch) return false;
-      if (filters.status    && s.status !== filters.status) return false;
-      if (filters.customer  && s.contactId !== filters.customer) return false;
+      if (filters.status     && s.status !== filters.status) return false;
+      if (filters.advPayment && (s.advancePaymentStatus || '') !== filters.advPayment) return false;
+      if (filters.customer   && s.contactId !== filters.customer) return false;
       if (filters.bol       && !(s.bolNumber || '').toLowerCase().includes(filters.bol.toLowerCase())) return false;
       if (filters.container && !(s.containerNumber || '').toLowerCase().includes(filters.container.toLowerCase())) return false;
       if (filters.vessel    && !(s.vesselName || '').toLowerCase().includes(filters.vessel.toLowerCase())) return false;
@@ -456,8 +457,10 @@ const ShipmentsListPage = () => {
       {showFilters && (
         <div className="glass-panel" style={{ padding: '18px 20px', border: '1px solid rgba(255,107,0,0.2)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 16px' }}>
-            <FilterSelect label="STATUS"   value={filters.status}   onChange={v => setF('status', v)}   options={statuses}  placeholder="All Status" />
-            <FilterSelect label="CUSTOMER" value={filters.customer} onChange={v => setF('customer', v)}
+            <FilterSelect label="STATUS"      value={filters.status}     onChange={v => setF('status', v)}     options={statuses}  placeholder="All Status" />
+            <FilterSelect label="ADV. PAYMENT" value={filters.advPayment} onChange={v => setF('advPayment', v)}
+              options={['Pending','Requested','Paid','Not Required']} placeholder="All Payments" />
+            <FilterSelect label="CUSTOMER"  value={filters.customer}  onChange={v => setF('customer', v)}
               options={customers.map(c => ({ value: c.id, label: c.name || c.company }))}
               placeholder="All Customers" />
             <FilterSelect label="GROWER"   value={filters.grower}   onChange={v => setF('grower', v)}   options={growers}   placeholder="All Grower" />
