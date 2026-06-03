@@ -35,7 +35,7 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
   };
 
   const thStyle = { padding: '10px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.72rem', whiteSpace: 'nowrap', letterSpacing: '0.04em', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid var(--border-glass)' };
-  const tdStyle = { padding: '10px 12px', fontSize: '0.82rem', verticalAlign: 'top', borderBottom: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap' };
+  const tdStyle = { padding: '10px 12px', fontSize: '0.82rem', verticalAlign: 'top', borderBottom: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', color: 'var(--text-primary)' };
 
   return (
     <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid var(--border-glass)' }}>
@@ -75,11 +75,11 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
                   </div>
                 )}
               </td>
-              <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>{row.city || '—'}</td>
-              <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>{row.state || '—'}</td>
-              <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>{row.zip || '—'}</td>
-              <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>{row.country || '—'}</td>
-              <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>
+              <td style={tdStyle}>{row.city || '—'}</td>
+              <td style={tdStyle}>{row.state || '—'}</td>
+              <td style={tdStyle}>{row.zip || '—'}</td>
+              <td style={tdStyle}>{row.country || '—'}</td>
+              <td style={tdStyle}>
                 {row.companyPhone && row.companyPhone !== 'N/A' ? row.companyPhone : '—'}
               </td>
               <td style={{ ...tdStyle, color: '#38bdf8', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
