@@ -1332,11 +1332,29 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselArrival} onChange={e => set('vesselArrival', e.target.value)} />
                 </Field>
-                {editingSection === 'ports' && (
-                  <Field label="Status" value={shipment.status} editing={editingSection === 'ports'}>
-                    <Sel opts={STATUS_OPTIONS} value={ed.status} onChange={e => set('status', e.target.value)} />
-                  </Field>
-                )}
+                {/* Status — always visible, auto-saves on change */}
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Status</div>
+                  {canEdit ? (
+                    <select
+                      className="ui-input"
+                      style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                      value={shipment.status}
+                      onChange={async e => {
+                        const newStatus = e.target.value;
+                        try {
+                          const updated = await shipmentsApi.update(shipment.id, { status: newStatus });
+                          onUpdate(updated);
+                          set('status', newStatus);
+                        } catch (err) { alert('Failed: ' + err.message); }
+                      }}
+                    >
+                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <div style={{ fontSize: '0.88rem', fontWeight: 500 }}>{shipment.status}</div>
+                  )}
+                </div>
               </div>
             </div>
 
