@@ -360,6 +360,31 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
               {renderField('ZIP CODE', 'zip', null)}
               {renderField('COUNTRY', 'country', null)}
             </div>
+            {/* Shipment Stats */}
+            {customerShipments.length > 0 && (() => {
+              const ADV = [
+                { label: 'Pending',      color: '#f59e0b', count: customerShipments.filter(s => (s.advancePaymentStatus || 'Pending') === 'Pending').length },
+                { label: 'Requested',    color: '#3b82f6', count: customerShipments.filter(s => s.advancePaymentStatus === 'Requested').length },
+                { label: 'Paid',         color: '#22c55e', count: customerShipments.filter(s => s.advancePaymentStatus === 'Paid').length },
+                { label: 'Not Required', color: '#94a3b8', count: customerShipments.filter(s => s.advancePaymentStatus === 'Not Required').length },
+              ];
+              return (
+                <div style={{ marginTop: 4, padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+                    Advance Payments · {customerShipments.length} Shipments
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+                    {ADV.map(st => (
+                      <div key={st.label} style={{ textAlign: 'center', padding: '10px 8px', borderRadius: 8, background: `${st.color}10`, border: `1px solid ${st.color}25` }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 800, color: st.color, lineHeight: 1 }}>{st.count}</div>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, color: st.color, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{st.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Financial */}
             <div style={{ marginTop: 4, padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)' }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
