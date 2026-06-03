@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Ship, MapPin, Anchor, Clock, CheckCircle2, Navigation,
   Package, FileText, AlertCircle, Loader2, X, Calendar, User,
@@ -138,8 +138,32 @@ const KanbanCard = ({ shipment, color, onClick }) => {
 };
 
 // ── Detail drawer ─────────────────────────────────────────────
+const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Delivered'];
+
 const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
+  const [savingStatus, setSavingStatus] = useState(false);
+  const { shipmentsApi: api } = (() => {
+    try { return { shipmentsApi: require ? null : null }; } catch { return {}; }
+  })() || {};
+
   if (!shipment) return null;
+
+  const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
+  const canEdit = ['admin', 'operation', 'super admin'].includes(currentUser.role);
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus === shipment.status) return;
+    setSavingStatus(true);
+    try {
+      const { shipmentsApi } = await import('../services/api');
+      const updated = await shipmentsApi.update(shipment.id, { status: newStatus });
+      onUpdate(updated);
+    } catch (err) { alert('Failed: ' + err.message); }
+    finally { setSavingStatus(false); }
+  };
+
+  const stage = STAGES.find(s => s.id === shipment.status) || STAGES[0];
+
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }} />
@@ -159,9 +183,29 @@ const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
                 {[shipment.shippingLine, shipment.vesselName, shipment.contact?.name].filter(Boolean).join(' · ')}
               </div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 6 }}>
-              <X size={20} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* Quick status change */}
+              {canEdit && (
+                <select
+                  value={shipment.status}
+                  onChange={e => handleStatusChange(e.target.value)}
+                  disabled={savingStatus}
+                  style={{
+                    background: `${stage.color}18`,
+                    border: `1px solid ${stage.color}50`,
+                    color: stage.color,
+                    borderRadius: 20, padding: '4px 12px',
+                    fontSize: '0.78rem', fontWeight: 700,
+                    cursor: 'pointer', outline: 'none',
+                  }}
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              )}
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 6 }}>
+                <X size={20} />
+              </button>
+            </div>
           </div>
           <StatusLine shipment={shipment} />
         </div>
