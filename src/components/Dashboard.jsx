@@ -4,7 +4,7 @@ import CustomerTable from './CustomerTable';
 import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
 import ImportLeadsModal from './ImportLeadsModal';
-import { contactsApi } from '../services/api';
+import { contactsApi, shipmentsApi } from '../services/api';
 import { FileSpreadsheet } from 'lucide-react';
 import '../index.css';
 
@@ -14,6 +14,7 @@ const Dashboard = ({ activeTab }) => {
   const [showImport, setShowImport] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [shipments, setShipments] = useState([]);
 
   const currentUser = (() => {
     try {
@@ -29,8 +30,12 @@ const Dashboard = ({ activeTab }) => {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const data = await contactsApi.getAll();
+      const [data, sData] = await Promise.all([
+        contactsApi.getAll(),
+        shipmentsApi.getAll().catch(() => []),
+      ]);
       setContacts(data);
+      setShipments(Array.isArray(sData) ? sData : []);
     } catch (err) {
       console.error('Failed to fetch contacts:', err);
     } finally {
@@ -123,12 +128,38 @@ const Dashboard = ({ activeTab }) => {
             <div>
               <h2>{activeTab === 'leads' ? 'Leads Management' : 'Customer Directory'}</h2>
               <p className="text-sec mt-2">
-                {activeTab === 'leads' 
-                  ? 'Upload and manage potential customers. Click on a row to configure AI outreach.' 
+                {activeTab === 'leads'
+                  ? 'Upload and manage potential customers. Click on a row to configure AI outreach.'
                   : 'View and manage your converted customers.'}
               </p>
             </div>
           </div>
+
+          {/* Shipment stats — customers tab only */}
+          {activeTab === 'customers' && shipments.length > 0 && (() => {
+            const stats = [
+              { label: 'Pending',    color: '#94a3b8', count: shipments.filter(s => s.status === 'Pending').length },
+              { label: 'In Transit', color: '#06b6d4', count: shipments.filter(s => ['Departed','Transshipment','In Transit'].includes(s.status)).length },
+              { label: 'Delivered',  color: '#22c55e', count: shipments.filter(s => s.status === 'Delivered').length },
+              { label: 'Paid',       color: '#f59e0b', count: shipments.filter(s => s.advancePaymentStatus === 'Paid').length },
+            ];
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+                {stats.map(st => (
+                  <div key={st.label} style={{
+                    padding: '14px 16px', borderRadius: 12,
+                    background: `${st.color}12`,
+                    border: `1px solid ${st.color}30`,
+                    display: 'flex', flexDirection: 'column', gap: 4,
+                  }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: st.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{st.label}</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800, color: st.color, lineHeight: 1 }}>{st.count}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>shipments</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {loading ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
