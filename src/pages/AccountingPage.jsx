@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi } from '../services/api';
 
+const ADV_STATUSES_LIST = ['Pending', 'Requested', 'Paid', 'Not Required'];
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -633,9 +635,25 @@ const AccountingPage = () => {
                         <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? new Date(s.vesselDeparture).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—'}</td>
                         <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#22c55e' }}>{s.vesselEta ? new Date(s.vesselEta).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—'}</td>
                         <td style={{ padding: '10px 14px' }}>
-                          <span style={{ background: `${color}15`, color, border: `1px solid ${color}40`, borderRadius: 20, padding: '3px 12px', fontSize: '0.75rem', fontWeight: 700 }}>
-                            {advStatus}
-                          </span>
+                          <select
+                            value={advStatus}
+                            onChange={async e => {
+                              const val = e.target.value;
+                              try {
+                                await shipmentsApi.update(s.id, { advancePaymentStatus: val });
+                                setShipments(prev => prev.map(x => x.id === s.id ? { ...x, advancePaymentStatus: val } : x));
+                              } catch (err) { alert('Failed: ' + err.message); }
+                            }}
+                            style={{
+                              background: `${color}15`, color,
+                              border: `1px solid ${color}40`,
+                              borderRadius: 20, padding: '3px 12px',
+                              fontSize: '0.75rem', fontWeight: 700,
+                              cursor: 'pointer', outline: 'none',
+                            }}
+                          >
+                            {ADV_STATUSES_LIST.map(st => <option key={st} value={st}>{st}</option>)}
+                          </select>
                         </td>
                       </tr>
                     );
