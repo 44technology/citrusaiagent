@@ -259,8 +259,8 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
 // ─── Product / Variety options ───────────────────────────────────────────────
 
 const PRODUCTS = {
-  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Maroc Late', 'Other'],
-  'Orange':   ['Navel', 'Valencia', 'Blood Orange', 'Cara Cara', 'Other'],
+  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
+  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
   'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
   'Lime':     ['Persian', 'Key Lime', 'Other'],
 };

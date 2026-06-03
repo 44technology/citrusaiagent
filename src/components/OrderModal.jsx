@@ -4,8 +4,8 @@ import { contactsApi } from '../services/api';
 
 // ── Product / Variety catalogue ──────────────────────────────
 const PRODUCTS = {
-  'Orange':   ['Navel', 'Valencia', 'Blood Orange', 'Cara Cara', 'Other'],
-  'Mandarin': ['Nadorcott', 'W Murcot', 'Clementines', 'Tango', 'Other'],
+  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
+  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
   'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
   'Lime':     ['Persian', 'Key Lime', 'Kaffir', 'Other'],
 };
