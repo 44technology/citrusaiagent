@@ -525,11 +525,29 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                           <MapPin size={12} /> {s.origin ? `${s.origin} → ` : ''}{s.destination}
                         </div>
                       </div>
-                      <span className="status-pill" style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '2px 8px',
-                        background: s.status === 'Arrived' ? 'rgba(174, 234, 0, 0.1)' : 'rgba(255, 122, 0, 0.1)',
-                        color: s.status === 'Arrived' ? 'var(--green-accent)' : 'var(--orange-primary)'
+                      <span style={{
+                        fontSize: '0.75rem', fontWeight: 700,
+                        padding: '3px 10px', borderRadius: 20,
+                        background: {
+                          'Pending':       'rgba(148,163,184,0.15)',
+                          'Loading':       'rgba(245,158,11,0.15)',
+                          'Departed':      'rgba(59,130,246,0.15)',
+                          'Transshipment': 'rgba(139,92,246,0.15)',
+                          'In Transit':    'rgba(6,182,212,0.15)',
+                          'Arrived':       'rgba(16,185,129,0.15)',
+                          'Customs':       'rgba(249,115,22,0.15)',
+                          'Delivered':     'rgba(34,197,94,0.2)',
+                        }[s.status] || 'rgba(255,255,255,0.07)',
+                        color: {
+                          'Pending':       '#94a3b8',
+                          'Loading':       '#f59e0b',
+                          'Departed':      '#3b82f6',
+                          'Transshipment': '#8b5cf6',
+                          'In Transit':    '#06b6d4',
+                          'Arrived':       '#10b981',
+                          'Customs':       '#f97316',
+                          'Delivered':     '#22c55e',
+                        }[s.status] || '#94a3b8',
                       }}>
                         {s.status}
                       </span>
