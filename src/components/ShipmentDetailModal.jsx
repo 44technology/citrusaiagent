@@ -402,13 +402,14 @@ const Sel = ({ opts, ...props }) => (
 
 // ─── Reefer Panel ─────────────────────────────────────────────────────────────
 
-const ReeferPanel = ({ s, editing, ed, set }) => {
+const ReeferPanel = ({ s, editing, ed, set, header }) => {
   const diff = s.reeferTempActual != null && s.reeferTempSet != null
     ? +(s.reeferTempActual - s.reeferTempSet).toFixed(1) : null;
   const tempOk = diff !== null && Math.abs(diff) <= 1.5;
 
   return (
     <div className="glass-panel" style={{ padding: 14, borderLeft: '3px solid #38bdf8' }}>
+      {header || (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Snowflake size={14} style={{ color: '#38bdf8' }} />
         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Reefer Temperature</span>
@@ -421,7 +422,7 @@ const ReeferPanel = ({ s, editing, ed, set }) => {
             {tempOk ? '✓ On Target' : `⚠ Δ${diff > 0 ? '+' : ''}${diff}°C`}
           </span>
         )}
-      </div>
+      </div>)}
       {editing ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, maxWidth: 320 }}>
           <div>
@@ -959,7 +960,8 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
 const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, embedded = false }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing]       = useState(false);
+  const [editingSection, setEditingSection] = useState(null); // 'cargo' | 'ports' | 'reefer'
   const [ed, setEd]               = useState(null);
   const [events, setEvents]       = useState([]);
   const [loading, setLoading]     = useState(false);
@@ -1028,14 +1030,37 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (section = null) => {
     setLoading(true);
     try {
       const updated = await shipmentsApi.update(shipment.id, ed);
-      onUpdate(updated); setEvents(updated.events || []); setIsEditing(false);
+      onUpdate(updated); setEvents(updated.events || []);
+      setIsEditing(false);
+      setEditingSection(null);
     } catch (err) { alert('Save failed: ' + err.message); }
     finally { setLoading(false); }
   };
+
+  // Per-section edit header helper
+  const SectionHeader = ({ label, section }) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</div>
+      {canEdit && (
+        editingSection === section ? (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn btn-glass" style={{ padding: '3px 10px', fontSize: '0.75rem' }} onClick={() => setEditingSection(null)}>Cancel</button>
+            <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: '0.75rem' }} onClick={() => handleSave(section)} disabled={loading}>
+              <Save size={11} /> {loading ? '…' : 'Save'}
+            </button>
+          </div>
+        ) : (
+          <button className="btn btn-glass" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => setEditingSection(section)}>
+            <Edit3 size={11} /> Edit
+          </button>
+        )
+      )}
+    </div>
+  );
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this shipment and all its journey events?')) return;
@@ -1108,30 +1133,13 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
 
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
 
-            {/* Embedded edit bar */}
-            {embedded && canEdit && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                {isEditing ? (
-                  <>
-                    <button className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={() => setIsEditing(false)}>Cancel</button>
-                    <button className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={handleSave} disabled={loading}>
-                      <Save size={13} /> {loading ? 'Saving…' : 'Save'}
-                    </button>
-                  </>
-                ) : (
-                  <button className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px' }} onClick={() => setIsEditing(true)}>
-                    <Edit3 size={13} /> Edit
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Progress bar — only in non-embedded modal */}
             {!embedded && <RouteProgress shipment={shipment} events={events} />}
 
             {/* Container & Cargo */}
             <div className="glass-panel" style={{ padding: 14 }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Container & Cargo</div>
+              <SectionHeader label="Container & Cargo" section="cargo" />
 
               {/* Linked Order — REF ID */}
               <div style={{ marginBottom: 12 }}>
@@ -1195,7 +1203,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 {/* Reference ID — independent from order */}
                 <Field
                   label="Reference ID"
-                  editing={isEditing}
+                  editing={editingSection === 'cargo'}
                   value={
                     (shipment.shipmentRefId || shipment.order?.referenceId)
                       ? <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--orange-primary)' }}>
@@ -1211,23 +1219,23 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                   />
                 </Field>
 
-                <Field label="Container #" value={shipment.containerNumber} editing={isEditing}>
+                <Field label="Container #" value={shipment.containerNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. CMAU1234567" value={ed.containerNumber} onChange={e => set('containerNumber', e.target.value)} />
                 </Field>
-                <Field label="Container Type" value={shipment.containerType} editing={isEditing}>
+                <Field label="Container Type" value={shipment.containerType} editing={editingSection === 'cargo'}>
                   <Sel opts={CONTAINER_TYPES} value={ed.containerType} onChange={e => set('containerType', e.target.value)} />
                 </Field>
-                <Field label="Seal #" value={shipment.sealNumber} editing={isEditing}>
+                <Field label="Seal #" value={shipment.sealNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
                 </Field>
-                <Field label="Grower" value={shipment.grower} editing={isEditing}>
+                <Field label="Grower" value={shipment.grower} editing={editingSection === 'cargo'}>
                   <GrowerAutocomplete
                     value={ed.grower}
                     onChange={v => set('grower', v)}
                     growers={growers}
                   />
                 </Field>
-                <Field label="Variety" value={shipment.variety} editing={isEditing}>
+                <Field label="Variety" value={shipment.variety} editing={editingSection === 'cargo'}>
                   <select
                     className="ui-input"
                     style={{ padding: '6px 10px', fontSize: '0.84rem' }}
@@ -1242,13 +1250,13 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                     ))}
                   </select>
                 </Field>
-                <Field label="Cargo" value={shipment.cargoDescription} editing={isEditing}>
+                <Field label="Cargo" value={shipment.cargoDescription} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />
                 </Field>
-                <Field label="Gross Weight" value={shipment.grossWeight ? `${Number(shipment.grossWeight).toLocaleString()} kg` : null} editing={isEditing}>
+                <Field label="Gross Weight" value={shipment.grossWeight ? `${Number(shipment.grossWeight).toLocaleString()} kg` : null} editing={editingSection === 'cargo'}>
                   <Inp type="number" placeholder="kg" value={ed.grossWeight} onChange={e => set('grossWeight', e.target.value)} />
                 </Field>
-                <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={isEditing}>
+                <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={editingSection === 'cargo'}>
                   <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
                 </Field>
 
@@ -1256,7 +1264,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 <div style={{ gridColumn: '1 / -1' }}>
                   <Field
                     label="Advance Payment Status"
-                    editing={isEditing}
+                    editing={editingSection === 'cargo'}
                     value={
                       shipment.advancePaymentStatus
                         ? <span style={{
@@ -1290,41 +1298,42 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
             </div>
 
             {/* Reefer */}
-            {showReefer && <ReeferPanel s={shipment} editing={isEditing} ed={ed} set={set} />}
+            {showReefer && <ReeferPanel s={shipment} editing={editingSection === 'reefer'} ed={ed} set={set}
+              header={<SectionHeader label="Reefer Temperature" section="reefer" />} />}
 
             {/* Ports & Schedule */}
             <div className="glass-panel" style={{ padding: 14 }}>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Ports & Schedule</div>
+              <SectionHeader label="Ports & Schedule" section="ports" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                <Field label="Port of Loading" value={shipment.portOfLoading} editing={isEditing}>
+                <Field label="Port of Loading" value={shipment.portOfLoading} editing={editingSection === 'ports'}>
                   <Inp placeholder="e.g. Port of Agadir" value={ed.portOfLoading} onChange={e => set('portOfLoading', e.target.value)} />
                 </Field>
-                <Field label="Transshipment Port" value={shipment.transshipmentPort} editing={isEditing}>
+                <Field label="Transshipment Port" value={shipment.transshipmentPort} editing={editingSection === 'ports'}>
                   <Inp placeholder="e.g. Port of Algeciras" value={ed.transshipmentPort} onChange={e => set('transshipmentPort', e.target.value)} />
                 </Field>
-                <Field label="Port of Discharge" value={shipment.portOfDischarge} editing={isEditing}>
+                <Field label="Port of Discharge" value={shipment.portOfDischarge} editing={editingSection === 'ports'}>
                   <Inp placeholder="e.g. Port of Newark, NJ" value={ed.portOfDischarge} onChange={e => set('portOfDischarge', e.target.value)} />
                 </Field>
-                <Field label="Vessel Name" value={shipment.vesselName} editing={isEditing}>
+                <Field label="Vessel Name" value={shipment.vesselName} editing={editingSection === 'ports'}>
                   <Inp placeholder="Vessel name" value={ed.vesselName} onChange={e => set('vesselName', e.target.value)} />
                 </Field>
-                <Field label="Shipping Line" value={shipment.shippingLine} editing={isEditing}>
+                <Field label="Shipping Line" value={shipment.shippingLine} editing={editingSection === 'ports'}>
                   <Inp placeholder="e.g. CMA CGM" value={ed.shippingLine} onChange={e => set('shippingLine', e.target.value)} />
                 </Field>
-                <Field label="BOL Number" value={shipment.bolNumber} editing={isEditing}>
+                <Field label="BOL Number" value={shipment.bolNumber} editing={editingSection === 'ports'}>
                   <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
                 </Field>
-                <Field label="Departure Date" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={isEditing}>
+                <Field label="Departure Date" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselDeparture} onChange={e => set('vesselDeparture', e.target.value)} />
                 </Field>
-                <Field label="ETA (Newark)" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={isEditing}>
+                <Field label="ETA (Newark)" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselEta} onChange={e => set('vesselEta', e.target.value)} />
                 </Field>
-                <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={isEditing}>
+                <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselArrival} onChange={e => set('vesselArrival', e.target.value)} />
                 </Field>
-                {isEditing && (
-                  <Field label="Status" value={shipment.status} editing={isEditing}>
+                {editingSection === 'ports' && (
+                  <Field label="Status" value={shipment.status} editing={editingSection === 'ports'}>
                     <Sel opts={STATUS_OPTIONS} value={ed.status} onChange={e => set('status', e.target.value)} />
                   </Field>
                 )}
@@ -1347,7 +1356,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
 
             {/* Notes */}
             <div className="glass-panel" style={{ padding: 14 }}>
-              <Field label="Notes" value={shipment.notes} editing={isEditing}>
+              <SectionHeader label="Notes" section="notes" />
+              <Field label="" value={shipment.notes} editing={editingSection === 'notes'}>
                 <textarea className="ui-input" rows={3}
                   style={{ resize: 'vertical', fontSize: '0.84rem', width: '100%' }}
                   placeholder="Shipping notes, remarks…"
@@ -1355,7 +1365,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
               </Field>
             </div>
 
-            {isSuperAdmin && !isEditing && (
+            {isSuperAdmin && !editingSection && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button className="btn btn-glass" style={{ color: '#ef4444', fontSize: '0.8rem' }} onClick={handleDelete}>
                   <Trash2 size={13} /> Delete Shipment
