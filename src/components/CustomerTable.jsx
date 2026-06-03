@@ -35,7 +35,7 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
   };
 
   const thStyle = { padding: '10px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.72rem', whiteSpace: 'nowrap', letterSpacing: '0.04em', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid var(--border-glass)' };
-  const tdStyle = { padding: '10px 12px', fontSize: '0.82rem', verticalAlign: 'top', borderBottom: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', color: 'var(--text-primary)' };
+  const tdStyle = { padding: '10px 12px', fontSize: '0.82rem', verticalAlign: 'top', borderBottom: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', color: '#e2e8f0' };
 
   return (
     <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid var(--border-glass)' }}>
