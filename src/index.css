@@ -189,12 +189,14 @@ h3 { font-size: 1.1rem; font-weight: 500; }
   flex-direction: column;
   gap: 16px;
   overflow: hidden;
+  min-height: 0;
 }
 
 .scroll-content {
   flex: 1;
   overflow-y: auto;
   border-radius: var(--radius-md);
+  min-height: 0;
 }
 
 /* Sidebar */
