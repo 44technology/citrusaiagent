@@ -98,9 +98,26 @@ export const createContactsBulk = async (req, res) => {
 // PATCH /api/contacts/:id
 export const updateContact = async (req, res) => {
   try {
+    // Whitelist only known Contact fields to prevent Prisma errors
+    const ALLOWED = new Set([
+      'name','phone','email','company','department','language','credit','status','type',
+      'city','state','zip','country','address','companyPhone','website',
+      'classifications','commodities',
+      'lineOfCredit','openBalance','termDays',
+      'companyId',
+    ]);
+    const data = Object.fromEntries(
+      Object.entries(req.body).filter(([k]) => ALLOWED.has(k))
+    );
+    // Parse numeric fields safely
+    if (data.lineOfCredit !== undefined) data.lineOfCredit = data.lineOfCredit === '' || data.lineOfCredit === null ? null : parseFloat(data.lineOfCredit);
+    if (data.openBalance  !== undefined) data.openBalance  = data.openBalance  === '' || data.openBalance  === null ? null : parseFloat(data.openBalance);
+    if (data.termDays     !== undefined) data.termDays     = data.termDays     === '' || data.termDays     === null ? null : parseInt(data.termDays);
+    if (data.credit       !== undefined) data.credit       = parseFloat(data.credit) || 0;
+
     const contact = await prisma.contact.update({
       where: { id: req.params.id },
-      data: req.body
+      data
     });
     res.json(contact);
   } catch (error) {

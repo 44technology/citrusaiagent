@@ -188,18 +188,12 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             </div>
           </div>
 
-          {/* Grower / Shipper / Receiver */}
+          {/* Grower */}
           <div>
             <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>PARTIES</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, maxWidth: 300 }}>
               <Field label="GROWER">
                 <input className="ui-input" placeholder="Grower name" value={form.grower} onChange={e => set('grower', e.target.value)} />
-              </Field>
-              <Field label="SHIPPER">
-                <input className="ui-input" placeholder="Shipper name" value={form.shipper} onChange={e => set('shipper', e.target.value)} />
-              </Field>
-              <Field label="RECEIVER">
-                <input className="ui-input" placeholder="Receiver name" value={form.receiver} onChange={e => set('receiver', e.target.value)} />
               </Field>
             </div>
           </div>

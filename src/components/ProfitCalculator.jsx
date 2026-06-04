@@ -33,10 +33,10 @@ const ProfitCalculator = ({ onClose }) => {
     <div style={{
       position: 'fixed', right: 24, top: '50%', transform: 'translateY(-50%)',
       width: 320, zIndex: 200,
-      background: 'var(--bg-card)',
+      background: '#1a1f2e',
       border: '1px solid rgba(255,107,0,0.3)',
       borderRadius: 16,
-      boxShadow: '0 0 40px rgba(255,107,0,0.15)',
+      boxShadow: '0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(255,107,0,0.15)',
       overflow: 'hidden',
     }}>
       {/* Header */}
