@@ -223,12 +223,25 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
       }
       if (!finalContactId) { alert('Please select a customer'); setSubmitting(false); return; }
 
+      // Clean empty strings to null for numeric fields
+      const clean = (v) => v === '' ? null : v;
       const data = {
-        ...form,
+        product: form.product,
+        variety: form.variety,
+        label: form.label || null,
+        grower: form.grower || null,
+        week: form.week || null,
         contactId: finalContactId,
         boxQuantity: totalBoxQty,
         boxType: JSON.stringify(boxRows.filter(r => r.boxType || r.boxQty)),
-        purchasePrice: totalPrice > 0 ? totalPrice : (parseFloat(form.purchasePrice) || null),
+        purchasePrice: totalPrice > 0 ? totalPrice : null,
+        salePrice: clean(form.salePrice),
+        expense: clean(form.expense),
+        departureWeek: clean(form.departureWeek),
+        arrivalWeek: clean(form.arrivalWeek),
+        advancePaymentTerms: clean(form.advancePaymentTerms),
+        advancePaymentPct: clean(form.advancePaymentPct),
+        advancePaymentAmount: clean(form.advancePaymentAmount),
       };
       if (isEdit) await onEdit(initialData.id, data);
       else await onAdd(data);

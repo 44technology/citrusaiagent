@@ -103,11 +103,18 @@ export const updateOrder = async (req, res) => {
     }
 
     const data = { ...req.body };
-    delete data.referenceId; // never allow overwriting referenceId
+    // Strip read-only and relation fields
+    ['referenceId', 'id', 'contact', 'user', 'createdAt', 'updatedAt', 'purchaseOrders', 'invoices', 'documents', 'shipments', 'tenant'].forEach(k => delete data[k]);
+    // Parse numeric fields
     if (data.purchasePrice !== undefined) data.purchasePrice = data.purchasePrice ? parseFloat(data.purchasePrice) : null;
     if (data.salePrice !== undefined) data.salePrice = data.salePrice ? parseFloat(data.salePrice) : null;
     if (data.expense !== undefined) data.expense = data.expense ? parseFloat(data.expense) : null;
     if (data.boxQuantity !== undefined) data.boxQuantity = parseInt(data.boxQuantity) || 0;
+    if (data.departureWeek !== undefined) data.departureWeek = data.departureWeek ? parseInt(data.departureWeek) : null;
+    if (data.arrivalWeek !== undefined) data.arrivalWeek = data.arrivalWeek ? parseInt(data.arrivalWeek) : null;
+    if (data.advancePaymentTerms !== undefined) data.advancePaymentTerms = data.advancePaymentTerms ? parseInt(data.advancePaymentTerms) : null;
+    if (data.advancePaymentPct !== undefined) data.advancePaymentPct = data.advancePaymentPct ? parseFloat(data.advancePaymentPct) : null;
+    if (data.advancePaymentAmount !== undefined) data.advancePaymentAmount = data.advancePaymentAmount ? parseFloat(data.advancePaymentAmount) : null;
 
     const order = await prisma.order.update({
       where: { id },
