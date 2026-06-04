@@ -231,6 +231,8 @@ model Order {
   expense       Float?
   receiver      String?
   week          String?
+  departureWeek Int?
+  arrivalWeek   Int?
   status        String   @default("pending")
   advancePaymentTerms  Int?      // Payment terms in days (e.g. 15, 30)
   advancePaymentPct    Float?    // Advance payment percentage (e.g. 70)

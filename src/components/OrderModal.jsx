@@ -22,6 +22,8 @@ const EMPTY = {
   salePrice: '',
   expense: '',
   week: '',
+  departureWeek: '',
+  arrivalWeek: '',
   contactId: '',
   advancePaymentTerms: '',
   advancePaymentPct: '',
@@ -153,6 +155,8 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
         salePrice:     initialData.salePrice || '',
         expense:       initialData.expense || '',
         week:          initialData.week || '',
+        departureWeek: initialData.departureWeek || '',
+        arrivalWeek:   initialData.arrivalWeek || '',
         contactId:     initialData.contactId || '',
         advancePaymentTerms:  initialData.advancePaymentTerms || '',
         advancePaymentPct:    initialData.advancePaymentPct || '',
@@ -428,10 +432,15 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             )}
           </div>
 
-          {/* Week */}
-          <Field label="WEEK / TIMING">
-            <input className="ui-input" placeholder="e.g. Week 22, 2025" value={form.week} onChange={e => set('week', e.target.value)} />
-          </Field>
+          {/* Weeks */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Field label="DEPARTURE WEEK">
+              <input type="number" className="ui-input" placeholder="e.g. 22" min="1" max="53" value={form.departureWeek || ''} onChange={e => set('departureWeek', e.target.value)} />
+            </Field>
+            <Field label="ARRIVAL WEEK">
+              <input type="number" className="ui-input" placeholder="e.g. 25" min="1" max="53" value={form.arrivalWeek || ''} onChange={e => set('arrivalWeek', e.target.value)} />
+            </Field>
+          </div>
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>

@@ -54,7 +54,7 @@ export const createOrder = async (req, res) => {
     const {
       grower, shipper, product, label, variety, boxType,
       boxQuantity, purchasePrice, salePrice, expense,
-      receiver, week, status, contactId,
+      receiver, week, departureWeek, arrivalWeek, status, contactId,
       advancePaymentTerms, advancePaymentPct, advancePaymentAmount
     } = req.body;
 
@@ -75,6 +75,8 @@ export const createOrder = async (req, res) => {
         expense: expense ? parseFloat(expense) : null,
         receiver: receiver || null,
         week: week || null,
+        departureWeek: departureWeek ? parseInt(departureWeek) : null,
+        arrivalWeek: arrivalWeek ? parseInt(arrivalWeek) : null,
         status: status || 'pending',
         userId: userId || null,
         contactId,
