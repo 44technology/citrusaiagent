@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, X, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ShoppingBag, X, Loader2, Plus, Trash2, Calculator } from 'lucide-react';
 import { contactsApi } from '../services/api';
 
 // ── Product / Variety catalogue ──────────────────────────────
@@ -36,6 +36,99 @@ const Field = ({ label, children, span2 = false }) => (
     {children}
   </div>
 );
+
+// ── Inline P&L Calculator ────────────────────────────────────
+const OrderPLCalculator = ({ totalPrice, totalBoxQty }) => {
+  const [open, setOpen] = useState(false);
+  const [salePrice, setSalePrice] = useState('');
+  const [freight, setFreight] = useState('');
+  const [customs, setCustoms] = useState('');
+  const [handling, setHandling] = useState('');
+  const [otherExp, setOtherExp] = useState('');
+
+  const totalExpense = [freight, customs, handling, otherExp].reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const totalSale = (parseFloat(salePrice) || 0) * totalBoxQty;
+  const netProfit = totalSale - totalPrice - totalExpense;
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        style={{
+          width: '100%', padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+          background: 'rgba(255,107,0,0.06)', border: '1px dashed rgba(255,107,0,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          color: 'var(--orange-primary)', fontSize: '0.85rem', fontWeight: 600,
+        }}>
+        <Calculator size={16} /> Open P&L Calculator
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ padding: 16, borderRadius: 12, background: '#1a1f2e', border: '1px solid rgba(255,107,0,0.25)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Calculator size={15} style={{ color: 'var(--orange-primary)' }} />
+          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>P&L Calculator</span>
+        </div>
+        <button type="button" onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
+          <X size={14} />
+        </button>
+      </div>
+
+      {/* Purchase total (from box rows) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Total Purchase (from box rows)</span>
+        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+        <div>
+          <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>SALE PRICE / BOX ($)</label>
+          <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={salePrice} onChange={e => setSalePrice(e.target.value)} style={{ fontSize: '0.84rem' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>FREIGHT ($)</label>
+          <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={freight} onChange={e => setFreight(e.target.value)} style={{ fontSize: '0.84rem' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>CUSTOMS ($)</label>
+          <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={customs} onChange={e => setCustoms(e.target.value)} style={{ fontSize: '0.84rem' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>HANDLING ($)</label>
+          <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={handling} onChange={e => setHandling(e.target.value)} style={{ fontSize: '0.84rem' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>OTHER EXPENSE ($)</label>
+          <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={otherExp} onChange={e => setOtherExp(e.target.value)} style={{ fontSize: '0.84rem' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <div style={{ width: '100%', padding: '8px 12px', borderRadius: 8, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <div style={{ fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700, marginBottom: 2 }}>TOTAL EXPENSE</div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f59e0b' }}>${totalExpense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+        <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 2 }}>TOTAL SALE</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#22c55e' }}>${totalSale.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 2 }}>TOTAL COST</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ef4444' }}>${(totalPrice + totalExpense).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div style={{ padding: '10px 12px', borderRadius: 8, background: netProfit >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', textAlign: 'center', border: `1px solid ${netProfit >= 0 ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}` }}>
+          <div style={{ fontSize: '0.65rem', color: netProfit >= 0 ? '#22c55e' : '#ef4444', fontWeight: 600, marginBottom: 2 }}>NET PROFIT</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>${Math.abs(netProfit).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, userRole, userContactId }) => {
   const isEdit = !!initialData;
@@ -298,27 +391,8 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             </div>
           </div>
 
-          {/* Pricing */}
-          <div>
-            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>PRICING</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <Field label="SALE PRICE / BOX ($)">
-                <input type="number" className="ui-input" placeholder="0.00" step="0.01" value={form.salePrice} onChange={e => set('salePrice', e.target.value)} />
-              </Field>
-              <Field label="EXPENSE ($)">
-                <input type="number" className="ui-input" placeholder="0.00" step="0.01" value={form.expense} onChange={e => set('expense', e.target.value)} />
-              </Field>
-            </div>
-            {/* Summary */}
-            {totalPrice > 0 && (
-              <div style={{ marginTop: 12, display: 'flex', gap: 24, padding: '10px 14px', background: 'rgba(255,107,0,0.05)', borderRadius: 8, fontSize: '0.85rem', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Total Price: <strong style={{ color: 'var(--text-primary)' }}>${totalPrice.toLocaleString()}</strong></span>
-                {form.salePrice && (
-                  <span style={{ color: 'var(--text-muted)' }}>Total Sale: <strong style={{ color: '#22c55e' }}>${((parseFloat(form.salePrice) || 0) * totalBoxQty).toLocaleString()}</strong></span>
-                )}
-              </div>
-            )}
-          </div>
+          {/* P&L Calculator (inline) */}
+          <OrderPLCalculator totalPrice={totalPrice} totalBoxQty={totalBoxQty} />
 
           {/* Advance Payment */}
           <div>
