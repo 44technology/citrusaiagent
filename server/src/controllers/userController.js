@@ -64,8 +64,8 @@ export const updateUserRole = async (req, res) => {
   const { role: currentUserRole } = req.user || {};
 
   try {
-    if (currentUserRole !== 'super admin') {
-      return res.status(403).json({ error: 'Only Super Admin can change roles' });
+    if (!['super admin', 'admin'].includes(currentUserRole)) {
+      return res.status(403).json({ error: 'Only Admin can change roles' });
     }
 
     const user = await prisma.user.update({
@@ -83,8 +83,8 @@ export const deleteUser = async (req, res) => {
   const { role } = req.user || {};
 
   try {
-    if (role !== 'super admin') {
-      return res.status(403).json({ error: 'Only Super Admin can delete users' });
+    if (!['super admin', 'admin'].includes(role)) {
+      return res.status(403).json({ error: 'Only Admin can delete users' });
     }
 
     await prisma.user.delete({ where: { id } });
