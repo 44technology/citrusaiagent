@@ -340,7 +340,7 @@ const SettingsPage = () => {
                           : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.82rem' }}>System / Admin</span>}
                       </td>
                       <td>
-                        {isSuperAdmin ? (
+                        {isAdmin ? (
                           <>
                             <select
                               className="ui-input"
@@ -361,7 +361,7 @@ const SettingsPage = () => {
                         {new Date(u.createdAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        {isSuperAdmin && (
+                        {isAdmin && (
                           <button
                             className="btn btn-glass"
                             onClick={() => handleDeleteUser(u.id)}
