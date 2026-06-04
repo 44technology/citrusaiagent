@@ -32,7 +32,7 @@ export const createUser = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const { role } = req.user || {};
-    if (role !== 'super admin') {
+    if (!['super admin', 'admin'].includes(role)) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 

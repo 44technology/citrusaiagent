@@ -104,7 +104,7 @@ export const updateContact = async (req, res) => {
       'city','state','zip','country','address','companyPhone','website',
       'classifications','commodities',
       'lineOfCredit','openBalance','termDays',
-      'companyId',
+      'assignedTo','companyId',
     ]);
     const data = Object.fromEntries(
       Object.entries(req.body).filter(([k]) => ALLOWED.has(k))

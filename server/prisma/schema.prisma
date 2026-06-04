@@ -33,6 +33,7 @@ model Contact {
   credit     Float      @default(0)
   status     String     @default("Active")
   type       String     @default("Lead")
+  assignedTo String?    // User ID of assigned sales person
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 

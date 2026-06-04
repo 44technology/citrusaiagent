@@ -2,7 +2,7 @@ import React from 'react';
 import { Phone, Globe, CheckCircle2, Clock, Mail, DollarSign, MapPin } from 'lucide-react';
 import '../index.css';
 
-const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
+const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick, users = [], onAssign }) => {
   if (!data || data.length === 0) return null;
 
   const getStatusIcon = (status) => {
@@ -52,6 +52,7 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
             <th style={thStyle}>WEBSITE</th>
             <th style={thStyle}>CLASSIFICATIONS</th>
             <th style={thStyle}>COMMODITIES</th>
+            <th style={thStyle}>ASSIGNED TO</th>
             <th style={thStyle}>STATUS</th>
             <th style={thStyle}>ACTIONS</th>
           </tr>
@@ -97,6 +98,29 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick }) => {
               </td>
               <td style={{ ...tdStyle, maxWidth: 160 }}>{tags(row.classifications)}</td>
               <td style={{ ...tdStyle, maxWidth: 160 }}>{tags(row.commodities)}</td>
+              <td style={tdStyle} onClick={e => e.stopPropagation()}>
+                {onAssign && users.length > 0 ? (
+                  <select
+                    value={row.assignedTo || ''}
+                    onChange={e => onAssign(row.id, e.target.value)}
+                    style={{
+                      background: row.assignedTo ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${row.assignedTo ? 'rgba(34,197,94,0.3)' : 'var(--border-glass)'}`,
+                      borderRadius: 8, padding: '3px 8px',
+                      fontSize: '0.75rem', fontWeight: 600,
+                      color: row.assignedTo ? '#22c55e' : 'var(--text-muted)',
+                      cursor: 'pointer', outline: 'none', maxWidth: 130,
+                    }}
+                  >
+                    <option value="">— None —</option>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                  </select>
+                ) : (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {row.assignedTo ? (users.find(u => u.id === row.assignedTo)?.username || '—') : '—'}
+                  </span>
+                )}
+              </td>
               <td style={tdStyle}>
                 <div className={`status-pill ${getStatusClass(row.status)}`} style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
                   {getStatusIcon(row.status)}

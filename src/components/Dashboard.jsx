@@ -4,7 +4,7 @@ import CustomerTable from './CustomerTable';
 import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
 import ImportLeadsModal from './ImportLeadsModal';
-import { contactsApi, shipmentsApi } from '../services/api';
+import { contactsApi, shipmentsApi, usersApi } from '../services/api';
 import { FileSpreadsheet } from 'lucide-react';
 import '../index.css';
 
@@ -15,6 +15,7 @@ const Dashboard = ({ activeTab }) => {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const currentUser = (() => {
     try {
@@ -30,12 +31,14 @@ const Dashboard = ({ activeTab }) => {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const [data, sData] = await Promise.all([
+      const [data, sData, uData] = await Promise.all([
         contactsApi.getAll(),
         shipmentsApi.getAll().catch(() => []),
+        usersApi.getAll().catch(() => []),
       ]);
       setContacts(data);
       setShipments(Array.isArray(sData) ? sData : []);
+      setUsers(Array.isArray(uData) ? uData : []);
     } catch (err) {
       console.error('Failed to fetch contacts:', err);
     } finally {
@@ -186,10 +189,17 @@ const Dashboard = ({ activeTab }) => {
                 </div>
               </div>
               
-              <CustomerTable 
-                data={filteredContacts} 
-                onPromote={handlePromote} 
+              <CustomerTable
+                data={filteredContacts}
+                onPromote={handlePromote}
                 onRowClick={handleRowClick}
+                users={users}
+                onAssign={async (contactId, userId) => {
+                  try {
+                    await contactsApi.update(contactId, { assignedTo: userId || null });
+                    await fetchContacts();
+                  } catch (err) { console.error(err); }
+                }}
               />
             </div>
           )}
