@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, X, Loader2 } from 'lucide-react';
+import { ShoppingBag, X, Loader2, Plus, Trash2 } from 'lucide-react';
 import { contactsApi } from '../services/api';
 
 // ── Product / Variety catalogue ──────────────────────────────
@@ -10,20 +10,21 @@ const PRODUCTS = {
   'Lime':     ['Persian', 'Key Lime', 'Kaffir', 'Other'],
 };
 
+const EMPTY_ROW = { boxType: '', size: '', boxQty: '', price: '' };
+
 const EMPTY = {
   grower: '',
-  shipper: '',
   product: 'Mandarin',
   label: '',
   variety: 'Nadorcott',
-  boxType: '',
   boxQuantity: '',
   purchasePrice: '',
   salePrice: '',
   expense: '',
-  receiver: '',
   week: '',
-  contactId: ''
+  contactId: '',
+  advancePaymentTerms: '',
+  advancePaymentAmount: '',
 };
 
 const Field = ({ label, children, span2 = false }) => (
@@ -40,6 +41,7 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
   const isCustomer = userRole === 'customer';
 
   const [form, setForm] = useState({ ...EMPTY });
+  const [boxRows, setBoxRows] = useState([{ ...EMPTY_ROW }]);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', email: '', company: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -49,39 +51,67 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
     if (initialData) {
       setForm({
         grower:        initialData.grower || '',
-        shipper:       initialData.shipper || '',
         product:       initialData.product || 'Mandarin',
         label:         initialData.label || '',
         variety:       initialData.variety || '',
-        boxType:       initialData.boxType || '',
         boxQuantity:   initialData.boxQuantity || '',
         purchasePrice: initialData.purchasePrice || '',
         salePrice:     initialData.salePrice || '',
         expense:       initialData.expense || '',
-        receiver:      initialData.receiver || '',
         week:          initialData.week || '',
-        contactId:     initialData.contactId || ''
+        contactId:     initialData.contactId || '',
+        advancePaymentTerms:  initialData.advancePaymentTerms || '',
+        advancePaymentAmount: initialData.advancePaymentAmount || '',
       });
+      // Parse boxRows from boxType JSON if exists
+      try {
+        const parsed = JSON.parse(initialData.boxType || '[]');
+        setBoxRows(Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ ...EMPTY_ROW }]);
+      } catch {
+        setBoxRows(initialData.boxType ? [{ boxType: initialData.boxType, size: '', boxQty: initialData.boxQuantity || '', price: '' }] : [{ ...EMPTY_ROW }]);
+      }
     } else {
       setForm({ ...EMPTY, contactId: isCustomer ? (userContactId || '') : '' });
+      setBoxRows([{ ...EMPTY_ROW }]);
       setIsNewCustomer(false);
     }
   }, [isOpen, initialData]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  // When product changes, reset variety to first option
   const handleProductChange = (product) => {
     const varieties = PRODUCTS[product] || [];
     set('product', product);
     set('variety', varieties[0] || '');
   };
 
+  // Box rows helpers
+  const updateRow = (idx, field, value) => {
+    setBoxRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  };
+  const addRow = () => setBoxRows(prev => [...prev, { ...EMPTY_ROW }]);
+  const removeRow = (idx) => setBoxRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+
+  // Calculated totals from box rows
+  const totalBoxQty = boxRows.reduce((s, r) => s + (parseInt(r.boxQty) || 0), 0);
+  const totalPrice = boxRows.reduce((s, r) => {
+    const qty = parseInt(r.boxQty) || 0;
+    const price = parseFloat(r.price) || 0;
+    return s + (qty * price);
+  }, 0);
+
+  // Row weight = boxType (kg) × boxQty
+  const rowWeight = (r) => {
+    const kg = parseFloat(r.boxType) || 0;
+    const qty = parseInt(r.boxQty) || 0;
+    return kg > 0 && qty > 0 ? (kg * qty).toLocaleString() : '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    if (!form.product || !form.variety || !form.boxQuantity) {
-      alert('Product, Variety and Box Quantity are required');
+    if (!form.product || !form.variety || totalBoxQty === 0) {
+      alert('Product, Variety and at least one box row with quantity are required');
       return;
     }
     setSubmitting(true);
@@ -94,7 +124,13 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
       }
       if (!finalContactId) { alert('Please select a customer'); setSubmitting(false); return; }
 
-      const data = { ...form, contactId: finalContactId };
+      const data = {
+        ...form,
+        contactId: finalContactId,
+        boxQuantity: totalBoxQty,
+        boxType: JSON.stringify(boxRows.filter(r => r.boxType || r.boxQty)),
+        purchasePrice: totalPrice > 0 ? totalPrice : (parseFloat(form.purchasePrice) || null),
+      };
       if (isEdit) await onEdit(initialData.id, data);
       else await onAdd(data);
       onClose();
@@ -113,7 +149,7 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
     <div className="modal-overlay animate-fade-in" onClick={onClose}>
       <div
         className="modal-content glass-panel"
-        style={{ width: 680, maxWidth: '96vw', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}
+        style={{ width: 740, maxWidth: '96vw', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -182,32 +218,88 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
               <Field label="LABEL (optional)">
                 <input className="ui-input" placeholder="e.g. Sweet Fresh" value={form.label} onChange={e => set('label', e.target.value)} />
               </Field>
-              <Field label="BOX TYPE">
-                <input className="ui-input" placeholder="e.g. 5kg, 10kg, 15kg" value={form.boxType} onChange={e => set('boxType', e.target.value)} />
-              </Field>
-            </div>
-          </div>
-
-          {/* Grower */}
-          <div>
-            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>PARTIES</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, maxWidth: 300 }}>
               <Field label="GROWER">
                 <input className="ui-input" placeholder="Grower name" value={form.grower} onChange={e => set('grower', e.target.value)} />
               </Field>
             </div>
           </div>
 
+          {/* Box Rows Table */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', margin: 0, letterSpacing: '0.08em' }}>BOX DETAILS</p>
+              <button type="button" className="btn btn-glass" style={{ padding: '4px 12px', fontSize: '0.76rem' }} onClick={addRow}>
+                <Plus size={13} /> Add Row
+              </button>
+            </div>
+            <div style={{ borderRadius: 10, border: '1px solid var(--border-glass)', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,107,0,0.08)' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--orange-primary)', letterSpacing: '0.05em' }}>BOX TYPE (kg)</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--orange-primary)', letterSpacing: '0.05em' }}>SIZE</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--orange-primary)', letterSpacing: '0.05em' }}>BOX QTY</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--orange-primary)', letterSpacing: '0.05em' }}>PRICE ($)</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>WEIGHT</th>
+                    <th style={{ padding: '8px 6px', width: 32 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {boxRows.map((row, idx) => (
+                    <tr key={idx} style={{ borderTop: '1px solid var(--border-glass-light)' }}>
+                      <td style={{ padding: '6px 10px' }}>
+                        <input className="ui-input" placeholder="e.g. 17" value={row.boxType} onChange={e => updateRow(idx, 'boxType', e.target.value)}
+                          style={{ padding: '5px 8px', fontSize: '0.82rem', width: '100%' }} />
+                      </td>
+                      <td style={{ padding: '6px 10px' }}>
+                        <input className="ui-input" placeholder="e.g. 113" value={row.size} onChange={e => updateRow(idx, 'size', e.target.value)}
+                          style={{ padding: '5px 8px', fontSize: '0.82rem', width: '100%' }} />
+                      </td>
+                      <td style={{ padding: '6px 10px' }}>
+                        <input type="number" className="ui-input" placeholder="0" value={row.boxQty} onChange={e => updateRow(idx, 'boxQty', e.target.value)}
+                          style={{ padding: '5px 8px', fontSize: '0.82rem', width: '100%' }} />
+                      </td>
+                      <td style={{ padding: '6px 10px' }}>
+                        <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={row.price} onChange={e => updateRow(idx, 'price', e.target.value)}
+                          style={{ padding: '5px 8px', fontSize: '0.82rem', width: '100%' }} />
+                      </td>
+                      <td style={{ padding: '6px 10px', color: '#22c55e', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                        {rowWeight(row) ? `${rowWeight(row)} kg` : '—'}
+                      </td>
+                      <td style={{ padding: '6px 4px' }}>
+                        {boxRows.length > 1 && (
+                          <button type="button" onClick={() => removeRow(idx)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.5)', padding: 2 }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'rgba(239,68,68,0.5)'}>
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                {/* Totals */}
+                <tfoot>
+                  <tr style={{ borderTop: '2px solid var(--border-glass)', background: 'rgba(255,107,0,0.04)' }}>
+                    <td colSpan={2} style={{ padding: '8px 12px', fontWeight: 700, fontSize: '0.78rem', color: 'var(--orange-primary)' }}>TOTALS</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>{totalBoxQty || '—'}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#22c55e' }}>{totalPrice > 0 ? `$${totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}</td>
+                    <td colSpan={2} style={{ padding: '8px 12px', fontWeight: 700, color: '#22c55e' }}>
+                      {boxRows.reduce((s, r) => s + ((parseFloat(r.boxType) || 0) * (parseInt(r.boxQty) || 0)), 0) > 0
+                        ? `${boxRows.reduce((s, r) => s + ((parseFloat(r.boxType) || 0) * (parseInt(r.boxQty) || 0)), 0).toLocaleString()} kg`
+                        : ''}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
           {/* Pricing */}
           <div>
             <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>PRICING</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
-              <Field label="BOX QTY *">
-                <input type="number" className="ui-input" placeholder="0" min="0" value={form.boxQuantity} onChange={e => set('boxQuantity', e.target.value)} />
-              </Field>
-              <Field label="PURCHASE PRICE / BOX ($)">
-                <input type="number" className="ui-input" placeholder="0.00" step="0.01" value={form.purchasePrice} onChange={e => set('purchasePrice', e.target.value)} />
-              </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <Field label="SALE PRICE / BOX ($)">
                 <input type="number" className="ui-input" placeholder="0.00" step="0.01" value={form.salePrice} onChange={e => set('salePrice', e.target.value)} />
               </Field>
@@ -216,17 +308,38 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
               </Field>
             </div>
             {/* Summary */}
-            {(form.purchasePrice || form.salePrice) && form.boxQuantity && (
-              <div style={{ marginTop: 12, display: 'flex', gap: 24, padding: '10px 14px', background: 'rgba(255,107,0,0.05)', borderRadius: 8, fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Total Purchase: <strong style={{ color: 'var(--text-primary)' }}>${((parseFloat(form.purchasePrice) || 0) * (parseInt(form.boxQuantity) || 0)).toLocaleString()}</strong></span>
-                <span style={{ color: 'var(--text-muted)' }}>Total Sale: <strong style={{ color: '#22c55e' }}>${((parseFloat(form.salePrice) || 0) * (parseInt(form.boxQuantity) || 0)).toLocaleString()}</strong></span>
-                {form.salePrice && form.purchasePrice && (
-                  <span style={{ color: 'var(--text-muted)' }}>Margin: <strong style={{ color: (parseFloat(form.salePrice) - parseFloat(form.purchasePrice)) >= 0 ? '#22c55e' : '#ef4444' }}>
-                    ${(((parseFloat(form.salePrice) || 0) - (parseFloat(form.purchasePrice) || 0)) * (parseInt(form.boxQuantity) || 0)).toLocaleString()}
-                  </strong></span>
+            {totalPrice > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', gap: 24, padding: '10px 14px', background: 'rgba(255,107,0,0.05)', borderRadius: 8, fontSize: '0.85rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Total Price: <strong style={{ color: 'var(--text-primary)' }}>${totalPrice.toLocaleString()}</strong></span>
+                {form.salePrice && (
+                  <span style={{ color: 'var(--text-muted)' }}>Total Sale: <strong style={{ color: '#22c55e' }}>${((parseFloat(form.salePrice) || 0) * totalBoxQty).toLocaleString()}</strong></span>
                 )}
               </div>
             )}
+          </div>
+
+          {/* Advance Payment */}
+          <div>
+            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>ADVANCE PAYMENT</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <Field label="ADVANCE PAYMENT TERMS (%)">
+                <input type="number" className="ui-input" placeholder="e.g. 70" min="0" max="100" value={form.advancePaymentTerms}
+                  onChange={e => {
+                    const terms = e.target.value;
+                    set('advancePaymentTerms', terms);
+                    if (terms && totalPrice > 0) {
+                      set('advancePaymentAmount', ((parseFloat(terms) / 100) * totalPrice).toFixed(2));
+                    }
+                  }}
+                />
+              </Field>
+              <Field label="ADVANCE PAYMENT AMOUNT ($)">
+                <input type="number" className="ui-input" placeholder="Auto-calculated" step="0.01" value={form.advancePaymentAmount}
+                  onChange={e => set('advancePaymentAmount', e.target.value)}
+                  style={{ background: form.advancePaymentTerms ? 'rgba(255,107,0,0.06)' : undefined }}
+                />
+              </Field>
+            </div>
           </div>
 
           {/* Week */}
