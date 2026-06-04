@@ -232,6 +232,9 @@ model Order {
   receiver      String?
   week          String?
   status        String   @default("pending")
+  advancePaymentTerms  Int?      // Payment terms in days (e.g. 15, 30)
+  advancePaymentPct    Float?    // Advance payment percentage (e.g. 70)
+  advancePaymentAmount Float?    // Calculated advance amount ($)
   userId        String?
   contactId     String
   createdAt     DateTime @default(now())

@@ -24,6 +24,7 @@ const EMPTY = {
   week: '',
   contactId: '',
   advancePaymentTerms: '',
+  advancePaymentPct: '',
   advancePaymentAmount: '',
 };
 
@@ -61,6 +62,7 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
         week:          initialData.week || '',
         contactId:     initialData.contactId || '',
         advancePaymentTerms:  initialData.advancePaymentTerms || '',
+        advancePaymentPct:    initialData.advancePaymentPct || '',
         advancePaymentAmount: initialData.advancePaymentAmount || '',
       });
       // Parse boxRows from boxType JSON if exists
@@ -321,25 +323,35 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
           {/* Advance Payment */}
           <div>
             <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>ADVANCE PAYMENT</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <Field label="ADVANCE PAYMENT TERMS (%)">
-                <input type="number" className="ui-input" placeholder="e.g. 70" min="0" max="100" value={form.advancePaymentTerms}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <Field label="TERMS (DAYS)">
+                <input type="number" className="ui-input" placeholder="e.g. 15, 30" min="0" value={form.advancePaymentTerms}
+                  onChange={e => set('advancePaymentTerms', e.target.value)}
+                />
+              </Field>
+              <Field label="ADVANCE (%)">
+                <input type="number" className="ui-input" placeholder="e.g. 70" min="0" max="100" value={form.advancePaymentPct}
                   onChange={e => {
-                    const terms = e.target.value;
-                    set('advancePaymentTerms', terms);
-                    if (terms && totalPrice > 0) {
-                      set('advancePaymentAmount', ((parseFloat(terms) / 100) * totalPrice).toFixed(2));
+                    const pct = e.target.value;
+                    set('advancePaymentPct', pct);
+                    if (pct && totalPrice > 0) {
+                      set('advancePaymentAmount', ((parseFloat(pct) / 100) * totalPrice).toFixed(2));
                     }
                   }}
                 />
               </Field>
-              <Field label="ADVANCE PAYMENT AMOUNT ($)">
+              <Field label="ADVANCE AMOUNT ($)">
                 <input type="number" className="ui-input" placeholder="Auto-calculated" step="0.01" value={form.advancePaymentAmount}
                   onChange={e => set('advancePaymentAmount', e.target.value)}
-                  style={{ background: form.advancePaymentTerms ? 'rgba(255,107,0,0.06)' : undefined }}
+                  style={{ background: form.advancePaymentPct ? 'rgba(255,107,0,0.06)' : undefined }}
                 />
               </Field>
             </div>
+            {form.advancePaymentTerms && form.advancePaymentAmount && (
+              <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(34,197,94,0.06)', borderRadius: 8, fontSize: '0.82rem', color: '#22c55e' }}>
+                Advance Payment: <strong>${parseFloat(form.advancePaymentAmount).toLocaleString()}</strong> due within <strong>{form.advancePaymentTerms} days</strong>
+              </div>
+            )}
           </div>
 
           {/* Week */}
