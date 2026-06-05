@@ -100,7 +100,7 @@ function App() {
         />
         <main className="main-content">
           <Header company={selectedCompany} />
-          <div className="scroll-content">
+          <div className="scroll-content" key={selectedCompany?.id}>
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
             {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
             {activeTab === 'tracking' && <ShipmentTracking selectedCompany={selectedCompany} />}
