@@ -5,10 +5,10 @@ import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
 import ImportLeadsModal from './ImportLeadsModal';
 import { contactsApi, shipmentsApi, usersApi } from '../services/api';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, Search, X } from 'lucide-react';
 import '../index.css';
 
-const Dashboard = ({ activeTab }) => {
+const Dashboard = ({ activeTab, selectedCompany }) => {
   const [contacts, setContacts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -48,7 +48,7 @@ const Dashboard = ({ activeTab }) => {
 
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [selectedCompany?.id]);
 
   // Polling for status updates every 5 seconds when campaign is active
   useEffect(() => {

@@ -101,7 +101,7 @@ function App() {
         <main className="main-content">
           <Header company={selectedCompany} />
           <div className="scroll-content">
-            {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} />}
+            {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
             {activeTab === 'shipments' && <ShipmentsListPage />}
             {activeTab === 'tracking' && <ShipmentTracking />}
             {activeTab === 'orders' && <OrdersPage />}
