@@ -24,12 +24,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
     { id: 'settings',   label: 'Settings',   icon: Settings },
   ];
 
-  const username = (() => {
+  const currentUser = (() => {
     try {
-      const uStr = localStorage.getItem('citrus_user');
-      return uStr ? (JSON.parse(uStr).username || uStr) : 'Admin';
-    } catch { return 'Admin'; }
+      return JSON.parse(localStorage.getItem('citrus_user') || '{}');
+    } catch { return {}; }
   })();
+  const username = currentUser.username || 'Admin';
+  const userRole = currentUser.role || 'User';
 
   const activeCompany = company || COMPANIES[0];
 
@@ -159,7 +160,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
           <div className="avatar">{username.charAt(0).toUpperCase()}</div>
           <div className="user-info">
             <div className="user-name">{username}</div>
-            <div className="user-role">Admin</div>
+            <div className="user-role" style={{ textTransform: 'capitalize' }}>{userRole}</div>
           </div>
         </div>
         {onLogout && (

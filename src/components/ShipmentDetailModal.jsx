@@ -974,7 +974,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
   const currentUser = (() => {
     try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
   })();
-  const canEdit    = ['admin', 'operation', 'super admin'].includes(currentUser.role);
+  const canEdit    = ['admin', 'operation', 'super admin', 'logistics'].includes(currentUser.role);
   const isSuperAdmin = currentUser.role === 'super admin';
 
   useEffect(() => {
