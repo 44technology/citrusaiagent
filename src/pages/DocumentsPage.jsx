@@ -160,7 +160,7 @@ const UploadModal = ({ onClose, onUploaded, contacts, orders, shipments, invoice
 
 // ─── Document Card ────────────────────────────────────────────────────────────
 
-const DocumentCard = ({ doc, onDelete, onDownload }) => {
+const DocumentCard = ({ doc, onDelete, onDownload, canDelete }) => {
   const cat = categoryColor(doc.category);
   const links = [
     doc.contact && `Customer: ${doc.contact.name}`,
@@ -198,9 +198,11 @@ const DocumentCard = ({ doc, onDelete, onDownload }) => {
         <button className="btn btn-glass" style={{ padding: '7px 10px' }} onClick={() => onDownload(doc)} title="Download">
           <Download size={15} />
         </button>
-        <button className="btn btn-glass" style={{ padding: '7px 10px', color: '#ef4444' }} onClick={() => onDelete(doc.id)} title="Delete">
-          <Trash2 size={15} />
-        </button>
+        {canDelete && (
+          <button className="btn btn-glass" style={{ padding: '7px 10px', color: '#ef4444' }} onClick={() => onDelete(doc.id)} title="Delete">
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -218,6 +220,16 @@ const DocumentsPage = () => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [showUpload, setShowUpload] = useState(false);
+
+  // Role check
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('citrus_user') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+  const canEdit = ['admin', 'operation', 'logistics'].includes(currentUser.role);
 
   const loadDocs = async () => {
     setLoading(true);
@@ -300,9 +312,11 @@ const DocumentsPage = () => {
           </h1>
           <p className="text-muted" style={{ marginTop: 4 }}>All business documents in one place — linked to customers, orders, shipments and invoices.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
-          <Upload size={18} /> Upload Document
-        </button>
+        {canEdit && (
+          <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
+            <Upload size={18} /> Upload Document
+          </button>
+        )}
       </div>
 
       {/* Category summary chips */}
@@ -349,7 +363,7 @@ const DocumentsPage = () => {
           </div>
         ) : (
           filtered.map(doc => (
-            <DocumentCard key={doc.id} doc={doc} onDelete={handleDelete} onDownload={handleDownload} />
+            <DocumentCard key={doc.id} doc={doc} onDelete={handleDelete} onDownload={handleDownload} canDelete={canEdit} />
           ))
         )}
       </div>
