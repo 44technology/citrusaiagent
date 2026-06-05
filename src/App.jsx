@@ -67,7 +67,8 @@ function App() {
 
   const handleSwitchCompany = (co) => {
     localStorage.setItem('citrus_company', JSON.stringify(co));
-    setSelectedCompany(co);
+    // Force full page reload so all API calls use the new company header
+    window.location.reload();
   };
 
   const handleLogout = () => {
