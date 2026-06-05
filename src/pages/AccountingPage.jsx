@@ -332,7 +332,7 @@ const CreateInvoiceModal = ({ onClose, onSaved }) => {
 
 // ─── Main AccountingPage ─────────────────────────────────────────────────────
 
-const AccountingPage = () => {
+const AccountingPage = ({ selectedCompany }) => {
   const [invoices, setInvoices] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [shipments, setShipments] = useState([]);
@@ -366,7 +366,7 @@ const AccountingPage = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [selectedCompany?.id]);
 
   const filteredInvoices = invoices.filter(inv => {
     const matchSearch = !search ||

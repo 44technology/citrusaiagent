@@ -67,7 +67,7 @@ const SortTh = ({ label, field, sort, setSort, style = {} }) => {
 };
 
 // ── Main Page ─────────────────────────────────────────────────
-const ShipmentsListPage = () => {
+const ShipmentsListPage = ({ selectedCompany }) => {
   const [shipments, setShipments]       = useState([]);
   const [customers, setCustomers]       = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -102,7 +102,7 @@ const ShipmentsListPage = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [selectedCompany?.id]);
 
   // Unique values for filter dropdowns
   const uniq = (arr, key) => [...new Set(arr.map(s => s[key]).filter(Boolean))].sort();

@@ -227,7 +227,7 @@ const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
 };
 
 // ── Main Tracking page ────────────────────────────────────────
-const ShipmentTracking = () => {
+const ShipmentTracking = ({ selectedCompany }) => {
   const [shipments, setShipments]   = useState([]);
   const [customers, setCustomers]   = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -242,7 +242,7 @@ const ShipmentTracking = () => {
   const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
   const hasFilters = Object.values(filters).some(Boolean) || search;
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [selectedCompany?.id]);
 
   const loadData = async () => {
     setLoading(true);

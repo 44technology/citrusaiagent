@@ -344,7 +344,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
 };
 
 // ── Main Page ─────────────────────────────────────────────────
-const GrowersPage = () => {
+const GrowersPage = ({ selectedCompany }) => {
   const [growers, setGrowers]   = useState([]);
   const [orders, setOrders]     = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -368,7 +368,7 @@ const GrowersPage = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [selectedCompany?.id]);
 
   const filtered = growers.filter(g =>
     !search ||

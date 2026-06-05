@@ -4,7 +4,7 @@ import { ordersApi, contactsApi, accountingApi } from '../services/api';
 import OrderModal from '../components/OrderModal';
 import ProfitCalculator from '../components/ProfitCalculator';
 
-const OrdersPage = () => {
+const OrdersPage = ({ selectedCompany }) => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -102,12 +102,12 @@ function App() {
           <Header company={selectedCompany} />
           <div className="scroll-content">
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
-            {activeTab === 'shipments' && <ShipmentsListPage />}
-            {activeTab === 'tracking' && <ShipmentTracking />}
-            {activeTab === 'orders' && <OrdersPage />}
-            {activeTab === 'accounting' && <AccountingPage />}
-            {activeTab === 'documents' && <DocumentsPage />}
-            {activeTab === 'growers' && <GrowersPage />}
+            {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
+            {activeTab === 'tracking' && <ShipmentTracking selectedCompany={selectedCompany} />}
+            {activeTab === 'orders' && <OrdersPage selectedCompany={selectedCompany} />}
+            {activeTab === 'accounting' && <AccountingPage selectedCompany={selectedCompany} />}
+            {activeTab === 'documents' && <DocumentsPage selectedCompany={selectedCompany} />}
+            {activeTab === 'growers' && <GrowersPage selectedCompany={selectedCompany} />}
             {activeTab === 'outreach' && <OutreachPage />}
             {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
             {activeTab === 'settings' && <SettingsPage />}

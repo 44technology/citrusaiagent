@@ -210,7 +210,7 @@ const DocumentCard = ({ doc, onDelete, onDownload, canDelete }) => {
 
 // ─── Main DocumentsPage ───────────────────────────────────────────────────────
 
-const DocumentsPage = () => {
+const DocumentsPage = ({ selectedCompany }) => {
   const [docs, setDocs] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -260,7 +260,7 @@ const DocumentsPage = () => {
     }
   };
 
-  useEffect(() => { loadDocs(); loadRelated(); }, []);
+  useEffect(() => { loadDocs(); loadRelated(); }, [selectedCompany?.id]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this document? This cannot be undone.')) return;
