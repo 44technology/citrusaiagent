@@ -86,7 +86,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   });
 
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
-  const isAdmin = ['admin', 'super admin', 'operation'].includes(currentUser.role);
+  const isAdmin = ['admin', 'super admin', 'operation', 'sales'].includes(currentUser.role);
 
   const loadData = async () => {
     setLoading(true);

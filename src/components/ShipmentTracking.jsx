@@ -149,7 +149,7 @@ const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
   if (!shipment) return null;
 
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
-  const canEdit = ['admin', 'operation', 'super admin'].includes(currentUser.role);
+  const canEdit = ['admin', 'operation', 'super admin', 'sales'].includes(currentUser.role);
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === shipment.status) return;
