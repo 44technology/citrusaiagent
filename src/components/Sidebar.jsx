@@ -32,6 +32,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
   const username = currentUser.username || 'Admin';
   const userRole = currentUser.role || 'User';
 
+  const isSuperAdmin = userRole === 'super admin';
   const activeCompany = company || COMPANIES[0];
 
   const handleSelect = (co) => {
@@ -61,8 +62,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
       {/* Company switcher */}
       <div style={{ margin: '0 12px 8px', position: 'relative', zIndex: 99 }}>
         <button
-          onClick={() => setDropdownOpen(v => !v)}
-          style={{
+          onClick={() => isSuperAdmin && setDropdownOpen(v => !v)}
+          style={{ cursor: isSuperAdmin ? 'pointer' : 'default',
             width: '100%',
             padding: '8px 12px',
             borderRadius: 10,
@@ -85,7 +86,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
           <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 700, color: activeCompany.color, textAlign: 'left' }}>
             {activeCompany.name}
           </span>
-          <ChevronDown size={13} style={{ color: activeCompany.color, transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'none' }} />
+          {isSuperAdmin && <ChevronDown size={13} style={{ color: activeCompany.color, transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'none' }} />}
         </button>
 
         {dropdownOpen && (
