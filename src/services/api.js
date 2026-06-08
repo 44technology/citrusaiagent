@@ -142,6 +142,14 @@ export const usersApi = {
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Vendor Packages ─────────────────────────────────
+export const vendorPackagesApi = {
+  getAll: (growerId) => request(`/vendor-packages${growerId ? `?growerId=${growerId}` : ''}`),
+  create: (data) => request('/vendor-packages', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/vendor-packages/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => request(`/vendor-packages/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Payments ────────────────────────────────────────
 export const paymentsApi = {
   getByInvoice: (invoiceId) => request(`/payments/invoice/${invoiceId}`),
