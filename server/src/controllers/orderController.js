@@ -37,7 +37,7 @@ export const getContactOrders = async (req, res) => {
 };
 
 const generateRefId = async () => {
-  const START = 260001;
+  const START = 2026001;
   const last = await prisma.order.findFirst({
     where: { referenceId: { gte: String(START) } },
     orderBy: { referenceId: 'desc' },
