@@ -190,7 +190,11 @@ const SettingsPage = () => {
   const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(null);
-  const [activeTab, setActiveTab] = useState('users'); // users | email | permissions
+  const [activeTab, setActiveTab] = useState('users'); // users | email | permissions | password
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
 
   // Email settings
   const [emailForm, setEmailForm] = useState({
@@ -238,20 +242,37 @@ const SettingsPage = () => {
     } catch (err) { alert('Failed: ' + err.message); }
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="flex-center" style={{ height: '80vh', flexDirection: 'column', gap: 16 }}>
-        <Shield size={64} style={{ opacity: 0.15, color: 'var(--text-muted)' }} />
-        <h2 style={{ color: 'var(--text-muted)' }}>Access Restricted</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Only Admin and Super Admin can access settings.</p>
-      </div>
-    );
-  }
+  // Non-admins can only see Change Password tab
+  const visibleTabs = isAdmin
+    ? tabs
+    : tabs.filter(t => t.key === 'password');
+
+  // Redirect non-admins away from restricted tabs
+  useEffect(() => {
+    if (!isAdmin && activeTab !== 'password') setActiveTab('password');
+  }, [isAdmin, activeTab]);
+
+  const handleChangePassword = async () => {
+    if (!pwForm.current || !pwForm.next || !pwForm.confirm) { setPwMsg('❌ All fields are required'); return; }
+    if (pwForm.next !== pwForm.confirm) { setPwMsg('❌ New passwords do not match'); return; }
+    if (pwForm.next.length < 6) { setPwMsg('❌ Password must be at least 6 characters'); return; }
+    setPwSaving(true); setPwMsg('');
+    try {
+      await usersApi.changePassword(pwForm.current, pwForm.next);
+      setPwMsg('✅ Password changed successfully');
+      setPwForm({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      setPwMsg('❌ ' + err.message);
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   const tabs = [
     { key: 'users',       label: 'User Management', icon: Users },
     { key: 'email',       label: 'Email Config',     icon: Mail  },
     { key: 'permissions', label: 'Permissions',      icon: Shield },
+    { key: 'password',    label: 'Change Password',  icon: Lock  },
   ];
 
   return (
@@ -270,7 +291,7 @@ const SettingsPage = () => {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--border-glass)', paddingBottom: 0 }}>
-        {tabs.map(t => {
+        {visibleTabs.map(t => {
           const Icon = t.icon;
           const active = activeTab === t.key;
           return (
@@ -523,6 +544,60 @@ const SettingsPage = () => {
           </div>
         </div>
       )}
+
+      {/* ── Tab: Change Password ── */}
+      {activeTab === 'password' && (
+        <div style={{ maxWidth: 480 }}>
+          <div className="glass-panel" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <Lock size={17} style={{ color: 'var(--orange-primary)' }} />
+              <h3 style={{ margin: 0, fontSize: '1rem' }}>Change Your Password</h3>
+            </div>
+
+            {[
+              { key: 'current', label: 'Current Password' },
+              { key: 'next',    label: 'New Password' },
+              { key: 'confirm', label: 'Confirm New Password' },
+            ].map(({ key, label }) => (
+              <div key={key} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPw[key] ? 'text' : 'password'}
+                    className="ui-input"
+                    placeholder="••••••••"
+                    value={pwForm[key]}
+                    onChange={e => setPwForm(p => ({ ...p, [key]: e.target.value }))}
+                    style={{ width: '100%', paddingRight: 40, boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(p => ({ ...p, [key]: !p[key] }))}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}
+                  >
+                    {showPw[key] ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {pwMsg && (
+              <div style={{ padding: '8px 12px', borderRadius: 8, marginBottom: 14, fontSize: '0.82rem',
+                background: pwMsg.startsWith('✅') ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                color: pwMsg.startsWith('✅') ? '#22c55e' : '#ef4444',
+                border: `1px solid ${pwMsg.startsWith('✅') ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
+              }}>
+                {pwMsg}
+              </div>
+            )}
+
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleChangePassword} disabled={pwSaving}>
+              {pwSaving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : 'Update Password'}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
