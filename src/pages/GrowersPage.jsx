@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, Tag, DollarSign, Package, TrendingDown, TrendingUp, Edit3, Save, Loader2, BoxSelect, Trash2 } from 'lucide-react';
-import { contactsApi, ordersApi, vendorPackagesApi } from '../services/api';
+import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen } from 'lucide-react';
+import { contactsApi, ordersApi } from '../services/api';
 
 // ── Product / Variety catalogue (same as OrderModal) ─────────
 const PRODUCTS = {
@@ -182,15 +182,17 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
 };
 
 // ── Grower Card ───────────────────────────────────────────────
-const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRefresh }) => {
+const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState('orders');
+  const [docs, setDocs] = useState([]);
+  const [docsLoaded, setDocsLoaded] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const growerOrders = orders.filter(o =>
     o.grower?.toLowerCase() === grower.name?.toLowerCase() ||
     o.contactId === grower.id
   );
-  const growerPkgs = (vendorPkgs || []).filter(p => p.growerId === grower.id);
 
   const totalBoxes   = growerOrders.reduce((s, o) => s + (o.boxQuantity || 0), 0);
   const totalValue   = growerOrders.reduce((s, o) => s + ((o.purchasePrice || 0) * (o.boxQuantity || 0)), 0);
@@ -200,6 +202,43 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
 
   const country = grower.language || 'Morocco';
   const region  = grower.department || '';
+
+  const loadDocs = async () => {
+    if (docsLoaded) return;
+    try {
+      const { documentsApi } = await import('../services/api');
+      const data = await documentsApi.getAll({ contactId: grower.id });
+      setDocs(Array.isArray(data) ? data : []);
+    } catch { setDocs([]); }
+    setDocsLoaded(true);
+  };
+
+  const handleTabChange = (t) => {
+    setTab(t);
+    if (t === 'documents') loadDocs();
+  };
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { documentsApi } = await import('../services/api');
+      await documentsApi.upload(file, { contactId: grower.id, category: 'General' });
+      const data = await documentsApi.getAll({ contactId: grower.id });
+      setDocs(Array.isArray(data) ? data : []);
+    } catch (err) { alert('Upload failed: ' + err.message); }
+    finally { setUploading(false); e.target.value = ''; }
+  };
+
+  const handleDeleteDoc = async (docId) => {
+    if (!confirm('Delete this document?')) return;
+    try {
+      const { documentsApi } = await import('../services/api');
+      await documentsApi.delete(docId);
+      setDocs(d => d.filter(x => x.id !== docId));
+    } catch (err) { alert('Delete failed: ' + err.message); }
+  };
 
   return (
     <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
@@ -235,10 +274,6 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
             <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Orders</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#3b82f6' }}>{growerPkgs.length}</div>
-            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Packages</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1rem', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</div>
             <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Boxes</div>
           </div>
@@ -249,10 +284,6 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
             </div>
           )}
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-glass" style={{ fontSize: '0.75rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
-              onClick={e => { e.stopPropagation(); onAddPackage(grower); }}>
-              <Package size={13} /> Package
-            </button>
             <button className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
               onClick={e => { e.stopPropagation(); onAddOffer(grower); }}>
               <Plus size={13} /> Offer
@@ -273,8 +304,12 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 2, padding: '10px 20px 0', borderBottom: '1px solid var(--border-glass-light)' }}>
-            {[['orders', `Orders (${growerOrders.length})`, 'var(--orange-primary)'], ['packages', `Vendor Packages (${growerPkgs.length})`, '#3b82f6']].map(([id, label, color]) => (
-              <button key={id} onClick={() => setTab(id)} style={{
+            {[
+              ['orders', `Orders (${growerOrders.length})`, 'var(--orange-primary)'],
+              ['info', 'Info', '#94a3b8'],
+              ['documents', 'Documents', '#3b82f6'],
+            ].map(([id, label, color]) => (
+              <button key={id} onClick={() => handleTabChange(id)} style={{
                 padding: '6px 16px', fontSize: '0.78rem', fontWeight: 700, border: 'none', cursor: 'pointer',
                 borderRadius: '8px 8px 0 0', background: tab === id ? 'rgba(255,255,255,0.06)' : 'transparent',
                 color: tab === id ? color : 'var(--text-muted)',
@@ -284,6 +319,7 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
           </div>
 
           <div style={{ padding: '14px 20px' }}>
+
             {/* Orders tab */}
             {tab === 'orders' && (
               growerOrders.length === 0
@@ -342,51 +378,66 @@ const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRe
                   </div>
             )}
 
-            {/* Vendor Packages tab */}
-            {tab === 'packages' && (
-              growerPkgs.length === 0
-                ? <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No packages yet — click <strong>Package</strong> to add one</div>
-                : <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                      <thead>
-                        <tr style={{ background: 'rgba(59,130,246,0.06)' }}>
-                          {['Product', 'Variety', 'Box Type', 'Size', 'Quantity', 'Price/Box', 'Total', 'Week', 'Season', 'Status'].map(h => (
-                            <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {growerPkgs.map((p, i) => {
-                          const statusColors = { Available: '#22c55e', Confirmed: '#3b82f6', Shipped: '#8b5cf6' };
-                          const col = statusColors[p.status] || 'var(--text-muted)';
-                          return (
-                            <tr key={p.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                              <td style={{ padding: '8px 12px' }}>{p.product}</td>
-                              <td style={{ padding: '8px 12px' }}>{p.variety}</td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.boxType || '—'}</td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.size || '—'}</td>
-                              <td style={{ padding: '8px 12px', fontWeight: 600 }}>{p.quantity.toLocaleString()}</td>
-                              <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600 }}>{p.pricePerBox ? `$${parseFloat(p.pricePerBox).toFixed(2)}` : '—'}</td>
-                              <td style={{ padding: '8px 12px', fontWeight: 700, color: '#3b82f6' }}>
-                                {p.pricePerBox ? `$${(p.pricePerBox * p.quantity).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
-                              </td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.week ? `W${p.week}` : '—'}</td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.season || '—'}</td>
-                              <td style={{ padding: '8px 12px' }}>
-                                <select value={p.status} onChange={async e => {
-                                  await vendorPackagesApi.update(p.id, { status: e.target.value });
-                                  onRefresh();
-                                }} style={{ background: `${col}15`, color: col, border: `1px solid ${col}40`, borderRadius: 10, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', outline: 'none' }}>
-                                  {['Available', 'Confirmed', 'Shipped'].map(s => <option key={s}>{s}</option>)}
-                                </select>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            {/* Info tab */}
+            {tab === 'info' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                {[
+                  { label: 'Name',    value: grower.name },
+                  { label: 'Company', value: grower.company !== 'N/A' ? grower.company : null },
+                  { label: 'Country', value: country },
+                  { label: 'Region',  value: region || null },
+                  { label: 'Phone',   value: grower.phone !== 'N/A' ? grower.phone : null },
+                  { label: 'Email',   value: grower.email !== 'N/A' ? grower.email : null },
+                  { label: 'Address', value: grower.address || null },
+                  { label: 'Website', value: grower.website || null },
+                  { label: 'Status',  value: grower.status },
+                ].filter(f => f.value).map(({ label, value }) => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
                   </div>
+                ))}
+                {grower.notes && (
+                  <div style={{ gridColumn: '1/-1', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{grower.notes}</div>
+                  </div>
+                )}
+              </div>
             )}
+
+            {/* Documents tab */}
+            {tab === 'documents' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <label style={{ cursor: 'pointer' }}>
+                    <input type="file" style={{ display: 'none' }} onChange={handleUpload} />
+                    <span className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      {uploading ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Plus size={13} /> Upload Document</>}
+                    </span>
+                  </label>
+                </div>
+                {docs.length === 0
+                  ? <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No documents yet — click Upload to add one</div>
+                  : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {docs.map(d => (
+                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
+                          <FolderOpen size={15} style={{ color: '#3b82f6', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.originalName || d.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{d.category} · {new Date(d.createdAt).toLocaleDateString()}</div>
+                          </div>
+                          <a href={`/api/documents/${d.id}/download`} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', fontSize: '0.75rem', textDecoration: 'none' }}>Download</a>
+                          <button onClick={() => handleDeleteDoc(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                }
+              </div>
+            )}
+
           </div>
         </div>
       )}
@@ -486,24 +537,20 @@ const AddVendorPackageModal = ({ grower, onClose, onSaved }) => {
 const GrowersPage = ({ selectedCompany }) => {
   const [growers, setGrowers]   = useState([]);
   const [orders, setOrders]     = useState([]);
-  const [vendorPkgs, setVendorPkgs] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
   const [showAdd, setShowAdd]   = useState(false);
   const [offerGrower, setOfferGrower] = useState(null);
-  const [pkgGrower, setPkgGrower] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [contacts, allOrders, pkgs] = await Promise.all([
+      const [contacts, allOrders] = await Promise.all([
         contactsApi.getAll('Grower'),
         ordersApi.getAll(),
-        vendorPackagesApi.getAll().catch(() => [])
       ]);
       setGrowers(contacts);
       setOrders(allOrders);
-      setVendorPkgs(Array.isArray(pkgs) ? pkgs : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -593,9 +640,7 @@ const GrowersPage = ({ selectedCompany }) => {
               key={g.id}
               grower={g}
               orders={orders}
-              vendorPkgs={vendorPkgs}
               onAddOffer={setOfferGrower}
-              onAddPackage={setPkgGrower}
               onRefresh={loadData}
             />
           ))}
@@ -610,13 +655,6 @@ const GrowersPage = ({ selectedCompany }) => {
         <AddOfferModal
           grower={offerGrower}
           onClose={() => setOfferGrower(null)}
-          onSaved={loadData}
-        />
-      )}
-      {pkgGrower && (
-        <AddVendorPackageModal
-          grower={pkgGrower}
-          onClose={() => setPkgGrower(null)}
           onSaved={loadData}
         />
       )}
