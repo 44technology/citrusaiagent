@@ -20,7 +20,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
     { id: 'accounting', label: 'Accounting', icon: Receipt },
     { id: 'outreach',   label: 'Outreach',   icon: Mail },
     { id: 'documents',  label: 'Documents',  icon: FolderOpen },
-    { id: 'analytics',  label: 'Analytics',  icon: BarChart3 },
+    { id: 'analytics',  label: 'P&L',        icon: BarChart3 },
     { id: 'settings',   label: 'Settings',   icon: Settings },
   ];
 

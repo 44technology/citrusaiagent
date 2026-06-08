@@ -13,6 +13,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
 import OutreachPage from './pages/OutreachPage';
 import ShipmentsListPage from './pages/ShipmentsListPage';
+import PLPage from './pages/PLPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -110,7 +111,7 @@ function App() {
             {activeTab === 'documents' && <DocumentsPage selectedCompany={selectedCompany} />}
             {activeTab === 'growers' && <GrowersPage selectedCompany={selectedCompany} />}
             {activeTab === 'outreach' && <OutreachPage />}
-            {activeTab === 'analytics' && <div className="placeholder">Analytics Coming Soon</div>}
+            {activeTab === 'analytics' && <PLPage selectedCompany={selectedCompany} />}
             {activeTab === 'settings' && <SettingsPage />}
           </div>
         </main>
