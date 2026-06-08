@@ -293,14 +293,16 @@ const SettingsPage = () => {
       {activeTab === 'users' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Create User Card */}
-          <div className="glass-panel" style={{ padding: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-              <Key size={17} style={{ color: 'var(--orange-primary)' }} />
-              <h3 style={{ margin: 0, fontSize: '1rem' }}>Create New User</h3>
+          {/* Create User Card — super admin only */}
+          {isSuperAdmin && (
+            <div className="glass-panel" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+                <Key size={17} style={{ color: 'var(--orange-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '1rem' }}>Create New User</h3>
+              </div>
+              <CreateUserForm onCreated={u => setUsers(p => [u, ...p])} callerIsSuperAdmin={isSuperAdmin} />
             </div>
-            <CreateUserForm onCreated={u => setUsers(p => [u, ...p])} callerIsSuperAdmin={isSuperAdmin} />
-          </div>
+          )}
 
           {/* User List */}
           <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
