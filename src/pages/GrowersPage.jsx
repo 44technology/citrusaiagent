@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, Tag, DollarSign, Package, TrendingDown, TrendingUp, Edit3, Save, Loader2 } from 'lucide-react';
-import { contactsApi, ordersApi } from '../services/api';
+import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, Tag, DollarSign, Package, TrendingDown, TrendingUp, Edit3, Save, Loader2, BoxSelect, Trash2 } from 'lucide-react';
+import { contactsApi, ordersApi, vendorPackagesApi } from '../services/api';
 
 // ── Product / Variety catalogue (same as OrderModal) ─────────
 const PRODUCTS = {
@@ -182,13 +182,15 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
 };
 
 // ── Grower Card ───────────────────────────────────────────────
-const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
+const GrowerCard = ({ grower, orders, vendorPkgs, onAddOffer, onAddPackage, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
+  const [tab, setTab] = useState('orders');
 
   const growerOrders = orders.filter(o =>
     o.grower?.toLowerCase() === grower.name?.toLowerCase() ||
     o.contactId === grower.id
   );
+  const growerPkgs = (vendorPkgs || []).filter(p => p.growerId === grower.id);
 
   const totalBoxes   = growerOrders.reduce((s, o) => s + (o.boxQuantity || 0), 0);
   const totalValue   = growerOrders.reduce((s, o) => s + ((o.purchasePrice || 0) * (o.boxQuantity || 0)), 0);
@@ -233,6 +235,10 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
             <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Orders</div>
           </div>
           <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#3b82f6' }}>{growerPkgs.length}</div>
+            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Packages</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1rem', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</div>
             <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Boxes</div>
           </div>
@@ -243,11 +249,12 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
             </div>
           )}
           <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              className="btn btn-primary"
-              style={{ fontSize: '0.75rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
-              onClick={e => { e.stopPropagation(); onAddOffer(grower); }}
-            >
+            <button className="btn btn-glass" style={{ fontSize: '0.75rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
+              onClick={e => { e.stopPropagation(); onAddPackage(grower); }}>
+              <Package size={13} /> Package
+            </button>
+            <button className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '5px 10px', whiteSpace: 'nowrap' }}
+              onClick={e => { e.stopPropagation(); onAddOffer(grower); }}>
               <Plus size={13} /> Offer
             </button>
             {expanded ? <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />}
@@ -255,90 +262,222 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
         </div>
       </div>
 
-      {/* Contact Info */}
+      {/* Expanded */}
       {expanded && (
-        <div style={{ borderTop: '1px solid var(--border-glass-light)', padding: '12px 20px', background: 'rgba(255,255,255,0.02)' }}>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: growerOrders.length > 0 ? 14 : 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            {grower.phone && grower.phone !== 'N/A' && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Phone size={13} /> {grower.phone}
-              </span>
-            )}
-            {grower.email && grower.email !== 'N/A' && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Mail size={13} /> {grower.email}
-              </span>
-            )}
+        <div style={{ borderTop: '1px solid var(--border-glass-light)', background: 'rgba(255,255,255,0.02)' }}>
+          {/* Contact info */}
+          <div style={{ padding: '10px 20px', display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: '0.82rem', color: 'var(--text-muted)', borderBottom: '1px solid var(--border-glass-light)' }}>
+            {grower.phone && grower.phone !== 'N/A' && <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={13} /> {grower.phone}</span>}
+            {grower.email && grower.email !== 'N/A' && <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Mail size={13} /> {grower.email}</span>}
           </div>
 
-          {/* Orders Table */}
-          {growerOrders.length > 0 && (
-            <>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Purchase Offers / Orders
-              </div>
-              <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
-                      {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Purchase Price', 'Total', 'Week', 'Status'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {growerOrders.map((o, i) => {
-                      const total = (o.purchasePrice || 0) * (o.boxQuantity || 0);
-                      return (
-                        <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                          <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>#{o.referenceId}</td>
-                          <td style={{ padding: '8px 12px' }}>{o.product}</td>
-                          <td style={{ padding: '8px 12px' }}>{o.variety}</td>
-                          <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.boxType || '—'}</td>
-                          <td style={{ padding: '8px 12px', fontWeight: 600 }}>{(o.boxQuantity || 0).toLocaleString()}</td>
-                          <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600 }}>
-                            {o.purchasePrice ? `$${parseFloat(o.purchasePrice).toFixed(2)}` : '—'}
-                          </td>
-                          <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>
-                            {total > 0 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
-                          </td>
-                          <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.week || '—'}</td>
-                          <td style={{ padding: '8px 12px' }}>
-                            <span style={{
-                              padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 600,
-                              background: o.status === 'offer' ? 'rgba(245,158,11,0.15)' : o.status === 'confirmed' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.07)',
-                              color: o.status === 'offer' ? '#f59e0b' : o.status === 'confirmed' ? '#22c55e' : 'var(--text-muted)'
-                            }}>
-                              {o.status || 'pending'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  {growerOrders.length > 1 && (
-                    <tfoot>
-                      <tr style={{ borderTop: '2px solid var(--border-glass-light)', background: 'rgba(255,255,255,0.03)' }}>
-                        <td colSpan={4} style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL</td>
-                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</td>
-                        <td style={{ padding: '8px 12px', fontWeight: 700, color: '#f59e0b' }}>${avgPrice} avg</td>
-                        <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                        <td colSpan={2} />
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
-              </div>
-            </>
-          )}
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: 2, padding: '10px 20px 0', borderBottom: '1px solid var(--border-glass-light)' }}>
+            {[['orders', `Orders (${growerOrders.length})`, 'var(--orange-primary)'], ['packages', `Vendor Packages (${growerPkgs.length})`, '#3b82f6']].map(([id, label, color]) => (
+              <button key={id} onClick={() => setTab(id)} style={{
+                padding: '6px 16px', fontSize: '0.78rem', fontWeight: 700, border: 'none', cursor: 'pointer',
+                borderRadius: '8px 8px 0 0', background: tab === id ? 'rgba(255,255,255,0.06)' : 'transparent',
+                color: tab === id ? color : 'var(--text-muted)',
+                borderBottom: tab === id ? `2px solid ${color}` : '2px solid transparent',
+              }}>{label}</button>
+            ))}
+          </div>
 
-          {growerOrders.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-              No offers yet — click <strong>+ Offer</strong> to add one
-            </div>
-          )}
+          <div style={{ padding: '14px 20px' }}>
+            {/* Orders tab */}
+            {tab === 'orders' && (
+              growerOrders.length === 0
+                ? <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No offers yet — click <strong>+ Offer</strong> to add one</div>
+                : <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+                          {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Purchase Price', 'Total', 'Dep. Week', 'Arr. Week', 'Adv. Payment', 'Status'].map(h => (
+                            <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {growerOrders.map((o, i) => {
+                          const total = (o.purchasePrice || 0) * (o.boxQuantity || 0);
+                          return (
+                            <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                              <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>#{o.referenceId}</td>
+                              <td style={{ padding: '8px 12px' }}>{o.product}</td>
+                              <td style={{ padding: '8px 12px' }}>{o.variety}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.boxType || '—'}</td>
+                              <td style={{ padding: '8px 12px', fontWeight: 600 }}>{(o.boxQuantity || 0).toLocaleString()}</td>
+                              <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600 }}>{o.purchasePrice ? `$${parseFloat(o.purchasePrice).toFixed(2)}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>{total > 0 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.departureWeek ? `W${o.departureWeek}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.arrivalWeek ? `W${o.arrivalWeek}` : '—'}</td>
+                              <td style={{ padding: '8px 12px' }}>
+                                {o.advancePaymentAmount
+                                  ? <span style={{ color: '#22c55e', fontWeight: 600 }}>${parseFloat(o.advancePaymentAmount).toLocaleString()}{o.advancePaymentPct ? ` (${o.advancePaymentPct}%)` : ''}</span>
+                                  : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                              </td>
+                              <td style={{ padding: '8px 12px' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 600,
+                                  background: o.status === 'offer' ? 'rgba(245,158,11,0.15)' : o.status === 'confirmed' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.07)',
+                                  color: o.status === 'offer' ? '#f59e0b' : o.status === 'confirmed' ? '#22c55e' : 'var(--text-muted)' }}>
+                                  {o.status || 'pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {growerOrders.length > 1 && (
+                        <tfoot>
+                          <tr style={{ borderTop: '2px solid var(--border-glass-light)', background: 'rgba(255,255,255,0.03)' }}>
+                            <td colSpan={4} style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 700, color: '#f59e0b' }}>${avgPrice} avg</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                            <td colSpan={4} />
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+            )}
+
+            {/* Vendor Packages tab */}
+            {tab === 'packages' && (
+              growerPkgs.length === 0
+                ? <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No packages yet — click <strong>Package</strong> to add one</div>
+                : <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(59,130,246,0.06)' }}>
+                          {['Product', 'Variety', 'Box Type', 'Size', 'Quantity', 'Price/Box', 'Total', 'Week', 'Season', 'Status'].map(h => (
+                            <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {growerPkgs.map((p, i) => {
+                          const statusColors = { Available: '#22c55e', Confirmed: '#3b82f6', Shipped: '#8b5cf6' };
+                          const col = statusColors[p.status] || 'var(--text-muted)';
+                          return (
+                            <tr key={p.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                              <td style={{ padding: '8px 12px' }}>{p.product}</td>
+                              <td style={{ padding: '8px 12px' }}>{p.variety}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.boxType || '—'}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.size || '—'}</td>
+                              <td style={{ padding: '8px 12px', fontWeight: 600 }}>{p.quantity.toLocaleString()}</td>
+                              <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600 }}>{p.pricePerBox ? `$${parseFloat(p.pricePerBox).toFixed(2)}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', fontWeight: 700, color: '#3b82f6' }}>
+                                {p.pricePerBox ? `$${(p.pricePerBox * p.quantity).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}
+                              </td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.week ? `W${p.week}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.season || '—'}</td>
+                              <td style={{ padding: '8px 12px' }}>
+                                <select value={p.status} onChange={async e => {
+                                  await vendorPackagesApi.update(p.id, { status: e.target.value });
+                                  onRefresh();
+                                }} style={{ background: `${col}15`, color: col, border: `1px solid ${col}40`, borderRadius: 10, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', outline: 'none' }}>
+                                  {['Available', 'Confirmed', 'Shipped'].map(s => <option key={s}>{s}</option>)}
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+            )}
+          </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Add Vendor Package Modal ──────────────────────────────────
+const AddVendorPackageModal = ({ grower, onClose, onSaved }) => {
+  const [form, setForm] = useState({
+    product: 'Mandarin', variety: 'Nadorcott', boxType: '', size: '',
+    quantity: '', pricePerBox: '', week: '', season: '', notes: '', status: 'Available'
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const varieties = PRODUCTS[form.product] || [];
+
+  const handleSave = async () => {
+    if (!form.quantity) { alert('Quantity is required'); return; }
+    setSaving(true);
+    try {
+      await vendorPackagesApi.create({ ...form, growerId: grower.id });
+      onSaved();
+      onClose();
+    } catch (err) { alert('Failed: ' + err.message); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass-panel" style={{ maxWidth: 520, padding: 0 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><Package size={18} className="text-orange" /> Add Vendor Package</h3>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>from {grower.name}</p>
+          </div>
+          <button className="icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>PRODUCT *</label>
+              <select className="ui-select" value={form.product} onChange={e => { set('product', e.target.value); set('variety', PRODUCTS[e.target.value]?.[0] || ''); }}>
+                {Object.keys(PRODUCTS).map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>VARIETY *</label>
+              <select className="ui-select" value={form.variety} onChange={e => set('variety', e.target.value)}>
+                {varieties.map(v => <option key={v}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>BOX TYPE (kg)</label>
+              <input className="ui-input" placeholder="e.g. 17, 18" value={form.boxType} onChange={e => set('boxType', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>SIZE</label>
+              <input className="ui-input" placeholder="e.g. 113, 95" value={form.size} onChange={e => set('size', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>QUANTITY *</label>
+              <input type="number" className="ui-input" placeholder="0" value={form.quantity} onChange={e => set('quantity', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>PRICE / BOX ($)</label>
+              <input type="number" step="0.01" className="ui-input" placeholder="0.00" value={form.pricePerBox} onChange={e => set('pricePerBox', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>WEEK</label>
+              <input type="number" className="ui-input" placeholder="e.g. 22" value={form.week} onChange={e => set('week', e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>SEASON</label>
+              <input className="ui-input" placeholder="e.g. 2025-2026" value={form.season} onChange={e => set('season', e.target.value)} />
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>STATUS</label>
+              <select className="ui-select" value={form.status} onChange={e => set('status', e.target.value)}>
+                {['Available', 'Confirmed', 'Shipped'].map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
+              {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : 'Add Package'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -347,20 +486,24 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
 const GrowersPage = ({ selectedCompany }) => {
   const [growers, setGrowers]   = useState([]);
   const [orders, setOrders]     = useState([]);
+  const [vendorPkgs, setVendorPkgs] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
   const [showAdd, setShowAdd]   = useState(false);
   const [offerGrower, setOfferGrower] = useState(null);
+  const [pkgGrower, setPkgGrower] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [contacts, allOrders] = await Promise.all([
+      const [contacts, allOrders, pkgs] = await Promise.all([
         contactsApi.getAll('Grower'),
-        ordersApi.getAll()
+        ordersApi.getAll(),
+        vendorPackagesApi.getAll().catch(() => [])
       ]);
       setGrowers(contacts);
       setOrders(allOrders);
+      setVendorPkgs(Array.isArray(pkgs) ? pkgs : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -450,7 +593,9 @@ const GrowersPage = ({ selectedCompany }) => {
               key={g.id}
               grower={g}
               orders={orders}
+              vendorPkgs={vendorPkgs}
               onAddOffer={setOfferGrower}
+              onAddPackage={setPkgGrower}
               onRefresh={loadData}
             />
           ))}
@@ -465,6 +610,13 @@ const GrowersPage = ({ selectedCompany }) => {
         <AddOfferModal
           grower={offerGrower}
           onClose={() => setOfferGrower(null)}
+          onSaved={loadData}
+        />
+      )}
+      {pkgGrower && (
+        <AddVendorPackageModal
+          grower={pkgGrower}
+          onClose={() => setPkgGrower(null)}
           onSaved={loadData}
         />
       )}

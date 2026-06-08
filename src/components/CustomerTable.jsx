@@ -27,7 +27,7 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick, users =
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         {arr.slice(0, 3).map((v, i) => (
-          <span key={i} style={{ background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)', borderRadius: 4, padding: '1px 6px', fontSize: '0.72rem', fontWeight: 600 }}>{v}</span>
+          <span key={i} style={{ background: 'rgba(148,163,184,0.12)', color: '#94a3b8', borderRadius: 4, padding: '1px 6px', fontSize: '0.72rem', fontWeight: 600 }}>{v}</span>
         ))}
         {arr.length > 3 && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>+{arr.length - 3}</span>}
       </div>

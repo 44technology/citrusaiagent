@@ -16,6 +16,7 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
   const [loading, setLoading] = useState(true);
   const [shipments, setShipments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
 
   const currentUser = (() => {
     try {
@@ -104,9 +105,19 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
     fetchContacts(); // Refresh after viewing detail
   };
 
-  const filteredContacts = contacts.filter(c => 
-    activeTab === 'leads' ? c.type === 'Lead' : c.type === 'Customer'
-  );
+  const filteredContacts = contacts.filter(c => {
+    const matchType = activeTab === 'leads' ? c.type === 'Lead' : c.type === 'Customer';
+    if (!matchType) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      c.name?.toLowerCase().includes(q) ||
+      c.company?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q) ||
+      c.city?.toLowerCase().includes(q) ||
+      c.country?.toLowerCase().includes(q)
+    );
+  });
 
   const selectedContact = contacts.find(c => c.id === selectedContactId);
 
@@ -127,7 +138,7 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
       <div className="dashboard-grid full-width">
         <div className="main-panel glass-panel" style={{ display: 'flex', flexDirection: 'column' }}>
           
-          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
             <div>
               <h2>{activeTab === 'leads' ? 'Leads Management' : 'Customer Directory'}</h2>
               <p className="text-sec mt-2">
@@ -135,6 +146,26 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
                   ? 'Upload and manage potential customers. Click on a row to configure AI outreach.'
                   : 'View and manage your converted customers.'}
               </p>
+            </div>
+            <div style={{ position: 'relative', flexShrink: 0, minWidth: 260 }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder={`Search ${activeTab === 'leads' ? 'leads' : 'customers'}...`}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: '100%', paddingLeft: 32, paddingRight: search ? 32 : 12, paddingTop: 8, paddingBottom: 8,
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)',
+                  borderRadius: 8, color: 'var(--text-primary)', fontSize: '0.84rem', outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {search && (
+                <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
+                  <X size={13} />
+                </button>
+              )}
             </div>
           </div>
 
