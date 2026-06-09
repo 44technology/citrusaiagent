@@ -522,6 +522,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-secondary)' }}>
               <tr>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>REF ID</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>SU</th>
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />
@@ -558,6 +559,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 >
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--orange-primary)', fontWeight: 700 }}>
                     {s.order?.referenceId ? `#${s.order.referenceId}` : s.shipmentRefId ? `#${s.shipmentRefId}` : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {s.soNumber || '—'}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>

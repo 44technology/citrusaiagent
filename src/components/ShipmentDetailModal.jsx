@@ -1007,6 +1007,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
       advancePaymentStatus: shipment.advancePaymentStatus || '',
       referenceId: shipment.shipmentRefId || shipment.order?.referenceId || '',
       orderId: shipment.orderId || '',
+      soNumber: shipment.soNumber || '',
     });
     setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : (shipment.shipmentRefId || ''));
     setMatchedOrder(shipment.order || null);
@@ -1258,6 +1259,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 </Field>
                 <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={editingSection === 'cargo'}>
                   <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
+                </Field>
+                <Field label="SU (BC SO#)" value={shipment.soNumber} editing={editingSection === 'cargo'}>
+                  <Inp placeholder="e.g. SO-12345" value={ed.soNumber} onChange={e => set('soNumber', e.target.value)} />
                 </Field>
 
                 {/* Advance Payment Status — spans full row */}

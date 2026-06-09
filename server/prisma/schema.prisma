@@ -108,6 +108,7 @@ model Shipment {
   id              String    @id @default(uuid())
   label           String
   referenceId     String?   // Manual ref ID (used when no order is linked)
+  soNumber        String?   // SO number (Business Central)
   destination     String
   vesselName      String?
   containerNumber String?

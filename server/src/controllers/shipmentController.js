@@ -174,7 +174,7 @@ export const updateShipment = async (req, res) => {
       'pallets','packType','variety','grower','product',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
-      'advToGrower','qcArrival',
+      'advToGrower','qcArrival','soNumber',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
 
