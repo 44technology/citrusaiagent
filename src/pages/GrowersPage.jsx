@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen } from 'lucide-react';
+import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen, Edit3, Save } from 'lucide-react';
 import { contactsApi, ordersApi } from '../services/api';
 
 // ── Product / Variety catalogue (same as OrderModal) ─────────
@@ -188,6 +188,12 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
   const [docs, setDocs] = useState([]);
   const [docsLoaded, setDocsLoaded] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({});
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
+  const isSuperAdmin = currentUser.role === 'super admin';
 
   const growerOrders = orders.filter(o =>
     o.grower?.toLowerCase() === grower.name?.toLowerCase() ||
@@ -380,27 +386,109 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
 
             {/* Info tab */}
             {tab === 'info' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                {[
-                  { label: 'Name',    value: grower.name },
-                  { label: 'Company', value: grower.company !== 'N/A' ? grower.company : null },
-                  { label: 'Country', value: country },
-                  { label: 'Region',  value: region || null },
-                  { label: 'Phone',   value: grower.phone !== 'N/A' ? grower.phone : null },
-                  { label: 'Email',   value: grower.email !== 'N/A' ? grower.email : null },
-                  { label: 'Address', value: grower.address || null },
-                  { label: 'Website', value: grower.website || null },
-                  { label: 'Status',  value: grower.status },
-                ].filter(f => f.value).map(({ label, value }) => (
-                  <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
+              <div>
+                {/* Edit / Save / Cancel buttons — super admin only */}
+                {isSuperAdmin && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 8 }}>
+                    {editingInfo ? (
+                      <>
+                        <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 14px' }}
+                          onClick={() => setEditingInfo(false)}>Cancel</button>
+                        <button className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '5px 14px' }}
+                          disabled={savingInfo}
+                          onClick={async () => {
+                            setSavingInfo(true);
+                            try {
+                              await contactsApi.update(grower.id, {
+                                name:       infoForm.name,
+                                company:    infoForm.company || 'N/A',
+                                phone:      infoForm.phone   || 'N/A',
+                                email:      infoForm.email   || 'N/A',
+                                language:   infoForm.country,
+                                department: infoForm.region,
+                                address:    infoForm.address,
+                                website:    infoForm.website,
+                                status:     infoForm.status,
+                              });
+                              setEditingInfo(false);
+                              onRefresh();
+                            } catch (err) { alert('Save failed: ' + err.message); }
+                            finally { setSavingInfo(false); }
+                          }}>
+                          {savingInfo ? <><Loader2 size={13} className="animate-spin" /> Saving…</> : <><Save size={13} /> Save</>}
+                        </button>
+                      </>
+                    ) : (
+                      <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 14px' }}
+                        onClick={() => {
+                          setInfoForm({
+                            name:    grower.name || '',
+                            company: grower.company !== 'N/A' ? grower.company : '',
+                            phone:   grower.phone !== 'N/A' ? grower.phone : '',
+                            email:   grower.email !== 'N/A' ? grower.email : '',
+                            country: grower.language || 'Morocco',
+                            region:  grower.department || '',
+                            address: grower.address || '',
+                            website: grower.website || '',
+                            status:  grower.status || 'Active',
+                          });
+                          setEditingInfo(true);
+                        }}>
+                        <Edit3 size={13} /> Edit
+                      </button>
+                    )}
                   </div>
-                ))}
-                {grower.notes && (
-                  <div style={{ gridColumn: '1/-1', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</div>
-                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{grower.notes}</div>
+                )}
+
+                {editingInfo ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                    {[
+                      { key: 'name',    label: 'Name' },
+                      { key: 'company', label: 'Company' },
+                      { key: 'country', label: 'Country' },
+                      { key: 'region',  label: 'Region' },
+                      { key: 'phone',   label: 'Phone' },
+                      { key: 'email',   label: 'Email' },
+                      { key: 'address', label: 'Address' },
+                      { key: 'website', label: 'Website' },
+                    ].map(({ key, label }) => (
+                      <div key={key}>
+                        <label style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                        <input className="ui-input" style={{ width: '100%', boxSizing: 'border-box' }}
+                          value={infoForm[key] || ''} onChange={e => setInfoForm(p => ({ ...p, [key]: e.target.value }))} />
+                      </div>
+                    ))}
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</label>
+                      <select className="ui-select" value={infoForm.status || 'Active'} onChange={e => setInfoForm(p => ({ ...p, status: e.target.value }))}>
+                        {['Active', 'Inactive'].map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                    {[
+                      { label: 'Name',    value: grower.name },
+                      { label: 'Company', value: grower.company !== 'N/A' ? grower.company : null },
+                      { label: 'Country', value: country },
+                      { label: 'Region',  value: region || null },
+                      { label: 'Phone',   value: grower.phone !== 'N/A' ? grower.phone : null },
+                      { label: 'Email',   value: grower.email !== 'N/A' ? grower.email : null },
+                      { label: 'Address', value: grower.address || null },
+                      { label: 'Website', value: grower.website || null },
+                      { label: 'Status',  value: grower.status },
+                    ].filter(f => f.value).map(({ label, value }) => (
+                      <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                        <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
+                      </div>
+                    ))}
+                    {grower.notes && (
+                      <div style={{ gridColumn: '1/-1', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--border-glass-light)' }}>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</div>
+                        <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{grower.notes}</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
