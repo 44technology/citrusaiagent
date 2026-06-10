@@ -242,6 +242,13 @@ const SettingsPage = () => {
     } catch (err) { alert('Failed: ' + err.message); }
   };
 
+  const tabs = [
+    { key: 'users',       label: 'User Management', icon: Users },
+    { key: 'email',       label: 'Email Config',     icon: Mail  },
+    { key: 'permissions', label: 'Permissions',      icon: Shield },
+    { key: 'password',    label: 'Change Password',  icon: Lock  },
+  ];
+
   // Non-admins can only see Change Password tab
   const visibleTabs = isAdmin
     ? tabs
@@ -267,13 +274,6 @@ const SettingsPage = () => {
       setPwSaving(false);
     }
   };
-
-  const tabs = [
-    { key: 'users',       label: 'User Management', icon: Users },
-    { key: 'email',       label: 'Email Config',     icon: Mail  },
-    { key: 'permissions', label: 'Permissions',      icon: Shield },
-    { key: 'password',    label: 'Change Password',  icon: Lock  },
-  ];
 
   return (
     <div className="page-container fade-in" style={{ padding: '28px 32px', maxWidth: 1100 }}>
