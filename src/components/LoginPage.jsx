@@ -54,7 +54,7 @@ const LoginPage = ({ onLogin }) => {
           <div className="login-logo-icon">
             🍊
           </div>
-          <h1 className="login-title">Citrus World</h1>
+          <h1 className="login-title">Sweet Fresh Portal</h1>
           <p className="text-sec" style={{ fontSize: '0.9rem' }}>Sign in to access your dashboard</p>
         </div>
 
@@ -131,7 +131,7 @@ const LoginPage = ({ onLogin }) => {
 
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <div className="text-muted" style={{ fontSize: '0.8rem' }}>
-            Citrus World — Internal Platform
+            Sweet Fresh Portal — Internal Platform
           </div>
         </div>
       </div>
