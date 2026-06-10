@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -21,8 +21,54 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
   return children;
 };
 
+const TAB_TO_PATH = {
+  leads: '/leads', customers: '/customers', orders: '/orders',
+  shipments: '/shipments', tracking: '/tracking', growers: '/growers',
+  accounting: '/accounting', outreach: '/outreach', documents: '/documents',
+  analytics: '/pl', settings: '/settings',
+};
+const PATH_TO_TAB = Object.fromEntries(Object.entries(TAB_TO_PATH).map(([k, v]) => [v, k]));
+
+function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitchCompany }) {
+  const navigate = useNavigate();
+  const { page } = useParams();
+  const activeTab = PATH_TO_TAB[`/${page}`] || 'leads';
+
+  const setActiveTab = (tab) => navigate(`/${TAB_TO_PATH[tab].slice(1)}`);
+
+  return (
+    <>
+      <div className="bg-glow-orange"></div>
+      <div className="bg-glow-green"></div>
+      <div className="app-container">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+          company={selectedCompany}
+          onSwitchCompany={handleSwitchCompany}
+        />
+        <main className="main-content">
+          <Header company={selectedCompany} />
+          <div className="scroll-content" key={selectedCompany?.id}>
+            {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
+            {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
+            {activeTab === 'tracking' && <ShipmentTracking selectedCompany={selectedCompany} />}
+            {activeTab === 'orders' && <OrdersPage selectedCompany={selectedCompany} />}
+            {activeTab === 'accounting' && <AccountingPage selectedCompany={selectedCompany} />}
+            {activeTab === 'documents' && <DocumentsPage selectedCompany={selectedCompany} />}
+            {activeTab === 'growers' && <GrowersPage selectedCompany={selectedCompany} />}
+            {activeTab === 'outreach' && <OutreachPage />}
+            {activeTab === 'analytics' && <PLPage selectedCompany={selectedCompany} />}
+            {activeTab === 'settings' && <SettingsPage />}
+          </div>
+        </main>
+      </div>
+    </>
+  );
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState('leads');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const DEFAULT_COMPANY = { id: 'cmp-sweetfresh-0001', name: 'Sweet Fresh', slug: 'sweet-fresh', color: '#ff6b00' };
   const [selectedCompany, setSelectedCompany] = useState(() => {
@@ -88,51 +134,24 @@ function App() {
     );
   }
 
-  const Layout = () => (
-    <>
-      <div className="bg-glow-orange"></div>
-      <div className="bg-glow-green"></div>
-      <div className="app-container">
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onLogout={handleLogout}
-          company={selectedCompany}
-          onSwitchCompany={handleSwitchCompany}
-        />
-        <main className="main-content">
-          <Header company={selectedCompany} />
-          <div className="scroll-content" key={selectedCompany?.id}>
-            {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
-            {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
-            {activeTab === 'tracking' && <ShipmentTracking selectedCompany={selectedCompany} />}
-            {activeTab === 'orders' && <OrdersPage selectedCompany={selectedCompany} />}
-            {activeTab === 'accounting' && <AccountingPage selectedCompany={selectedCompany} />}
-            {activeTab === 'documents' && <DocumentsPage selectedCompany={selectedCompany} />}
-            {activeTab === 'growers' && <GrowersPage selectedCompany={selectedCompany} />}
-            {activeTab === 'outreach' && <OutreachPage />}
-            {activeTab === 'analytics' && <PLPage selectedCompany={selectedCompany} />}
-            {activeTab === 'settings' && <SettingsPage />}
-          </div>
-        </main>
-      </div>
-    </>
-  );
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} />
-<Route 
-          path="/dashboard" 
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/leads" /> : <LoginPage onLogin={handleLogin} />} />
+        <Route
+          path="/:page"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Layout />
+              <AppInner
+                isAuthenticated={isAuthenticated}
+                selectedCompany={selectedCompany}
+                handleLogout={handleLogout}
+                handleSwitchCompany={handleSwitchCompany}
+              />
             </ProtectedRoute>
-          } 
+          }
         />
-        {/* Redirect Root to Dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to="/leads" />} />
       </Routes>
     </BrowserRouter>
   );
