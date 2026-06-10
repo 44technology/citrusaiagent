@@ -51,8 +51,8 @@ const LoginPage = ({ onLogin }) => {
 
       <div className="login-container glass-panel animate-slide-up">
         <div className="login-logo">
-          <div className="login-logo-icon">
-            🍊
+          <div className="login-logo-icon" style={{ overflow: 'hidden', width: 90, height: 90, margin: '0 auto' }}>
+            <img src="/logo.png" alt="Sweet Fresh" style={{ width: '100%', marginTop: '-8%' }} />
           </div>
           <h1 className="login-title">Sweet Fresh Portal</h1>
           <p className="text-sec" style={{ fontSize: '0.9rem' }}>Sign in to access your dashboard</p>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, BarChart3, Settings, Citrus, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List } from 'lucide-react';
+import { Users, BarChart3, Settings, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List } from 'lucide-react';
 import '../index.css';
 
 const COMPANIES = [
@@ -43,8 +43,12 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
   return (
     <aside className="sidebar glass-panel">
       <div className="sidebar-logo">
-        <div className="logo-icon-container">
-          <Citrus className="logo-icon" size={28} />
+        <div style={{ width: 44, height: 44, overflow: 'hidden', flexShrink: 0 }}>
+          <img
+            src="/logo.png"
+            alt="Sweet Fresh"
+            style={{ width: '100%', marginTop: '-8%', display: 'block' }}
+          />
         </div>
         <div className="logo-text">
           <span className="text-gradient">Sweet Fresh</span> Portal
