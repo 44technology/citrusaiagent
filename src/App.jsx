@@ -135,7 +135,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/portal">
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/leads" /> : <LoginPage onLogin={handleLogin} />} />
         <Route
