@@ -830,9 +830,9 @@ h3 { font-size: 1.1rem; font-weight: 500; }
   width: 36px;
   height: 36px;
   border-radius: var(--radius-round);
-  background: transparent;
-  border: 1px solid var(--border-glass);
-  color: var(--text-muted);
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  color: #ff6b6b;
   display: flex;
   align-items: center;
   justify-content: center;
