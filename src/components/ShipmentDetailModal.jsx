@@ -1345,7 +1345,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 <Field label="BOL Number" value={shipment.bolNumber} editing={editingSection === 'ports'}>
                   <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
                 </Field>
-                <Field label="Departure Date (ETD)" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
+                <Field label="ETD" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselDeparture} onChange={e => set('vesselDeparture', e.target.value)} />
                 </Field>
                 <Field label="W-Dep" value={shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0]) ? `W${shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0])}` : null} editing={editingSection === 'ports'}>
@@ -1353,7 +1353,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                     {ed.departureWeek ? `W${ed.departureWeek}` : '—'}
                   </div>
                 </Field>
-                <Field label="ETA (Newark)" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={editingSection === 'ports'}>
+                <Field label="ETA" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselEta} onChange={e => set('vesselEta', e.target.value)} />
                 </Field>
                 <Field label="W-Arr" value={shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0]) ? `W${shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0])}` : null} editing={editingSection === 'ports'}>
