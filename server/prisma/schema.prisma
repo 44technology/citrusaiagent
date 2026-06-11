@@ -14,12 +14,13 @@ model Company {
   color     String   @default("#ff6b00")
   createdAt DateTime @default(now())
 
-  contacts      Contact[]
-  orders        Order[]
-  shipments     Shipment[]
-  documents     Document[]
-  invoices      Invoice[]
+  contacts       Contact[]
+  orders         Order[]
+  shipments      Shipment[]
+  documents      Document[]
+  invoices       Invoice[]
   purchaseOrders PurchaseOrder[]
+  vendorPackages VendorPackage[]
 }
 
 model Contact {
