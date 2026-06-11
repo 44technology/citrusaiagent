@@ -43,12 +43,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
   return (
     <aside className="sidebar glass-panel">
       <div className="sidebar-logo">
-        <div style={{ width: 44, height: 44, overflow: 'hidden', flexShrink: 0 }}>
-          <img
-            src="/logo.png"
-            alt="Sweet Fresh"
-            style={{ width: '100%', marginTop: '-8%', display: 'block' }}
-          />
+        <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#111', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <img src="/logo.png" alt="Sweet Fresh" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
         </div>
         <div className="logo-text">
           <span className="text-gradient">Sweet Fresh</span> Portal
