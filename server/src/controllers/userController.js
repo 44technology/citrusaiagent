@@ -80,7 +80,7 @@ export const updateUserRole = async (req, res) => {
 
 export const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  const userId = req.user?.id;
+  const userId = req.user?.userId || req.user?.id;
 
   if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Both fields required' });
   if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
