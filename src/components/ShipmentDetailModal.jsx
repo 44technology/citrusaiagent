@@ -1,4 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+
+// ISO-style week number matching business convention (Jun 7-13 = W24)
+function getWeekNumber(dateStr) {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  if (isNaN(date)) return null;
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const startDay = startOfYear.getDay();
+  const dayOfYear = Math.floor((date - startOfYear) / 86400000);
+  return Math.ceil((dayOfYear + startDay + 1) / 7);
+}
 import {
   X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
@@ -990,6 +1001,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
       containerNumber: shipment.containerNumber || '', bolNumber: shipment.bolNumber || '',
       vesselEta: shipment.vesselEta?.split('T')[0] || '',
       vesselDeparture: shipment.vesselDeparture?.split('T')[0] || '',
+      departureWeek: shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0]),
+      arrivalWeek: shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0]),
       vesselArrival: shipment.vesselArrival?.split('T')[0] || '',
       shippingLine: shipment.shippingLine || '', status: shipment.status || 'Pending',
       notes: shipment.notes || '',
@@ -1017,7 +1030,12 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
 
   if (!isOpen || !shipment || !ed) return null;
 
-  const set = (k, v) => setEd(p => ({ ...p, [k]: v }));
+  const set = (k, v) => setEd(p => {
+    const next = { ...p, [k]: v };
+    if (k === 'vesselDeparture') next.departureWeek = getWeekNumber(v);
+    if (k === 'vesselEta')       next.arrivalWeek   = getWeekNumber(v);
+    return next;
+  });
 
   const handleRefIdSearch = (val) => {
     setRefIdInput(val);
@@ -1327,11 +1345,21 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 <Field label="BOL Number" value={shipment.bolNumber} editing={editingSection === 'ports'}>
                   <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
                 </Field>
-                <Field label="Departure Date" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
+                <Field label="Departure Date (ETD)" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselDeparture} onChange={e => set('vesselDeparture', e.target.value)} />
+                </Field>
+                <Field label="W-Dep" value={shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0]) ? `W${shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0])}` : null} editing={editingSection === 'ports'}>
+                  <div style={{ padding: '6px 10px', background: 'rgba(255,107,0,0.1)', border: '1px solid rgba(255,107,0,0.3)', borderRadius: 8, color: 'var(--orange-primary)', fontWeight: 700, fontSize: '0.9rem' }}>
+                    {ed.departureWeek ? `W${ed.departureWeek}` : '—'}
+                  </div>
                 </Field>
                 <Field label="ETA (Newark)" value={shipment.vesselEta ? formatDateUTC(shipment.vesselEta) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselEta} onChange={e => set('vesselEta', e.target.value)} />
+                </Field>
+                <Field label="W-Arr" value={shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0]) ? `W${shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0])}` : null} editing={editingSection === 'ports'}>
+                  <div style={{ padding: '6px 10px', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 8, color: '#38bdf8', fontWeight: 700, fontSize: '0.9rem' }}>
+                    {ed.arrivalWeek ? `W${ed.arrivalWeek}` : '—'}
+                  </div>
                 </Field>
                 <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselArrival} onChange={e => set('vesselArrival', e.target.value)} />

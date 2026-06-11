@@ -16,7 +16,8 @@ const getWeek = (dateStr) => {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   const jan1 = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  const w = Math.ceil((Math.floor((d - jan1) / 86400000) + jan1.getDay() + 1) / 7);
+  return `W${w}`;
 };
 
 const STATUS_COLORS = {
