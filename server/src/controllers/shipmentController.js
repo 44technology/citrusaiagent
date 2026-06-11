@@ -134,14 +134,8 @@ export const updateShipment = async (req, res) => {
   try {
     const data = { ...req.body };
 
-    if (data.vesselEta !== undefined) {
-      data.vesselEta = parseDateUTC(data.vesselEta);
-      if (data.vesselEta) data.arrivalWeek = calcWeek(data.vesselEta);
-    }
-    if (data.vesselDeparture !== undefined) {
-      data.vesselDeparture = parseDateUTC(data.vesselDeparture);
-      if (data.vesselDeparture) data.departureWeek = calcWeek(data.vesselDeparture);
-    }
+    if (data.vesselEta !== undefined) data.vesselEta = parseDateUTC(data.vesselEta);
+    if (data.vesselDeparture !== undefined) data.vesselDeparture = parseDateUTC(data.vesselDeparture);
     if (data.vesselArrival !== undefined) data.vesselArrival = parseDateUTC(data.vesselArrival);
 
     // Parse numeric reefer fields
@@ -186,7 +180,7 @@ export const updateShipment = async (req, res) => {
       'pallets','packType','variety','grower','product',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
-      'advToGrower','qcArrival','soNumber','departureWeek','arrivalWeek',
+      'advToGrower','qcArrival','soNumber',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
 
