@@ -575,7 +575,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.contact.company}</div>
                     )}
                   </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
