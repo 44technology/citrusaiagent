@@ -193,7 +193,7 @@ export const updateShipment = async (req, res) => {
       'status','notes','contactId','orderId',
       'portOfLoading','portOfDischarge','transshipmentPort',
       'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',
-      'pallets','packType','variety','grower',
+      'pallets','packType','product','variety','grower',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
       'advToGrower','qcArrival','soNumber',

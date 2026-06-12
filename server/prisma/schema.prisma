@@ -139,6 +139,7 @@ model Shipment {
   numberOfBoxes    Int?
   pallets          Int?      // Number of pallets
   packType         String?   // e.g. "18 KG", "10 KG"
+  product          String?   // e.g. "Mandarin", "Orange"
   variety          String?   // e.g. "NADORCOTT", "MAROC LATE"
   grower           String?   // Grower / supplier name
 
