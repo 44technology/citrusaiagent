@@ -963,7 +963,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       transshipmentPort: shipment.transshipmentPort || '',
       containerType: shipment.containerType || '', sealNumber: shipment.sealNumber || '',
       grower: shipment.grower || '',
-      product: getProductForVariety(shipment.variety) || '',
+      product: shipment.product || getProductForVariety(shipment.variety) || '',
       variety: shipment.variety || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
