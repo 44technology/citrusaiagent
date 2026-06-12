@@ -995,6 +995,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
 
   useEffect(() => {
     if (!shipment) return;
+    // Don't reset form fields while a section is being edited
+    if (editingSection || isEditing) return;
     setEd({
       label: shipment.label || '', origin: shipment.origin || '',
       destination: shipment.destination || '', vesselName: shipment.vesselName || '',
