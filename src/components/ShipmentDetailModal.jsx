@@ -1089,11 +1089,6 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 color: shipment.status === 'Delivered' ? '#22c55e' : shipment.status === 'Arrived' ? '#10b981' : shipment.status === 'Customs' ? '#f97316' : shipment.status === 'In Transit' ? '#06b6d4' : shipment.status === 'Transshipment' ? '#8b5cf6' : shipment.status === 'Departed' ? '#3b82f6' : shipment.status === 'Loading' ? '#f59e0b' : 'var(--text-muted)',
               }}>{shipment.status}</span>
             )}
-            {onClone && (
-              <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 10px', color: '#38bdf8', borderColor: 'rgba(56,189,248,0.3)' }} onClick={() => onClone(shipment)} title="Clone this shipment">
-                <Copy size={12} /> Clone
-              </button>
-            )}
             {canEdit && (isEditing ? (
               <div style={{ display: 'flex', gap: 6 }}>
                 <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 10px' }} onClick={() => setIsEditing(false)}>Cancel</button>
@@ -1387,11 +1382,18 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
               </Field>
             </div>
 
-            {isSuperAdmin && !editingSection && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-glass" style={{ color: '#ef4444', fontSize: '0.8rem' }} onClick={handleDelete}>
-                  <Trash2 size={13} /> Delete Shipment
-                </button>
+            {!editingSection && (onClone || isSuperAdmin) && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                {onClone && (
+                  <button className="btn btn-glass" style={{ color: '#38bdf8', borderColor: 'rgba(56,189,248,0.3)', fontSize: '0.8rem' }} onClick={() => onClone(shipment)}>
+                    <Copy size={13} /> Clone
+                  </button>
+                )}
+                {isSuperAdmin && (
+                  <button className="btn btn-glass" style={{ color: '#ef4444', fontSize: '0.8rem' }} onClick={handleDelete}>
+                    <Trash2 size={13} /> Delete Shipment
+                  </button>
+                )}
               </div>
             )}
           </div>
