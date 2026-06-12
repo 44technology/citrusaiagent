@@ -138,6 +138,10 @@ export const updateShipment = async (req, res) => {
     if (data.vesselDeparture !== undefined) data.vesselDeparture = parseDateUTC(data.vesselDeparture);
     if (data.vesselArrival !== undefined) data.vesselArrival = parseDateUTC(data.vesselArrival);
 
+    // Empty string foreign keys must be null
+    if (data.orderId === '' || data.orderId === undefined) data.orderId = null;
+    if (data.contactId === '') data.contactId = null;
+
     // Parse numeric reefer fields
     const numericFields = ['reeferTempSet', 'reeferTempActual', 'humidity', 'ventilation', 'co2Level', 'grossWeight'];
     numericFields.forEach(f => {
