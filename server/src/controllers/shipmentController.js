@@ -89,6 +89,18 @@ export const createShipment = async (req, res) => {
       return res.status(400).json({ error: 'Label and contactId are required' });
     }
 
+    // Unique containerNumber check
+    if (containerNumber) {
+      const dup = await prisma.shipment.findFirst({ where: { containerNumber } });
+      if (dup) return res.status(400).json({ error: `Container number "${containerNumber}" already exists on another shipment.` });
+    }
+
+    // Unique manual referenceId check
+    if (referenceId) {
+      const dup = await prisma.shipment.findFirst({ where: { referenceId } });
+      if (dup) return res.status(400).json({ error: `Reference ID "${referenceId}" is already used by another shipment.` });
+    }
+
     const shipment = await prisma.shipment.create({
       data: {
         label, referenceId: referenceId || null,

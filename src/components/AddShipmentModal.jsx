@@ -3,7 +3,19 @@ import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3, Search, Ch
 import { contactsApi, ordersApi } from '../services/api';
 import { formatFullDateUTC } from '../utils/dateUtils';
 
-const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
+const EMPTY_FORM = {
+  contactId: '', orderId: '', label: '', origin: 'Morocco', destination: '',
+  vesselName: '', containerNumber: '', bolNumber: '',
+  vesselEta: '', vesselDeparture: '', vesselArrival: '',
+  shippingLine: '', status: 'Pending', notes: '',
+  portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
+  containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
+  reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
+  variety: '', grower: '', soNumber: '',
+  customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
+};
+
+const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLabelManual, setIsLabelManual] = useState(false);
@@ -11,26 +23,50 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
   const [showManualSelect, setShowManualSelect] = useState(false);
-  const [form, setForm] = useState({
-    contactId: '', orderId: '', label: '', origin: 'Morocco', destination: '',
-    vesselName: '', containerNumber: '', bolNumber: '',
-    vesselEta: '', vesselDeparture: '', vesselArrival: '',
-    shippingLine: '', status: 'Pending', notes: '',
-    // Ports
-    portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
-    // Container & cargo
-    containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
-    // Reefer
-    reeferTempSet: '', humidity: '', ventilation: '',
-    // New customer
-    customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
     if (isOpen) {
       ordersApi.getAll().then(setOrders).catch(() => {});
+      if (initialData) {
+        // Pre-fill from cloned shipment — clear unique fields
+        setForm({
+          ...EMPTY_FORM,
+          contactId:        initialData.contactId    || '',
+          orderId:          initialData.orderId       || '',
+          origin:           initialData.origin        || 'Morocco',
+          destination:      initialData.destination   || '',
+          vesselName:       initialData.vesselName    || '',
+          shippingLine:     initialData.shippingLine  || '',
+          portOfLoading:    initialData.portOfLoading || 'Port of Agadir',
+          portOfDischarge:  initialData.portOfDischarge || '',
+          transshipmentPort:initialData.transshipmentPort || '',
+          containerType:    initialData.containerType || '40RF',
+          cargoDescription: initialData.cargoDescription || '',
+          grossWeight:      initialData.grossWeight   ? String(initialData.grossWeight) : '',
+          numberOfBoxes:    initialData.numberOfBoxes ? String(initialData.numberOfBoxes) : '',
+          reeferTempSet:    initialData.reeferTempSet ? String(initialData.reeferTempSet) : '',
+          reeferTempActual: initialData.reeferTempActual ? String(initialData.reeferTempActual) : '',
+          humidity:         initialData.humidity      ? String(initialData.humidity) : '',
+          ventilation:      initialData.ventilation   ? String(initialData.ventilation) : '',
+          co2Level:         initialData.co2Level      ? String(initialData.co2Level) : '',
+          variety:          initialData.variety       || '',
+          grower:           initialData.grower        || '',
+          notes:            initialData.notes         || '',
+          status:           'Pending',
+          // containerNumber, bolNumber, soNumber, vesselEta, vesselDeparture intentionally blank
+        });
+        setIsLabelManual(false);
+        if (initialData.order?.referenceId) {
+          setRefIdInput(String(initialData.order.referenceId));
+        }
+      } else {
+        setForm(EMPTY_FORM);
+        setRefIdInput('');
+        setMatchedOrder(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   // Auto-generate label logic
   useEffect(() => {
@@ -155,7 +191,12 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers }) => {
         <div className="modal-header">
           <div className="flex-center gap-2">
             <Ship size={20} className="text-orange" />
-            <h3>Add New Shipment</h3>
+            <h3>{initialData ? 'Clone Shipment' : 'Add New Shipment'}</h3>
+            {initialData && (
+              <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 12, background: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)', marginLeft: 4 }}>
+                Cloned from {initialData.containerNumber || initialData.label || 'shipment'}
+              </span>
+            )}
           </div>
           <button className="icon-btn-small" onClick={onClose}>
             <X size={18} />

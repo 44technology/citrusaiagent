@@ -75,6 +75,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const [loadError, setLoadError]       = useState('');
   const [expandedId, setExpandedId]     = useState(null);
   const [showAdd, setShowAdd]           = useState(false);
+  const [cloneData, setCloneData]       = useState(null);
   const [showImport, setShowImport]     = useState(false);
   const [showFilters, setShowFilters]   = useState(false);
   const [search, setSearch]             = useState('');
@@ -611,6 +612,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                           shipment={s}
                           onUpdate={u => setShipments(p => p.map(x => x.id === u.id ? u : x))}
                           onDelete={handleDelete}
+                          onClone={s => { setCloneData(s); setExpandedId(null); setShowAdd(true); }}
                           embedded={true}
                         />
                       </div>
@@ -628,9 +630,10 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       {showAdd && (
         <AddShipmentModal
           isOpen={showAdd}
-          onClose={() => setShowAdd(false)}
+          onClose={() => { setShowAdd(false); setCloneData(null); }}
           onAdd={handleAdd}
           customers={customers}
+          initialData={cloneData}
         />
       )}
       {showImport && (

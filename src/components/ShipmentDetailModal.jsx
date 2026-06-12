@@ -11,7 +11,7 @@ function getWeekNumber(dateStr) {
   return Math.ceil((dayOfYear + startDay + 1) / 7);
 }
 import {
-  X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3,
+  X, Ship, MapPin, Calendar, Anchor, Trash2, Save, Edit3, Copy,
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
@@ -970,7 +970,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, embedded = false }) => {
+const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, onClone, embedded = false }) => {
   const [isEditing, setIsEditing]       = useState(false);
   const [editingSection, setEditingSection] = useState(null); // 'cargo' | 'ports' | 'reefer'
   const [ed, setEd]               = useState(null);
@@ -1136,6 +1136,11 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, em
                 background: shipment.status === 'Delivered' ? 'rgba(34,197,94,0.2)' : shipment.status === 'Arrived' ? 'rgba(16,185,129,0.15)' : shipment.status === 'Customs' ? 'rgba(249,115,22,0.15)' : shipment.status === 'In Transit' ? 'rgba(6,182,212,0.15)' : shipment.status === 'Transshipment' ? 'rgba(139,92,246,0.15)' : shipment.status === 'Departed' ? 'rgba(59,130,246,0.15)' : shipment.status === 'Loading' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.07)',
                 color: shipment.status === 'Delivered' ? '#22c55e' : shipment.status === 'Arrived' ? '#10b981' : shipment.status === 'Customs' ? '#f97316' : shipment.status === 'In Transit' ? '#06b6d4' : shipment.status === 'Transshipment' ? '#8b5cf6' : shipment.status === 'Departed' ? '#3b82f6' : shipment.status === 'Loading' ? '#f59e0b' : 'var(--text-muted)',
               }}>{shipment.status}</span>
+            )}
+            {onClone && (
+              <button className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '5px 10px', color: '#38bdf8', borderColor: 'rgba(56,189,248,0.3)' }} onClick={() => onClone(shipment)} title="Clone this shipment">
+                <Copy size={12} /> Clone
+              </button>
             )}
             {canEdit && (isEditing ? (
               <div style={{ display: 'flex', gap: 6 }}>
