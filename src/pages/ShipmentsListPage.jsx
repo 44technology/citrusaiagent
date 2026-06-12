@@ -528,7 +528,6 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>TYPE</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>GROWER</th>
                 <SortTh label="CLIENT"       field="contact.name"     sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>PRODUCT</th>
@@ -569,7 +568,6 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
                   <td style={{ padding: '10px 12px' }}><StatusBadge status={s.status} /></td>
-                  <td style={{ padding: '10px 12px' }}><TypeBadge type={s.containerType} /></td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>

@@ -11,8 +11,15 @@ const EMPTY_FORM = {
   portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
   containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
-  variety: '', grower: '', soNumber: '',
+  variety: '', product: '', grower: '', soNumber: '',
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
+};
+
+const PRODUCTS = {
+  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
+  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
+  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
+  'Lime':     ['Persian', 'Key Lime', 'Other'],
 };
 
 const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) => {
@@ -20,6 +27,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const [loading, setLoading] = useState(false);
   const [isLabelManual, setIsLabelManual] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [growers, setGrowers] = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
   const [showManualSelect, setShowManualSelect] = useState(false);
@@ -28,6 +36,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   useEffect(() => {
     if (isOpen) {
       ordersApi.getAll().then(setOrders).catch(() => {});
+      contactsApi.getAll('Grower').then(setGrowers).catch(() => {});
       if (initialData) {
         // Pre-fill from cloned shipment — clear unique fields
         setForm({
@@ -51,6 +60,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           ventilation:      initialData.ventilation   ? String(initialData.ventilation) : '',
           co2Level:         initialData.co2Level      ? String(initialData.co2Level) : '',
           variety:          initialData.variety       || '',
+          product:          (() => { const v = initialData.variety; if (!v) return ''; for (const [p, vs] of Object.entries(PRODUCTS)) { if (vs.includes(v)) return p; } return ''; })(),
           grower:           initialData.grower        || '',
           notes:            initialData.notes         || '',
           status:           'Pending',
@@ -121,6 +131,11 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       if (!value) { clearOrder(); return; }
       const order = orders.find(o => o.id === value);
       if (order) { applyOrder(order); return; }
+    }
+
+    if (field === 'product') {
+      setForm(prev => ({ ...prev, product: value, variety: '' }));
+      return;
     }
 
     setForm(prev => ({ ...prev, [field]: value }));
@@ -446,6 +461,33 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">Number of Boxes</label>
                 <input type="number" className="ui-input" placeholder="e.g. 1120"
                   value={form.numberOfBoxes} onChange={e => handleChange('numberOfBoxes', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Grower / Product / Variety */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">Grower</label>
+                <select className="ui-input" value={form.grower} onChange={e => handleChange('grower', e.target.value)}>
+                  <option value="">— Select Grower —</option>
+                  {growers.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="shipment-label">Product</label>
+                <select className="ui-input" value={form.product} onChange={e => handleChange('product', e.target.value)}>
+                  <option value="">— Select Product —</option>
+                  {Object.keys(PRODUCTS).map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="shipment-label">Variety</label>
+                <select className="ui-input" value={form.variety} onChange={e => handleChange('variety', e.target.value)}>
+                  <option value="">— Select Variety —</option>
+                  {(form.product ? PRODUCTS[form.product] : Object.values(PRODUCTS).flat()).map(v => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

@@ -276,62 +276,12 @@ const PRODUCTS = {
   'Lime':     ['Persian', 'Key Lime', 'Other'],
 };
 
-// ─── Grower Autocomplete ──────────────────────────────────────────────────────
-
-const GrowerAutocomplete = ({ value, onChange, growers }) => {
-  const [open, setOpen]     = useState(false);
-  const [query, setQuery]   = useState(value || '');
-  const ref                 = useRef();
-
-  useEffect(() => { setQuery(value || ''); }, [value]);
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const filtered = growers.filter(g =>
-    g.name?.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 8);
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <input
-        className="ui-input"
-        style={{ padding: '6px 10px', fontSize: '0.84rem' }}
-        placeholder="Search grower…"
-        value={query}
-        onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-      />
-      {open && (query || growers.length > 0) && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
-          background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
-          borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-          maxHeight: 200, overflowY: 'auto',
-        }}>
-          {filtered.length === 0 ? (
-            <div style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No growers found</div>
-          ) : filtered.map(g => (
-            <button
-              key={g.id}
-              onMouseDown={e => { e.preventDefault(); onChange(g.name); setQuery(g.name); setOpen(false); }}
-              style={{
-                width: '100%', textAlign: 'left', background: 'none', border: 'none',
-                padding: '8px 12px', cursor: 'pointer', fontSize: '0.83rem',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
-              {g.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+const getProductForVariety = (variety) => {
+  if (!variety) return '';
+  for (const [product, varieties] of Object.entries(PRODUCTS)) {
+    if (varieties.includes(variety)) return product;
+  }
+  return '';
 };
 
 // ─── Journey config (Morocco → USA) ──────────────────────────────────────────
@@ -1013,6 +963,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       transshipmentPort: shipment.transshipmentPort || '',
       containerType: shipment.containerType || '', sealNumber: shipment.sealNumber || '',
       grower: shipment.grower || '',
+      product: getProductForVariety(shipment.variety) || '',
       variety: shipment.variety || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
@@ -1036,6 +987,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
     const next = { ...p, [k]: v };
     if (k === 'vesselDeparture') next.departureWeek = getWeekNumber(v);
     if (k === 'vesselEta')       next.arrivalWeek   = getWeekNumber(v);
+    if (k === 'product')         next.variety = '';
     return next;
   });
 
@@ -1255,11 +1207,26 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                   <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
                 </Field>
                 <Field label="Grower" value={shipment.grower} editing={editingSection === 'cargo'}>
-                  <GrowerAutocomplete
+                  <select
+                    className="ui-input"
+                    style={{ padding: '6px 10px', fontSize: '0.84rem' }}
                     value={ed.grower}
-                    onChange={v => set('grower', v)}
-                    growers={growers}
-                  />
+                    onChange={e => set('grower', e.target.value)}
+                  >
+                    <option value="">— Select Grower —</option>
+                    {growers.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Product" value={getProductForVariety(shipment.variety)} editing={editingSection === 'cargo'}>
+                  <select
+                    className="ui-input"
+                    style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                    value={ed.product}
+                    onChange={e => set('product', e.target.value)}
+                  >
+                    <option value="">— Select Product —</option>
+                    {Object.keys(PRODUCTS).map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
                 </Field>
                 <Field label="Variety" value={shipment.variety} editing={editingSection === 'cargo'}>
                   <select
@@ -1268,11 +1235,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                     value={ed.variety}
                     onChange={e => set('variety', e.target.value)}
                   >
-                    <option value="">— Select —</option>
-                    {Object.entries(PRODUCTS).map(([product, varieties]) => (
-                      <optgroup key={product} label={product}>
-                        {varieties.map(v => <option key={v} value={v}>{v}</option>)}
-                      </optgroup>
+                    <option value="">— Select Variety —</option>
+                    {(ed.product ? PRODUCTS[ed.product] : Object.values(PRODUCTS).flat()).map(v => (
+                      <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
                 </Field>
