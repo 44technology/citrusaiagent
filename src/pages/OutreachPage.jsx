@@ -132,7 +132,7 @@ const PersonRow = ({ person, contactId, checked, onToggle, onUpdate, onDelete })
         <button onClick={() => setEditing(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 3 }}>
           <Edit2 size={13} />
         </button>
-        <button onClick={() => onDelete(person.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 3 }}>
+        <button onClick={() => { if (window.confirm('Are you sure you want to delete this contact person?')) onDelete(person.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 3 }}>
           <Trash2 size={13} />
         </button>
       </div>
