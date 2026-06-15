@@ -299,17 +299,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
               <User size={24} className="text-orange" />
             </div>
             <div>
-              {isEditing && isSuperAdmin ? (
-                <input
-                  className="ui-input"
-                  style={{ fontSize: '1.2rem', fontWeight: 700, padding: '4px 10px', marginBottom: 4 }}
-                  value={editData.name || ''}
-                  onChange={e => handleEditChange('name', e.target.value)}
-                  placeholder="Contact name"
-                />
-              ) : (
-                <h2 style={{ fontSize: '1.4rem' }}>{localContact.name}</h2>
-              )}
+              <h2 style={{ fontSize: '1.4rem' }}>{localContact.name}</h2>
               <div className="flex-center gap-2 mt-2">
                 <span className="status-badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', borderColor: 'rgba(255,255,255,0.1)' }}>
                   {localContact.type}
@@ -362,6 +352,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
               )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {isSuperAdmin && renderField('COMPANY NAME', 'name', User)}
               {renderField('COMPANY PHONE', 'companyPhone', Phone)}
               {renderField('EMAIL', 'email', Mail)}
               {renderField('WEBSITE', 'website', Globe)}
