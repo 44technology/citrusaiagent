@@ -157,18 +157,20 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-profile">
+        <div className="user-profile" style={{ flex: 1, minWidth: 0 }}>
           <div className="avatar">{username.charAt(0).toUpperCase()}</div>
-          <div className="user-info">
-            <div className="user-name">{username}</div>
-            <div className="user-role" style={{ textTransform: 'capitalize' }}>{userRole}</div>
+          <div className="user-info" style={{ minWidth: 0, flex: 1 }}>
+            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{username}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="user-role" style={{ textTransform: 'capitalize' }}>{userRole}</div>
+              {onLogout && (
+                <button className="logout-btn" onClick={onLogout} title="Sign Out" style={{ padding: '2px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <LogOut size={12} /> Sign out
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        {onLogout && (
-          <button className="logout-btn" onClick={onLogout} title="Sign Out">
-            <LogOut size={18} />
-          </button>
-        )}
       </div>
     </aside>
   );
