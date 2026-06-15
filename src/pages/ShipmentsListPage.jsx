@@ -506,7 +506,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       )}
 
       {/* Table */}
-      <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '1px solid var(--border-glass-light)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 12, border: '1px solid var(--border-glass-light)' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="loader" /></div>
         ) : filtered.length === 0 ? (
