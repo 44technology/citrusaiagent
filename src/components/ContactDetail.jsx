@@ -7,7 +7,7 @@ import { contactsApi, campaignApi, shipmentsApi, ordersApi } from '../services/a
 
 
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
-  const isSuperAdmin = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}').role === 'super_admin'; } catch { return false; } })();
+  const isSuperAdmin = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}').role === 'super admin'; } catch { return false; } })();
   const [note, setNote] = useState('');
   const [notesList, setNotesList] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
