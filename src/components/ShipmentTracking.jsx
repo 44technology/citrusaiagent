@@ -133,6 +133,24 @@ const KanbanCard = ({ shipment, color, onClick }) => {
           🚢 {shipment.vesselName}
         </div>
       )}
+
+      {/* POL → POD */}
+      {(shipment.portOfLoading || shipment.portOfDischarge) && (
+        <div style={{ marginTop: 4, fontSize: '0.68rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden' }}>
+          <Anchor size={9} style={{ color, flexShrink: 0 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {[shipment.portOfLoading, shipment.portOfDischarge].filter(Boolean).join(' → ')}
+          </span>
+        </div>
+      )}
+
+      {/* Product / Variety */}
+      {(shipment.product || shipment.order?.product || shipment.variety || shipment.order?.variety) && (
+        <div style={{ marginTop: 3, fontSize: '0.68rem', color, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Package size={9} style={{ display: 'inline', marginRight: 3 }} />
+          {[shipment.product || shipment.order?.product, shipment.variety || shipment.order?.variety].filter(Boolean).join(' · ')}
+        </div>
+      )}
     </div>
   );
 };
