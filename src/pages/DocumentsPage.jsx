@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FolderOpen, Upload, Search, X, Download, Trash2, FileText,
-  File, Image
+  File, Image, Eye
 } from 'lucide-react';
 import { documentsApi, contactsApi, ordersApi, shipmentsApi, accountingApi } from '../services/api';
 
@@ -160,7 +160,7 @@ const UploadModal = ({ onClose, onUploaded, contacts, orders, shipments, invoice
 
 // ─── Document Card ────────────────────────────────────────────────────────────
 
-const DocumentCard = ({ doc, onDelete, onDownload, canDelete }) => {
+const DocumentCard = ({ doc, onDelete, onDownload, onView, canDelete }) => {
   const cat = categoryColor(doc.category);
   const links = [
     doc.contact && `Customer: ${doc.contact.name}`,
@@ -195,6 +195,9 @@ const DocumentCard = ({ doc, onDelete, onDownload, canDelete }) => {
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <button className="btn btn-glass" style={{ padding: '7px 10px' }} onClick={() => onView(doc)} title="View">
+          <Eye size={15} />
+        </button>
         <button className="btn btn-glass" style={{ padding: '7px 10px' }} onClick={() => onDownload(doc)} title="Download">
           <Download size={15} />
         </button>
@@ -275,8 +278,7 @@ const DocumentsPage = ({ selectedCompany }) => {
   const handleDownload = (doc) => {
     const apiBase = import.meta.env.VITE_API_URL || '/api';
     const token = localStorage.getItem('citrus_token');
-    const url = `${apiBase}/documents/${doc.id}/download`;
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${apiBase}/documents/${doc.id}/download`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
       .then(blob => {
         const a = document.createElement('a');
@@ -286,6 +288,18 @@ const DocumentsPage = ({ selectedCompany }) => {
         URL.revokeObjectURL(a.href);
       })
       .catch(err => alert('Download failed: ' + err.message));
+  };
+
+  const handleView = (doc) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token = localStorage.getItem('citrus_token');
+    fetch(`${apiBase}/documents/${doc.id}/view`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      })
+      .catch(err => alert('View failed: ' + err.message));
   };
 
   const filtered = docs.filter(d => {
@@ -363,7 +377,7 @@ const DocumentsPage = ({ selectedCompany }) => {
           </div>
         ) : (
           filtered.map(doc => (
-            <DocumentCard key={doc.id} doc={doc} onDelete={handleDelete} onDownload={handleDownload} canDelete={canEdit} />
+            <DocumentCard key={doc.id} doc={doc} onDelete={handleDelete} onDownload={handleDownload} onView={handleView} canDelete={canEdit} />
           ))
         )}
       </div>

@@ -81,6 +81,21 @@ export const downloadDocument = async (req, res) => {
   }
 };
 
+export const viewDocument = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const doc = await prisma.document.findUnique({ where: { id } });
+    if (!doc) return res.status(404).json({ error: 'Document not found' });
+    if (!fs.existsSync(doc.path)) return res.status(404).json({ error: 'File not found on disk' });
+
+    res.setHeader('Content-Disposition', `inline; filename="${doc.originalName}"`);
+    res.setHeader('Content-Type', doc.mimeType);
+    fs.createReadStream(doc.path).pipe(res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const deleteDocument = async (req, res) => {
   const { id } = req.params;
   try {

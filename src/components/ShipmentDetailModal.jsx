@@ -15,7 +15,7 @@ import {
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
-  Search, Paperclip, Upload, Download
+  Search, Paperclip, Upload, Download, Eye
 } from 'lucide-react';
 import { shipmentsApi, ordersApi, documentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -124,6 +124,20 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
         URL.revokeObjectURL(a.href);
       })
       .catch(err => alert('Download failed: ' + err.message));
+  };
+
+  const handleView = (doc) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token   = localStorage.getItem('citrus_token');
+    fetch(`${apiBase}/documents/${doc.id}/view`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      })
+      .catch(err => alert('View failed: ' + err.message));
   };
 
   const uploadedTypes = new Set(docs.map(d => d.category));
@@ -240,6 +254,14 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
                 </div>
 
                 {/* Actions */}
+                <button
+                  className="btn btn-glass"
+                  style={{ padding: '5px 8px', flexShrink: 0 }}
+                  onClick={() => handleView(doc)}
+                  title="View"
+                >
+                  <Eye size={13} />
+                </button>
                 <button
                   className="btn btn-glass"
                   style={{ padding: '5px 8px', flexShrink: 0 }}
