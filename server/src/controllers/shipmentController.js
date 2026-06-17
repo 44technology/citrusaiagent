@@ -183,27 +183,38 @@ export const updateShipment = async (req, res) => {
     STRIP.forEach(f => delete data[f]);
 
     // Handle referenceId: try to link to order, else store as shipmentRefId
+    let orderRelation = undefined;
     if (data.referenceId !== undefined) {
       const refId = String(data.referenceId || '').trim();
       delete data.referenceId;
       if (refId) {
         const order = await prisma.order.findFirst({ where: { referenceId: refId } });
         if (order) {
-          data.orderId = order.id;
+          orderRelation = { connect: { id: order.id } };
+          data.shipmentRefId = null;
         } else {
+          orderRelation = { disconnect: true };
           data.shipmentRefId = refId;
-          data.orderId = null;
         }
       } else {
+        orderRelation = { disconnect: true };
         data.shipmentRefId = null;
       }
+    } else if (data.orderId !== undefined) {
+      const oid = data.orderId;
+      if (oid) {
+        orderRelation = { connect: { id: oid } };
+      } else {
+        orderRelation = { disconnect: true };
+      }
     }
+    delete data.orderId;
 
     // Only keep known Shipment fields
     const ALLOWED = new Set([
       'label','shipmentRefId','origin','destination','vesselName','containerNumber',
       'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine',
-      'status','notes','contactId','orderId',
+      'status','notes','contactId',
       'portOfLoading','portOfDischarge','transshipmentPort',
       'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',
       'pallets','packType','product','variety','grower',
@@ -213,6 +224,7 @@ export const updateShipment = async (req, res) => {
       'demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
+    if (orderRelation !== undefined) data.order = orderRelation;
 
     const shipment = await prisma.shipment.update({
       where: { id: req.params.id },
