@@ -163,16 +163,20 @@ export const updateShipment = async (req, res) => {
     if (data.orderId === '' || data.orderId === undefined) data.orderId = null;
     if (data.contactId === '') data.contactId = null;
 
-    // Parse numeric reefer fields
-    const numericFields = ['reeferTempSet', 'reeferTempActual', 'humidity', 'ventilation', 'co2Level', 'grossWeight'];
-    numericFields.forEach(f => {
+    // Parse float fields
+    const floatFields = ['reeferTempSet', 'reeferTempActual', 'humidity', 'ventilation', 'co2Level', 'grossWeight', 'oceanFreight', 'advToGrower'];
+    floatFields.forEach(f => {
       if (data[f] !== undefined) {
         data[f] = data[f] === '' || data[f] === null ? null : parseFloat(data[f]);
       }
     });
-    if (data.numberOfBoxes !== undefined) {
-      data.numberOfBoxes = data.numberOfBoxes === '' || data.numberOfBoxes === null ? null : parseInt(data.numberOfBoxes);
-    }
+    // Parse int fields
+    const intFields = ['numberOfBoxes', 'pallets'];
+    intFields.forEach(f => {
+      if (data[f] !== undefined) {
+        data[f] = data[f] === '' || data[f] === null ? null : parseInt(data[f]);
+      }
+    });
 
     // Strip relation objects and unknown fields
     const STRIP = ['id','contact','events','expenses','order','createdAt','updatedAt','documents','companyId'];
@@ -218,7 +222,7 @@ export const updateShipment = async (req, res) => {
     res.json(shipment);
   } catch (error) {
     console.error('Error updating shipment:', error);
-    res.status(500).json({ error: 'Failed to update shipment' });
+    res.status(500).json({ error: 'Failed to update shipment: ' + error.message });
   }
 };
 
