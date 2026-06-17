@@ -81,6 +81,7 @@ export const createShipment = async (req, res) => {
       portOfLoading, portOfDischarge, transshipmentPort,
       // Container & cargo
       containerType, sealNumber, cargoDescription, grossWeight, numberOfBoxes,
+      pallets, packType, product, variety, grower,
       // Reefer
       reeferTempSet, reeferTempActual, humidity, ventilation, co2Level
     } = req.body;
@@ -125,6 +126,11 @@ export const createShipment = async (req, res) => {
         cargoDescription: cargoDescription || null,
         grossWeight: grossWeight ? parseFloat(grossWeight) : null,
         numberOfBoxes: numberOfBoxes ? parseInt(numberOfBoxes) : null,
+        pallets: pallets ? parseInt(pallets) : null,
+        packType: packType || null,
+        product: product || null,
+        variety: variety || null,
+        grower: grower || null,
         // Reefer
         reeferTempSet: reeferTempSet !== undefined && reeferTempSet !== '' ? parseFloat(reeferTempSet) : null,
         reeferTempActual: reeferTempActual !== undefined && reeferTempActual !== '' ? parseFloat(reeferTempActual) : null,
