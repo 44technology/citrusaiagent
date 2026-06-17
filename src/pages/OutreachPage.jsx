@@ -292,6 +292,7 @@ export default function OutreachPage() {
   const [result, setResult]       = useState(null);
   const [error, setError]         = useState('');
   const [activeTemplate, setActiveTemplate] = useState(null);
+  const [groupSend, setGroupSend] = useState(false);
 
   useEffect(() => {
     contactsApi.getAll().then(data => setContacts(Array.isArray(data) ? data : []));

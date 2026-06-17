@@ -163,6 +163,11 @@ model Shipment {
   ventilation      Float?    // Ventilation setting cbm/h (e.g. 25)
   co2Level         Float?    // CO2 % (optional, controlled atmosphere)
 
+  // ── Demurrage & Detention ────────────────────────
+  demurrageLastFreeDay  DateTime?  // Last free day at port (demurrage)
+  detentionLastFreeDay  DateTime?  // Last free day at customer (per diem/detention)
+  emptyReturnDate       DateTime?  // Actual date empty container was returned
+
   companyId        String?
   company          Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
 

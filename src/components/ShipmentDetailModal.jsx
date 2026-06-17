@@ -276,6 +276,14 @@ const PRODUCTS = {
   'Lime':     ['Persian', 'Key Lime', 'Other'],
 };
 
+const getDemurrageColor = (dateStr) => {
+  if (!dateStr) return null;
+  const days = Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+  if (days < 0)  return '#ef4444'; // overdue — red
+  if (days <= 3) return '#f59e0b'; // 3 days or less — amber
+  return '#22c55e'; // safe — green
+};
+
 const getProductForVariety = (variety) => {
   if (!variety) return '';
   for (const [product, varieties] of Object.entries(PRODUCTS)) {
@@ -337,7 +345,7 @@ const PHASE_LABELS = {
 };
 
 const CONTAINER_TYPES = ['40RF', '40HC-RF', '20RF', '40DRY', '40HC-DRY', '20DRY'];
-const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Delivered'];
+const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Delivered', 'Empty Return Pending', 'Empty Returned'];
 
 const isReefer = (type) => type && type.includes('RF');
 
@@ -974,6 +982,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       referenceId: shipment.shipmentRefId || shipment.order?.referenceId || '',
       orderId: shipment.orderId || '',
       soNumber: shipment.soNumber || '',
+      demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
+      detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
+      emptyReturnDate: shipment.emptyReturnDate?.split('T')[0] || '',
     });
     setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : (shipment.shipmentRefId || ''));
     setMatchedOrder(shipment.order || null);
@@ -1330,6 +1341,27 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 </Field>
                 <Field label="Actual Arrival" value={shipment.vesselArrival ? formatDateUTC(shipment.vesselArrival) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselArrival} onChange={e => set('vesselArrival', e.target.value)} />
+                </Field>
+                <Field
+                  label="Demurrage LFD"
+                  editing={editingSection === 'ports'}
+                  value={shipment.demurrageLastFreeDay ? <span style={{ color: getDemurrageColor(shipment.demurrageLastFreeDay) }}>{formatDateUTC(shipment.demurrageLastFreeDay)}</span> : null}
+                >
+                  <Inp type="date" value={ed.demurrageLastFreeDay} onChange={e => set('demurrageLastFreeDay', e.target.value)} />
+                </Field>
+                <Field
+                  label="Detention LFD"
+                  editing={editingSection === 'ports'}
+                  value={shipment.detentionLastFreeDay ? <span style={{ color: getDemurrageColor(shipment.detentionLastFreeDay) }}>{formatDateUTC(shipment.detentionLastFreeDay)}</span> : null}
+                >
+                  <Inp type="date" value={ed.detentionLastFreeDay} onChange={e => set('detentionLastFreeDay', e.target.value)} />
+                </Field>
+                <Field
+                  label="Empty Return Date"
+                  editing={editingSection === 'ports'}
+                  value={shipment.emptyReturnDate ? formatDateUTC(shipment.emptyReturnDate) : null}
+                >
+                  <Inp type="date" value={ed.emptyReturnDate} onChange={e => set('emptyReturnDate', e.target.value)} />
                 </Field>
                 {/* Status — always visible, auto-saves on change */}
                 <div>

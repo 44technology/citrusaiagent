@@ -21,15 +21,29 @@ const getWeek = (dateStr) => {
 };
 
 const STATUS_COLORS = {
-  'Pending':       { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
-  'Loading':       { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
-  'Departed':      { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
-  'Transshipment': { bg: 'rgba(139,92,246,0.15)',  color: '#8b5cf6' },
-  'In Transit':    { bg: 'rgba(6,182,212,0.15)',   color: '#06b6d4' },
-  'Arrived':       { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
-  'Customs':       { bg: 'rgba(249,115,22,0.15)',  color: '#f97316' },
-  'Delivered':     { bg: 'rgba(34,197,94,0.2)',    color: '#22c55e' },
-  'On Hold':       { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
+  'Pending':              { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
+  'Loading':              { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b' },
+  'Departed':             { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
+  'Transshipment':        { bg: 'rgba(139,92,246,0.15)',  color: '#8b5cf6' },
+  'In Transit':           { bg: 'rgba(6,182,212,0.15)',   color: '#06b6d4' },
+  'Arrived':              { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
+  'Customs':              { bg: 'rgba(249,115,22,0.15)',  color: '#f97316' },
+  'Delivered':            { bg: 'rgba(34,197,94,0.2)',    color: '#22c55e' },
+  'Empty Return Pending': { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
+  'Empty Returned':       { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
+  'On Hold':              { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
+};
+
+const getLfdWarning = (s) => {
+  const today = new Date();
+  const check = (dateStr, label) => {
+    if (!dateStr) return null;
+    const days = Math.ceil((new Date(dateStr) - today) / 86400000);
+    if (days < 0)  return { label: `${label} OVERDUE ${Math.abs(days)}d`, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' };
+    if (days <= 3) return { label: `${label} ${days}d left`, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' };
+    return null;
+  };
+  return check(s.demurrageLastFreeDay, 'DEM') || check(s.detentionLastFreeDay, 'DET');
 };
 
 const StatusBadge = ({ status }) => {
@@ -567,7 +581,14 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
-                  <td style={{ padding: '10px 12px' }}><StatusBadge status={s.status} /></td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <StatusBadge status={s.status} />
+                      {(() => { const w = getLfdWarning(s); return w ? (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: w.bg, color: w.color, whiteSpace: 'nowrap' }}>{w.label}</span>
+                      ) : null; })()}
+                    </div>
+                  </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>
