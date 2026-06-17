@@ -365,14 +365,28 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
             <h3 style={{ color: 'var(--text-primary)', fontSize: 22, marginBottom: 8 }}>Import Complete!</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>
               <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 18 }}>{result.created}</span> shipments imported successfully.
+              {result.skipped > 0 && (
+                <span style={{ color: '#94a3b8', fontWeight: 600 }}> {result.skipped} skipped (already exist).</span>
+              )}
               {result.failed?.length > 0 && (
-                <span style={{ color: '#f59e0b', fontWeight: 600 }}> {result.failed.length} rows skipped.</span>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}> {result.failed.length} errors.</span>
               )}
             </p>
 
+            {result.skippedRows?.length > 0 && (
+              <div style={{ textAlign: 'left', background: 'var(--bg-secondary)', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                <p style={{ color: '#94a3b8', fontWeight: 600, marginBottom: 8 }}>Already in system (skipped):</p>
+                {result.skippedRows.map((f, i) => (
+                  <p key={i} style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 4 }}>
+                    • <strong>{f.row}</strong>
+                  </p>
+                ))}
+              </div>
+            )}
+
             {result.failed?.length > 0 && (
               <div style={{ textAlign: 'left', background: 'var(--bg-secondary)', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-                <p style={{ color: '#f59e0b', fontWeight: 600, marginBottom: 8 }}>Skipped Rows:</p>
+                <p style={{ color: '#f59e0b', fontWeight: 600, marginBottom: 8 }}>Errors:</p>
                 {result.failed.map((f, i) => (
                   <p key={i} style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 4 }}>
                     • <strong>{f.row}</strong>: {f.reason}

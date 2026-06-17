@@ -284,12 +284,26 @@ export const importShipments = async (req, res) => {
       return created.id;
     };
 
-    const results = { created: 0, failed: [], skipped: 0 };
+    // Pre-load existing container numbers for duplicate check
+    const existingContainers = await prisma.shipment.findMany({
+      select: { containerNumber: true },
+      where: { containerNumber: { not: null } }
+    });
+    const existingSet = new Set(existingContainers.map(s => s.containerNumber.trim().toUpperCase()));
+
+    const results = { created: 0, failed: [], skipped: 0, skippedRows: [] };
 
     for (const row of rows) {
       try {
         const containerNumber = row.containerNumber || null;
         const bolNumber       = row.bolNumber || null;
+
+        // Skip duplicate containers
+        if (containerNumber && existingSet.has(containerNumber.trim().toUpperCase())) {
+          results.skipped++;
+          results.skippedRows.push({ row: containerNumber, reason: 'Container already exists' });
+          continue;
+        }
 
         // Use BOL N or Container N as label (required field)
         const label = bolNumber || containerNumber || row.vesselName || 'Import';
