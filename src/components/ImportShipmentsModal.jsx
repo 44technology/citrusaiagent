@@ -29,6 +29,7 @@ const COL_MAP = {
   'ADV_FROM_CLIENT':   'advancePaymentStatus',
   'CUSTOMER':          'customerName',
   'ETD':               'etd',
+  'ETA':               'eta',
   'ETA_DEST':          'eta',
   'ATA_DEST':          'arrivalDate',
   'ORIGIN_PORT':       'portOfLoading',
@@ -53,9 +54,16 @@ const COL_MAP = {
   'ADVANCE_PAYMENT_STATUS': 'advancePaymentStatus',
 };
 
+// Normalize Excel header → COL_MAP key: uppercase, spaces/dots/slashes → underscore
+const normalizeHeader = (h) =>
+  String(h || '').trim().toUpperCase()
+    .replace(/[\s./()'-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+
 // Detect if first row looks like real headers (≥3 known keys match)
 const isHeaderRow = (row) => {
-  const matches = row.filter(h => COL_MAP[String(h || '').trim()]);
+  const matches = row.filter(h => COL_MAP[normalizeHeader(h)]);
   return matches.length >= 3;
 };
 
@@ -141,7 +149,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
         const mapped = dataRows.map(row => {
           const obj = {};
           headers.forEach((h, i) => {
-            const key = COL_MAP[h];
+            const key = COL_MAP[normalizeHeader(h)];
             if (!key) return;
             const val = row[i];
             if (key === 'etd' || key === 'eta' || key === 'arrivalDate') {
