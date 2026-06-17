@@ -155,6 +155,9 @@ export const updateShipment = async (req, res) => {
     if (data.vesselEta !== undefined) data.vesselEta = parseDateUTC(data.vesselEta);
     if (data.vesselDeparture !== undefined) data.vesselDeparture = parseDateUTC(data.vesselDeparture);
     if (data.vesselArrival !== undefined) data.vesselArrival = parseDateUTC(data.vesselArrival);
+    if (data.demurrageLastFreeDay !== undefined) data.demurrageLastFreeDay = parseDateUTC(data.demurrageLastFreeDay);
+    if (data.detentionLastFreeDay !== undefined) data.detentionLastFreeDay = parseDateUTC(data.detentionLastFreeDay);
+    if (data.emptyReturnDate !== undefined) data.emptyReturnDate = parseDateUTC(data.emptyReturnDate);
 
     // Empty string foreign keys must be null
     if (data.orderId === '' || data.orderId === undefined) data.orderId = null;
