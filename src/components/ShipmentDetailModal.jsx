@@ -959,6 +959,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   const [showAdd, setShowAdd]     = useState(false);
   const [orders, setOrders]       = useState([]);
   const [growers, setGrowers]     = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
 
@@ -971,6 +972,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   useEffect(() => {
     ordersApi.getAll().then(setOrders).catch(() => {});
     contactsApi.getAll('Grower').then(setGrowers).catch(() => {});
+    contactsApi.getAll().then(all => setCustomers(all.filter(c => c.type?.toLowerCase() === 'customer'))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1003,6 +1005,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       advancePaymentStatus: shipment.advancePaymentStatus || '',
       referenceId: shipment.shipmentRefId || shipment.order?.referenceId || '',
       orderId: shipment.orderId || '',
+      contactId: shipment.contactId || '',
       soNumber: shipment.soNumber || '',
       demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
       detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
@@ -1234,6 +1237,25 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="Seal #" value={shipment.sealNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="Seal number" value={ed.sealNumber} onChange={e => set('sealNumber', e.target.value)} />
                 </Field>
+                {isSuperAdmin && (
+                  <Field
+                    label="Customer"
+                    editing={editingSection === 'cargo'}
+                    value={shipment.contact?.name || shipment.contact?.company || null}
+                  >
+                    <select
+                      className="ui-input"
+                      style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                      value={ed.contactId}
+                      onChange={e => set('contactId', e.target.value)}
+                    >
+                      <option value="">— No Customer —</option>
+                      {customers.map(c => (
+                        <option key={c.id} value={c.id}>{c.name || c.company}</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
                 <Field label="Grower" value={shipment.grower} editing={editingSection === 'cargo'}>
                   <select
                     className="ui-input"
