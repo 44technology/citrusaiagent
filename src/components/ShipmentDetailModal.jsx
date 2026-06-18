@@ -44,12 +44,15 @@ const DOC_TYPES = [
   { key: 'Other',    label: 'Other Document' },
 ];
 
-const ShipmentDocuments = ({ shipment, canEdit }) => {
+const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
   const [docs, setDocs]             = useState([]);
   const [loading, setLoading]       = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [pendingType, setPendingType] = useState(null);
   const [uploading, setUploading]   = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const [editingDocId, setEditingDocId]     = useState(null);
+  const [editingCategory, setEditingCategory] = useState('');
   const fileInputRef  = useRef();
   const dropdownRef   = useRef();
 
@@ -84,18 +87,33 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
   };
 
   const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !pendingType) return;
+    const files = Array.from(e.target.files);
+    if (!files.length || !pendingType) return;
     setUploading(true);
+    const failed = [];
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(files.length > 1 ? `Uploading ${i + 1}/${files.length}…` : '');
+      try {
+        await documentsApi.upload(files[i], { shipmentId: shipment.id, category: pendingType });
+      } catch (err) {
+        failed.push(files[i].name + ': ' + err.message);
+      }
+    }
+    await load();
+    setUploading(false);
+    setUploadProgress('');
+    e.target.value = '';
+    setPendingType(null);
+    if (failed.length) alert('Some uploads failed:\n' + failed.join('\n'));
+  };
+
+  const handleUpdateCategory = async (docId, category) => {
     try {
-      await documentsApi.upload(file, { shipmentId: shipment.id, category: pendingType });
-      await load();
+      await documentsApi.update(docId, { category });
+      setDocs(prev => prev.map(d => d.id === docId ? { ...d, category } : d));
+      setEditingDocId(null);
     } catch (err) {
-      alert('Upload failed: ' + err.message);
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-      setPendingType(null);
+      alert('Update failed: ' + err.message);
     }
   };
 
@@ -168,7 +186,7 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
               disabled={uploading}
             >
               <Upload size={12} />
-              {uploading ? 'Uploading…' : 'Upload'}
+              {uploading ? (uploadProgress || 'Uploading…') : 'Upload'}
             </button>
 
             {showDropdown && (
@@ -211,8 +229,8 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
         )}
       </div>
 
-      {/* Hidden file input */}
-      <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
+      {/* Hidden file input — multiple files allowed */}
+      <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={handleFileChange} />
 
       {/* Content */}
       {loading ? (
@@ -233,12 +251,35 @@ const ShipmentDocuments = ({ shipment, canEdit }) => {
                 padding: '8px 12px', background: 'rgba(255,255,255,0.03)',
                 borderRadius: 8, border: '1px solid var(--border-glass)',
               }}>
-                {/* Type badge */}
-                <span style={{
-                  fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
-                  background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)',
-                  padding: '2px 8px', borderRadius: 6,
-                }}>{typeInfo.key}</span>
+                {/* Type badge — super admin can click to change */}
+                {isSuperAdmin && editingDocId === doc.id ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                    <select
+                      autoFocus
+                      className="ui-input"
+                      value={editingCategory}
+                      onChange={e => setEditingCategory(e.target.value)}
+                      style={{ padding: '2px 6px', fontSize: '0.72rem', fontFamily: 'monospace', width: 110 }}
+                    >
+                      {DOC_TYPES.map(t => <option key={t.key} value={t.key}>{t.key}</option>)}
+                    </select>
+                    <button className="btn btn-primary" style={{ padding: '2px 7px', fontSize: '0.7rem' }}
+                      onClick={() => handleUpdateCategory(doc.id, editingCategory)}>✓</button>
+                    <button className="btn btn-glass" style={{ padding: '2px 7px', fontSize: '0.7rem' }}
+                      onClick={() => setEditingDocId(null)}>✕</button>
+                  </div>
+                ) : (
+                  <span
+                    onClick={isSuperAdmin ? () => { setEditingDocId(doc.id); setEditingCategory(doc.category); } : undefined}
+                    title={isSuperAdmin ? 'Click to change type' : undefined}
+                    style={{
+                      fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
+                      background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)',
+                      padding: '2px 8px', borderRadius: 6,
+                      cursor: isSuperAdmin ? 'pointer' : 'default',
+                      border: isSuperAdmin ? '1px solid rgba(255,107,0,0.3)' : '1px solid transparent',
+                    }}>{typeInfo.key}</span>
+                )}
 
                 {/* File info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -1445,7 +1486,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
             <ExpensesPanel shipment={shipment} canEdit={canEdit} />
 
             {/* Documents */}
-            <ShipmentDocuments shipment={shipment} canEdit={canEdit} />
+            <ShipmentDocuments shipment={shipment} canEdit={canEdit} isSuperAdmin={isSuperAdmin} />
 
             {/* Notes */}
             <div className="glass-panel" style={{ padding: 14 }}>

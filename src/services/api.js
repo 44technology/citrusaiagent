@@ -188,6 +188,7 @@ export const documentsApi = {
     }
     return res.json();
   },
+  update: (id, data) => request(`/documents/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/documents/${id}`, { method: 'DELETE' }),
 };
 

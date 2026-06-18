@@ -96,6 +96,17 @@ export const viewDocument = async (req, res) => {
   }
 };
 
+export const updateDocument = async (req, res) => {
+  const { id } = req.params;
+  const { category } = req.body;
+  try {
+    const doc = await prisma.document.update({ where: { id }, data: { category } });
+    res.json(doc);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const deleteDocument = async (req, res) => {
   const { id } = req.params;
   try {
