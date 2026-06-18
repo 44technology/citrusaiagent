@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   List, Plus, Search, Filter, Download, FileSpreadsheet,
   ChevronUp, ChevronDown, ChevronsUpDown, X, Trash2
@@ -96,8 +96,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const [sort, setSort]                 = useState({ field: 'vesselEta', dir: 'asc' });
 
   const [filters, setFilters] = useState({
-    status: '', advPayment: '', customer: '', grower: '', bol: '', container: '',
-    vessel: '', pol: '', pod: '', variety: '',
+    status: [], advPayment: [], customer: [], grower: [], bol: '', container: '',
+    vessel: '', pol: [], pod: [], variety: [],
     etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
   });
 
@@ -163,8 +163,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const varieties = [...new Set(shipments.map(s => s.variety || s.order?.variety || null).filter(Boolean))].sort();
 
   const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
-  const resetFilters = () => setFilters({ status: '', grower: '', bol: '', container: '', vessel: '', pol: '', pod: '', variety: '', etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
-  const hasFilters = Object.values(filters).some(Boolean);
+  const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
+  const hasFilters = Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : Boolean(v));
 
   // Filter + search + sort
   const filtered = useMemo(() => {
@@ -182,16 +182,16 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       (s.shipmentRefId ? String(s.shipmentRefId) : '').includes(q);
 
       if (!matchSearch) return false;
-      if (filters.status     && s.status !== filters.status) return false;
-      if (filters.advPayment && (s.advancePaymentStatus || '') !== filters.advPayment) return false;
-      if (filters.customer   && s.contactId !== filters.customer) return false;
+      if (filters.status.length     && !filters.status.includes(s.status)) return false;
+      if (filters.advPayment.length && !filters.advPayment.includes(s.advancePaymentStatus || '')) return false;
+      if (filters.customer.length   && !filters.customer.includes(s.contactId)) return false;
       if (filters.bol       && !(s.bolNumber || '').toLowerCase().includes(filters.bol.toLowerCase())) return false;
       if (filters.container && !(s.containerNumber || '').toLowerCase().includes(filters.container.toLowerCase())) return false;
       if (filters.vessel    && !(s.vesselName || '').toLowerCase().includes(filters.vessel.toLowerCase())) return false;
-      if (filters.pol       && s.portOfLoading !== filters.pol) return false;
-      if (filters.pod       && s.portOfDischarge !== filters.pod) return false;
-      if (filters.variety   && (s.variety || s.order?.variety) !== filters.variety) return false;
-      if (filters.grower    && (s.grower || s.order?.grower || '') !== filters.grower) return false;
+      if (filters.pol.length    && !filters.pol.includes(s.portOfLoading)) return false;
+      if (filters.pod.length    && !filters.pod.includes(s.portOfDischarge)) return false;
+      if (filters.variety.length && !filters.variety.includes(s.variety || s.order?.variety)) return false;
+      if (filters.grower.length  && !filters.grower.includes(s.grower || s.order?.grower || '')) return false;
       if (filters.etdFrom   && s.vesselDeparture && s.vesselDeparture < filters.etdFrom) return false;
       if (filters.etdTo     && s.vesselDeparture && s.vesselDeparture > filters.etdTo) return false;
       if (filters.etaFrom   && s.vesselEta && s.vesselEta < filters.etaFrom) return false;
@@ -371,18 +371,51 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     loadData();
   };
 
-  const FilterSelect = ({ label, value, onChange, options, placeholder }) => (
-    <div>
-      <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
-      <select className="ui-select" value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }}>
-        <option value="">{placeholder}</option>
-        {options.map(o => typeof o === 'object'
-          ? <option key={o.value} value={o.value}>{o.label}</option>
-          : <option key={o} value={o}>{o}</option>
+  const MultiSelect = ({ label, value, onChange, options, placeholder }) => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => {
+      const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+      document.addEventListener('mousedown', h);
+      return () => document.removeEventListener('mousedown', h);
+    }, []);
+    const getValue = o => typeof o === 'object' ? o.value : o;
+    const getLabel = o => typeof o === 'object' ? o.label : o;
+    const toggle = v => onChange(value.includes(v) ? value.filter(x => x !== v) : [...value, v]);
+    const toggleAll = () => onChange(value.length === options.length ? [] : options.map(getValue));
+    const displayText = value.length === 0 ? placeholder
+      : value.length === 1 ? getLabel(options.find(o => getValue(o) === value[0]) || value[0])
+      : `${value.length} selected`;
+    return (
+      <div ref={ref} style={{ position: 'relative' }}>
+        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
+        <button type="button" onClick={() => setOpen(p => !p)}
+          style={{ width: '100%', fontSize: '0.82rem', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--bg-secondary)', border: `1px solid ${value.length ? 'rgba(255,107,0,0.4)' : 'var(--border-glass)'}`, borderRadius: 8, padding: '8px 12px', color: value.length ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</span>
+          <ChevronDown size={13} style={{ flexShrink: 0, opacity: 0.6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', marginLeft: 4 }} />
+        </button>
+        {open && (
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200, background: 'var(--bg-secondary)', border: '1px solid var(--border-glass-light)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, borderBottom: '1px solid var(--border-glass)', color: 'var(--orange-primary)' }}>
+              <input type="checkbox" checked={options.length > 0 && value.length === options.length} onChange={toggleAll} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer' }} />
+              All
+            </label>
+            {options.map(o => {
+              const v = getValue(o); const l = getLabel(o); const checked = value.includes(v);
+              return (
+                <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', fontSize: '0.8rem', background: checked ? 'rgba(255,107,0,0.07)' : 'transparent', color: checked ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'background 0.1s' }}
+                  onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { if (!checked) e.currentTarget.style.background = 'transparent'; }}>
+                  <input type="checkbox" checked={checked} onChange={() => toggle(v)} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer', flexShrink: 0 }} />
+                  {l}
+                </label>
+              );
+            })}
+          </div>
         )}
-      </select>
-    </div>
-  );
+      </div>
+    );
+  };
 
   const FilterInput = ({ label, value, onChange, placeholder, type = 'text' }) => (
     <div>
@@ -436,7 +469,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
           onClick={() => setShowFilters(p => !p)}
           style={{ gap: 8, whiteSpace: 'nowrap' }}
         >
-          <Filter size={15} /> Filters {hasFilters && <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{Object.values(filters).filter(Boolean).length}</span>}
+          <Filter size={15} /> Filters {hasFilters && <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{Object.values(filters).filter(v => Array.isArray(v) ? v.length > 0 : Boolean(v)).length}</span>}
         </button>
       </div>
 
@@ -444,19 +477,19 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       {showFilters && (
         <div className="glass-panel" style={{ padding: '18px 20px', border: '1px solid rgba(255,107,0,0.2)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 16px' }}>
-            <FilterSelect label="STATUS"      value={filters.status}     onChange={v => setF('status', v)}     options={statuses}  placeholder="All Status" />
-            <FilterSelect label="ADV. PAYMENT" value={filters.advPayment} onChange={v => setF('advPayment', v)}
+            <MultiSelect label="STATUS"      value={filters.status}     onChange={v => setF('status', v)}     options={statuses}  placeholder="All Status" />
+            <MultiSelect label="ADV. PAYMENT" value={filters.advPayment} onChange={v => setF('advPayment', v)}
               options={['Pending','Requested','Paid','Not Required']} placeholder="All Payments" />
-            <FilterSelect label="CUSTOMER"  value={filters.customer}  onChange={v => setF('customer', v)}
+            <MultiSelect label="CUSTOMER"  value={filters.customer}  onChange={v => setF('customer', v)}
               options={customers.map(c => ({ value: c.id, label: c.name || c.company }))}
               placeholder="All Customers" />
-            <FilterSelect label="GROWER"   value={filters.grower}   onChange={v => setF('grower', v)}   options={growers}   placeholder="All Grower" />
+            <MultiSelect label="GROWER"   value={filters.grower}   onChange={v => setF('grower', v)}   options={growers}   placeholder="All Grower" />
             <FilterInput  label="BOL #"   value={filters.bol}     onChange={v => setF('bol', v)}     placeholder="Filter by BOL" />
             <FilterInput  label="CONTAINER" value={filters.container} onChange={v => setF('container', v)} placeholder="Filter by container" />
             <FilterInput  label="VESSEL"  value={filters.vessel}  onChange={v => setF('vessel', v)}  placeholder="Filter by vessel" />
-            <FilterSelect label="POL"     value={filters.pol}     onChange={v => setF('pol', v)}     options={pols}      placeholder="All POL" />
-            <FilterSelect label="POD"     value={filters.pod}     onChange={v => setF('pod', v)}     options={pods}      placeholder="All POD" />
-            <FilterSelect label="VARIETY" value={filters.variety} onChange={v => setF('variety', v)} options={varieties} placeholder="All Variety" />
+            <MultiSelect label="POL"     value={filters.pol}     onChange={v => setF('pol', v)}     options={pols}      placeholder="All POL" />
+            <MultiSelect label="POD"     value={filters.pod}     onChange={v => setF('pod', v)}     options={pods}      placeholder="All POD" />
+            <MultiSelect label="VARIETY" value={filters.variety} onChange={v => setF('variety', v)} options={varieties} placeholder="All Variety" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, gridColumn: 'span 2' }}>
               <FilterInput label="ETD FROM" type="date" value={filters.etdFrom} onChange={v => setF('etdFrom', v)} placeholder="" />
               <FilterInput label="ETD TO"   type="date" value={filters.etdTo}   onChange={v => setF('etdTo', v)}   placeholder="" />
