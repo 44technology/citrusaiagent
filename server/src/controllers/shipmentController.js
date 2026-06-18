@@ -193,6 +193,13 @@ export const updateShipment = async (req, res) => {
           orderRelation = { connect: { id: order.id } };
           data.shipmentRefId = null;
         } else {
+          // Check if another shipment already uses this ref ID
+          const dupRef = await prisma.shipment.findFirst({
+            where: { shipmentRefId: refId, NOT: { id: req.params.id } }
+          });
+          if (dupRef) {
+            return res.status(400).json({ error: `Reference ID "${refId}" is already used by another shipment.` });
+          }
           orderRelation = { disconnect: true };
           data.shipmentRefId = refId;
         }
