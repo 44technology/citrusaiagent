@@ -32,7 +32,8 @@ const fmtSize = (bytes) => {
 const DOC_TYPES = [
   { key: 'SWB',      label: 'Sea Waybill' },
   { key: 'BOL',      label: 'Bill of Lading' },
-  { key: 'PL',       label: 'Packing List' },
+  { key: 'PL-Grower',   label: 'Packing List (Grower)' },
+  { key: 'PL-Customer', label: 'Packing List (Customer)' },
   { key: 'INV',      label: 'Invoice' },
   { key: 'PO',       label: 'Purchase Order' },
   { key: 'ISF',      label: 'ISF Filing' },
