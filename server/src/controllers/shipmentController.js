@@ -159,9 +159,16 @@ export const updateShipment = async (req, res) => {
     if (data.detentionLastFreeDay !== undefined) data.detentionLastFreeDay = parseDateUTC(data.detentionLastFreeDay);
     if (data.emptyReturnDate !== undefined) data.emptyReturnDate = parseDateUTC(data.emptyReturnDate);
 
+    // Handle contactId → contact relation
+    let contactRelation = undefined;
+    if (data.contactId !== undefined) {
+      const cid = data.contactId;
+      if (cid) contactRelation = { connect: { id: cid } };
+    }
+    delete data.contactId;
+
     // Empty string foreign keys must be null
     if (data.orderId === '' || data.orderId === undefined) data.orderId = null;
-    if (data.contactId === '') data.contactId = null;
 
     // Parse float fields
     const floatFields = ['reeferTempSet', 'reeferTempActual', 'humidity', 'ventilation', 'co2Level', 'grossWeight', 'oceanFreight', 'advToGrower'];
@@ -221,7 +228,7 @@ export const updateShipment = async (req, res) => {
     const ALLOWED = new Set([
       'label','shipmentRefId','origin','destination','vesselName','containerNumber',
       'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine',
-      'status','notes','contactId',
+      'status','notes',
       'portOfLoading','portOfDischarge','transshipmentPort',
       'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',
       'pallets','packType','product','variety','grower',
@@ -232,6 +239,7 @@ export const updateShipment = async (req, res) => {
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
     if (orderRelation !== undefined) data.order = orderRelation;
+    if (contactRelation !== undefined) data.contact = contactRelation;
 
     const shipment = await prisma.shipment.update({
       where: { id: req.params.id },
