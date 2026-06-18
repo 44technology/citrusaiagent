@@ -88,8 +88,20 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
   };
 
   const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
+    let files = Array.from(e.target.files);
     if (!files.length || !pendingType) return;
+
+    // Duplicate name check
+    const existingNames = new Set(docs.map(d => d.originalName.toLowerCase()));
+    const duplicates = files.filter(f => existingNames.has(f.name.toLowerCase()));
+    if (duplicates.length) {
+      const names = duplicates.map(f => `• ${f.name}`).join('\n');
+      const ok = window.confirm(
+        `The following file${duplicates.length > 1 ? 's are' : ' is'} already uploaded:\n\n${names}\n\nDo you still want to upload?`
+      );
+      if (!ok) { e.target.value = ''; setPendingType(null); return; }
+    }
+
     setUploading(true);
     const failed = [];
     for (let i = 0; i < files.length; i++) {
