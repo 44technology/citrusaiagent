@@ -598,9 +598,6 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>
-                    {s.contact?.company && s.contact.company !== 'N/A' && (
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.contact.company}</div>
-                    )}
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
