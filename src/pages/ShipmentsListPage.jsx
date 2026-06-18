@@ -81,6 +81,60 @@ const SortTh = ({ label, field, sort, setSort, style = {} }) => {
   );
 };
 
+// ── Multi-select filter dropdown ──────────────────────────────
+const MultiSelect = ({ label, value, onChange, options, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const getValue = o => typeof o === 'object' ? o.value : o;
+  const getLabel = o => typeof o === 'object' ? o.label : o;
+  const toggle = v => onChange(value.includes(v) ? value.filter(x => x !== v) : [...value, v]);
+  const toggleAll = () => onChange(value.length === options.length ? [] : options.map(getValue));
+  const displayText = value.length === 0 ? placeholder
+    : value.length === 1 ? getLabel(options.find(o => getValue(o) === value[0]) || value[0])
+    : `${value.length} selected`;
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
+      <button type="button" onClick={() => setOpen(p => !p)}
+        style={{ width: '100%', fontSize: '0.82rem', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--bg-secondary)', border: `1px solid ${value.length ? 'rgba(255,107,0,0.4)' : 'var(--border-glass)'}`, borderRadius: 8, padding: '8px 12px', color: value.length ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</span>
+        <ChevronDown size={13} style={{ flexShrink: 0, opacity: 0.6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', marginLeft: 4 }} />
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200, background: 'var(--bg-secondary)', border: '1px solid var(--border-glass-light)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, borderBottom: '1px solid var(--border-glass)', color: 'var(--orange-primary)' }}>
+            <input type="checkbox" checked={options.length > 0 && value.length === options.length} onChange={toggleAll} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer' }} />
+            All
+          </label>
+          {options.map(o => {
+            const v = getValue(o); const l = getLabel(o); const checked = value.includes(v);
+            return (
+              <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', fontSize: '0.8rem', background: checked ? 'rgba(255,107,0,0.07)' : 'transparent', color: checked ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'background 0.1s' }}
+                onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                onMouseLeave={e => { if (!checked) e.currentTarget.style.background = 'transparent'; }}>
+                <input type="checkbox" checked={checked} onChange={() => toggle(v)} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer', flexShrink: 0 }} />
+                {l}
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FilterInput = ({ label, value, onChange, placeholder, type = 'text' }) => (
+  <div>
+    <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
+    <input type={type} className="ui-input" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }} />
+  </div>
+);
+
 // ── Main Page ─────────────────────────────────────────────────
 const ShipmentsListPage = ({ selectedCompany }) => {
   const [shipments, setShipments]       = useState([]);
@@ -371,58 +425,6 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     loadData();
   };
 
-  const MultiSelect = ({ label, value, onChange, options, placeholder }) => {
-    const [open, setOpen] = useState(false);
-    const ref = useRef(null);
-    useEffect(() => {
-      const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-      document.addEventListener('mousedown', h);
-      return () => document.removeEventListener('mousedown', h);
-    }, []);
-    const getValue = o => typeof o === 'object' ? o.value : o;
-    const getLabel = o => typeof o === 'object' ? o.label : o;
-    const toggle = v => onChange(value.includes(v) ? value.filter(x => x !== v) : [...value, v]);
-    const toggleAll = () => onChange(value.length === options.length ? [] : options.map(getValue));
-    const displayText = value.length === 0 ? placeholder
-      : value.length === 1 ? getLabel(options.find(o => getValue(o) === value[0]) || value[0])
-      : `${value.length} selected`;
-    return (
-      <div ref={ref} style={{ position: 'relative' }}>
-        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
-        <button type="button" onClick={() => setOpen(p => !p)}
-          style={{ width: '100%', fontSize: '0.82rem', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--bg-secondary)', border: `1px solid ${value.length ? 'rgba(255,107,0,0.4)' : 'var(--border-glass)'}`, borderRadius: 8, padding: '8px 12px', color: value.length ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</span>
-          <ChevronDown size={13} style={{ flexShrink: 0, opacity: 0.6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', marginLeft: 4 }} />
-        </button>
-        {open && (
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200, background: 'var(--bg-secondary)', border: '1px solid var(--border-glass-light)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, borderBottom: '1px solid var(--border-glass)', color: 'var(--orange-primary)' }}>
-              <input type="checkbox" checked={options.length > 0 && value.length === options.length} onChange={toggleAll} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer' }} />
-              All
-            </label>
-            {options.map(o => {
-              const v = getValue(o); const l = getLabel(o); const checked = value.includes(v);
-              return (
-                <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', fontSize: '0.8rem', background: checked ? 'rgba(255,107,0,0.07)' : 'transparent', color: checked ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'background 0.1s' }}
-                  onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                  onMouseLeave={e => { if (!checked) e.currentTarget.style.background = 'transparent'; }}>
-                  <input type="checkbox" checked={checked} onChange={() => toggle(v)} style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer', flexShrink: 0 }} />
-                  {l}
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const FilterInput = ({ label, value, onChange, placeholder, type = 'text' }) => (
-    <div>
-      <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 5, letterSpacing: '0.05em' }}>{label}</label>
-      <input type={type} className="ui-input" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }} />
-    </div>
-  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, padding: '20px 24px' }}>
