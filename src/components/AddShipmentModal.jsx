@@ -67,9 +67,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           // containerNumber, bolNumber, soNumber, vesselEta, vesselDeparture intentionally blank
         });
         setIsLabelManual(false);
-        if (initialData.order?.referenceId) {
-          setRefIdInput(String(initialData.order.referenceId));
-        }
+        // Intentionally clear ref ID on clone — each shipment must have a unique ref
+        setRefIdInput('');
+        setMatchedOrder(null);
       } else {
         setForm(EMPTY_FORM);
         setRefIdInput('');

@@ -221,6 +221,7 @@ export const updateShipment = async (req, res) => {
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
       'advToGrower','qcArrival','soNumber',
+      'demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
     if (orderRelation !== undefined) data.order = orderRelation;
