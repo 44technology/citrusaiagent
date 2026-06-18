@@ -104,6 +104,38 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
   const isAdmin = ['admin', 'super admin', 'operation', 'sales'].includes(currentUser.role);
 
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  const EXPORT_COLS = [
+    { key: 'refId',          label: 'REF ID',         width: 12, get: s => s.order?.referenceId || s.shipmentRefId || '' },
+    { key: 'bolNumber',      label: 'BOL N',           width: 18, get: s => s.bolNumber || '' },
+    { key: 'containerNumber',label: 'CONTAINER NO.',   width: 16, get: s => s.containerNumber || '' },
+    { key: 'status',         label: 'STATUS',          width: 16, get: s => s.status || '' },
+    { key: 'customer',       label: 'CLIENT',          width: 18, get: s => s.contact?.name || '' },
+    { key: 'grower',         label: 'GROWER',          width: 18, get: s => s.grower || s.order?.grower || '' },
+    { key: 'product',        label: 'PRODUCT',         width: 12, get: s => s.product || s.order?.product || '' },
+    { key: 'variety',        label: 'VARIETY',         width: 14, get: s => s.variety || s.order?.variety || '' },
+    { key: 'vesselName',     label: 'VESSEL NAME',     width: 20, get: s => s.vesselName || '' },
+    { key: 'shippingLine',   label: 'SHIPPING CO.',    width: 14, get: s => s.shippingLine || '' },
+    { key: 'etd',            label: 'ETD',             width: 12, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
+    { key: 'wDep',           label: 'W(DEP)',          width: 8,  get: s => getWeek(s.vesselDeparture) },
+    { key: 'pol',            label: 'POL',             width: 14, get: s => s.portOfLoading || '' },
+    { key: 'eta',            label: 'ETA',             width: 12, get: s => s.vesselEta ? formatDateUTC(s.vesselEta) : '' },
+    { key: 'wArr',           label: 'W(ARR)',          width: 8,  get: s => getWeek(s.vesselEta) },
+    { key: 'pod',            label: 'POD',             width: 14, get: s => s.portOfDischarge || '' },
+    { key: 'arrivalDate',    label: 'ARRIVAL DATE',    width: 14, get: s => s.vesselArrival ? formatDateUTC(s.vesselArrival) : '' },
+    { key: 'numberOfBoxes',  label: 'BOXES',           width: 9,  get: s => s.numberOfBoxes || '' },
+    { key: 'pallets',        label: 'PALLETS',         width: 9,  get: s => s.pallets || '' },
+    { key: 'packType',       label: 'PACK',            width: 10, get: s => s.packType || '' },
+    { key: 'soNumber',       label: 'SO NUMBER',       width: 14, get: s => s.soNumber || '' },
+    { key: 'advPayment',     label: 'ADV. PAYMENT',    width: 14, get: s => s.advancePaymentStatus || '' },
+    { key: 'demLFD',         label: 'DEM. LFD',        width: 12, get: s => s.demurrageLastFreeDay ? formatDateUTC(s.demurrageLastFreeDay) : '' },
+    { key: 'detLFD',         label: 'DET. LFD',        width: 12, get: s => s.detentionLastFreeDay ? formatDateUTC(s.detentionLastFreeDay) : '' },
+  ];
+
+  const DEFAULT_COLS = ['bolNumber','containerNumber','status','customer','grower','product','variety','vesselName','shippingLine','etd','wDep','pol','eta','wArr','pod','arrivalDate','numberOfBoxes','pallets','packType'];
+  const [selectedExportCols, setSelectedExportCols] = useState(new Set(DEFAULT_COLS));
+
   const loadData = async () => {
     setLoading(true);
     setLoadError('');
@@ -178,57 +210,27 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     return list;
   }, [shipments, search, filters, sort]);
 
-  // Export to Excel — styled template
+  // Export to Excel — dynamic columns
   const handleExport = async () => {
+    const cols = EXPORT_COLS.filter(c => selectedExportCols.has(c.key));
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Shipments');
 
-    // ── Colours ──────────────────────────────────────
-    const DARK   = '1A1A2E';
-    const ORANGE = 'FF6B00';
-    const HEADER = '16213E';
-    const ALT    = '0F3460';
-    const WHITE  = 'FFFFFF';
-    const MUTED  = 'A0A0B0';
-    const GREEN  = '22C55E';
-
-    // ── Stats ────────────────────────────────────────
+    const DARK = '1A1A2E', ORANGE = 'FF6B00', HEADER = '16213E';
+    const WHITE = 'FFFFFF', MUTED = 'A0A0B0', GREEN = '22C55E';
+    const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
     const totalBoxes   = filtered.reduce((s, sh) => s + (sh.numberOfBoxes || 0), 0);
     const totalPallets = filtered.reduce((s, sh) => s + (sh.pallets || 0), 0);
-    const onBoard  = filtered.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
+    const onBoard    = filtered.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
     const discharged = filtered.filter(s => ['Arrived','Delivered'].includes(s.status)).length;
-    const gateIn   = filtered.filter(s => s.status === 'Loading').length;
-    const dateStr  = new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
+    const gateIn     = filtered.filter(s => s.status === 'Loading').length;
+    const lastDataCol = String.fromCharCode(65 + cols.length); // A + n cols (col A = spacer)
 
-    // ── Column widths ─────────────────────────────────
-    ws.columns = [
-      { width: 4 },   // A spacer
-      { width: 16 },  // B GROWER
-      { width: 14 },  // C LABEL
-      { width: 18 },  // D CONTAINER NO.
-      { width: 18 },  // E STATUS
-      { width: 22 },  // F VESSEL NAME
-      { width: 14 },  // G SHIPPING CO.
-      { width: 12 },  // H ETD
-      { width: 7 },   // I W(DEP)
-      { width: 12 },  // J POL
-      { width: 12 },  // K ETA
-      { width: 7 },   // L W(ARR)
-      { width: 14 },  // M POD
-      { width: 14 },  // N ARRIVAL DATE
-      { width: 14 },  // O VARIETY
-      { width: 9 },   // P BOXES
-      { width: 9 },   // Q PALLETS
-      { width: 9 },   // R PACK
-    ];
-
-    // Helper: apply fill+font to a cell
     const style = (cell, { bg, color = WHITE, bold = false, sz = 10, align = 'left', wrap = false } = {}) => {
       if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + bg } };
       cell.font = { color: { argb: 'FF' + color }, bold, size: sz, name: 'Calibri' };
       cell.alignment = { horizontal: align, vertical: 'middle', wrapText: wrap };
     };
-
     const border = (cell) => {
       cell.border = {
         top:    { style: 'thin', color: { argb: 'FF2A2A4A' } },
@@ -238,137 +240,106 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       };
     };
 
-    // ── Row 1: empty ─────────────────────────────────
-    ws.addRow([]);
-    ws.getRow(1).height = 8;
+    ws.columns = [{ width: 4 }, ...cols.map(c => ({ width: c.width }))];
 
-    // ── Row 2: Title ─────────────────────────────────
-    const titleRow = ws.addRow([]);
-    titleRow.height = 32;
-    const titleCell = ws.getCell('C2');
+    // Row 1
+    ws.addRow([]); ws.getRow(1).height = 8;
+
+    // Row 2: Title
+    const titleRow = ws.addRow([]); titleRow.height = 32;
+    const titleCell = ws.getCell('B2');
     titleCell.value = 'SWEET FRESH PRODUCE  ·  SHIPMENT TRACKER';
-    style(titleCell, { bg: DARK, color: ORANGE, bold: true, sz: 16, align: 'left' });
-    ws.mergeCells('C2:R2');
-    // Fill rest of row
-    ['A2','B2'].forEach(r => { const c = ws.getCell(r); style(c, { bg: DARK }); });
+    style(titleCell, { bg: DARK, color: ORANGE, bold: true, sz: 16 });
+    ws.mergeCells(`B2:${lastDataCol}2`);
+    ws.getCell('A2').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + DARK } };
 
-    // ── Row 3: Subtitle ───────────────────────────────
-    const subRow = ws.addRow([]);
-    subRow.height = 20;
-    const subCell = ws.getCell('C3');
-    subCell.value = `Generated: ${dateStr}  |  All Shipments`;
-    style(subCell, { bg: DARK, color: MUTED, sz: 9, align: 'left' });
-    ws.mergeCells('C3:R3');
-    ['A3','B3'].forEach(r => { const c = ws.getCell(r); style(c, { bg: DARK }); });
+    // Row 3: Subtitle
+    const subRow = ws.addRow([]); subRow.height = 20;
+    const subCell = ws.getCell('B3');
+    subCell.value = `Generated: ${dateStr}  |  ${filtered.length} Shipments`;
+    style(subCell, { bg: DARK, color: MUTED, sz: 9 });
+    ws.mergeCells(`B3:${lastDataCol}3`);
+    ws.getCell('A3').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + DARK } };
 
-    // ── Row 4: Stats headers ──────────────────────────
-    ws.addRow([]);
-    ws.getRow(4).height = 20;
-    const statLabels = [
-      { label: 'TOTAL SHIPMENTS', cols: 'B4:D4' },
-      { label: 'SHIPPED ON BOARD', cols: 'E4:G4' },
-      { label: 'DISCHARGED',       cols: 'H4:J4' },
-      { label: 'GATE IN EMPTY',    cols: 'K4:M4' },
-      { label: 'TOTAL BOXES',      cols: 'N4:P4' },
-      { label: 'TOTAL PALLETS',    cols: 'Q4:R4' },
+    // Row 4-5: Stats
+    ws.addRow([]); ws.getRow(4).height = 20;
+    const statDefs = [
+      ['TOTAL', filtered.length], ['ON BOARD', onBoard],
+      ['DISCHARGED', discharged], ['GATE IN', gateIn],
+      ['BOXES', totalBoxes], ['PALLETS', totalPallets],
     ];
-    statLabels.forEach(({ label, cols }) => {
-      const startCell = ws.getCell(cols.split(':')[0]);
-      startCell.value = label;
-      style(startCell, { bg: HEADER, color: MUTED, bold: true, sz: 8, align: 'center' });
-      ws.mergeCells(cols);
+    const statCols = cols.length >= 6 ? Math.floor(cols.length / 6) : 1;
+    statDefs.forEach(([lbl, val], i) => {
+      const startCol = String.fromCharCode(66 + i * statCols);
+      const endCol   = String.fromCharCode(65 + (i + 1) * statCols);
+      const lCell = ws.getCell(`${startCol}4`);
+      lCell.value = lbl;
+      style(lCell, { bg: HEADER, color: MUTED, bold: true, sz: 8, align: 'center' });
+      try { ws.mergeCells(`${startCol}4:${endCol}4`); } catch {}
+      ws.getRow(5).height = 28;
+      const vCell = ws.getCell(`${startCol}5`);
+      vCell.value = val;
+      style(vCell, { bg: HEADER, color: ORANGE, bold: true, sz: 16, align: 'center' });
+      try { ws.mergeCells(`${startCol}5:${endCol}5`); } catch {}
     });
     ws.getCell('A4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + HEADER } };
-
-    // ── Row 5: Stats values ───────────────────────────
-    ws.addRow([]);
-    ws.getRow(5).height = 28;
-    const statVals = [
-      { val: filtered.length, cols: 'B5:D5' },
-      { val: onBoard,         cols: 'E5:G5' },
-      { val: discharged,      cols: 'H5:J5' },
-      { val: gateIn,          cols: 'K5:M5' },
-      { val: totalBoxes.toLocaleString(), cols: 'N5:P5' },
-      { val: totalPallets,    cols: 'Q5:R5' },
-    ];
-    statVals.forEach(({ val, cols }) => {
-      const startCell = ws.getCell(cols.split(':')[0]);
-      startCell.value = val;
-      style(startCell, { bg: HEADER, color: ORANGE, bold: true, sz: 16, align: 'center' });
-      ws.mergeCells(cols);
-    });
     ws.getCell('A5').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + HEADER } };
 
-    // ── Row 6: Empty ──────────────────────────────────
-    ws.addRow([]);
-    ws.getRow(6).height = 6;
+    // Row 6: spacer
+    ws.addRow([]); ws.getRow(6).height = 6;
 
-    // ── Row 7: Column headers ─────────────────────────
-    const hdrs = ['', 'GROWER', 'LABEL', 'CONTAINER NO.', 'STATUS', 'VESSEL NAME', 'SHIPPING CO.', 'ETD', 'W\n(DEP)', 'POL', 'ETA', 'W\n(ARR)', 'POD', 'ARRIVAL DATE', 'VARIETY', 'BOXES', 'PALLETS', 'PACK'];
-    const hdrRow = ws.addRow(hdrs);
+    // Row 7: headers
+    const hdrRow = ws.addRow(['', ...cols.map(c => c.label)]);
     hdrRow.height = 36;
-    hdrRow.eachCell((cell) => {
+    hdrRow.eachCell(cell => {
       style(cell, { bg: ORANGE, color: WHITE, bold: true, sz: 9, align: 'center', wrap: true });
       border(cell);
     });
 
-    // ── Data rows ─────────────────────────────────────
+    // Data rows
     filtered.forEach((s, i) => {
       const bg = i % 2 === 0 ? '12122A' : DARK;
-      const row = ws.addRow([
-        '',
-        s.grower || s.order?.grower || '',
-        s.label || '',
-        s.containerNumber || '',
-        s.status || '',
-        s.vesselName || '',
-        s.shippingLine || '',
-        s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '',
-        getWeek(s.vesselDeparture),
-        s.portOfLoading || s.origin || '',
-        s.vesselEta ? formatDateUTC(s.vesselEta) : '',
-        getWeek(s.vesselEta),
-        s.portOfDischarge || s.destination || '',
-        s.vesselArrival ? formatDateUTC(s.vesselArrival) : '',
-        s.variety || s.order?.variety || '',
-        s.numberOfBoxes || '',
-        s.pallets || '',
-        s.packType || '',
-      ]);
+      const row = ws.addRow(['', ...cols.map(c => c.get(s))]);
       row.height = 18;
       row.eachCell((cell, colNum) => {
-        style(cell, { bg, color: colNum === 4 ? ORANGE : colNum >= 16 ? GREEN : WHITE, sz: 9, align: colNum >= 8 ? 'center' : 'left' });
+        const colKey = cols[colNum - 2]?.key;
+        const isNum = ['numberOfBoxes','pallets'].includes(colKey);
+        style(cell, { bg, color: isNum ? GREEN : WHITE, sz: 9, align: colNum === 1 ? 'left' : 'left' });
         border(cell);
       });
     });
 
-    // ── Totals row ────────────────────────────────────
-    const totRow = ws.addRow(['', 'TOTALS', '', '', '', '', '', '', '', '', '', '', '', '', '',
-      totalBoxes, totalPallets, '']);
+    // Totals
+    const totRow = ws.addRow(['', ...cols.map(c =>
+      c.key === 'numberOfBoxes' ? totalBoxes : c.key === 'pallets' ? totalPallets : ''
+    )]);
     totRow.height = 22;
     totRow.eachCell((cell, colNum) => {
-      style(cell, { bg: HEADER, color: colNum >= 16 ? GREEN : ORANGE, bold: true, sz: 10, align: colNum >= 16 ? 'center' : 'left' });
+      const colKey = cols[colNum - 2]?.key;
+      const isNum = ['numberOfBoxes','pallets'].includes(colKey);
+      style(cell, { bg: HEADER, color: isNum ? GREEN : ORANGE, bold: true, sz: 10, align: 'left' });
       border(cell);
     });
-    ws.mergeCells(`B${totRow.number}:O${totRow.number}`);
+    if (cols.length > 1) {
+      try { ws.mergeCells(`B${totRow.number}:${String.fromCharCode(64 + cols.length)}${totRow.number}`); } catch {}
+    }
 
-    // ── Footer ────────────────────────────────────────
+    // Footer
     ws.addRow([]);
     const footRow = ws.addRow(['', 'Sweet Fresh Produce  ·  Confidential  ·  All rights reserved']);
     footRow.height = 18;
-    const footCell = ws.getCell(`B${footRow.number}`);
-    style(footCell, { bg: DARK, color: MUTED, sz: 8, align: 'left' });
-    ws.mergeCells(`B${footRow.number}:R${footRow.number}`);
+    style(ws.getCell(`B${footRow.number}`), { bg: DARK, color: MUTED, sz: 8 });
+    try { ws.mergeCells(`B${footRow.number}:${lastDataCol}${footRow.number}`); } catch {}
 
-    // ── Write & download ──────────────────────────────
     const buffer = await wb.xlsx.writeBuffer();
-    const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url    = URL.createObjectURL(blob);
-    const a      = document.createElement('a');
-    a.href       = url;
-    a.download   = `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`;
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Shipments_${new Date().toISOString().slice(0,10)}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
+    setShowExportModal(false);
   };
 
   const handleUpdate = (updated) => {
@@ -435,7 +406,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
           <button className="btn btn-glass" onClick={() => setShowImport(true)} style={{ gap: 8 }}>
             <FileSpreadsheet size={16} /> Import
           </button>
-          <button className="btn btn-glass" onClick={handleExport} style={{ gap: 8 }}>
+          <button className="btn btn-glass" onClick={() => setShowExportModal(true)} style={{ gap: 8 }}>
             <Download size={16} /> Export
           </button>
           {isAdmin && filtered.length > 0 && (
@@ -662,6 +633,61 @@ const ShipmentsListPage = ({ selectedCompany }) => {
           onClose={() => { setShowImport(false); loadData(); }}
           onImported={() => { loadData(); }}
         />
+      )}
+
+      {/* Export Column Picker Modal */}
+      {showExportModal && (
+        <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
+          <div className="modal-content" style={{ maxWidth: 480, width: '95vw' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Download size={18} className="text-orange" /> Export Columns
+              </h2>
+              <button className="modal-close" onClick={() => setShowExportModal(false)}><X size={20} /></button>
+            </div>
+            <div style={{ padding: '16px 24px' }}>
+              {/* Select All */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 10, borderRadius: 8, background: 'rgba(255,107,0,0.08)', border: '1px solid rgba(255,107,0,0.2)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedExportCols.size === EXPORT_COLS.length}
+                  onChange={e => setSelectedExportCols(e.target.checked ? new Set(EXPORT_COLS.map(c => c.key)) : new Set())}
+                  style={{ width: 16, height: 16, accentColor: 'var(--orange-primary)', cursor: 'pointer' }}
+                />
+                Select All ({EXPORT_COLS.length} columns)
+              </label>
+
+              {/* Column list */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', maxHeight: 360, overflowY: 'auto' }}>
+                {EXPORT_COLS.map(col => (
+                  <label key={col.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 6, background: selectedExportCols.has(col.key) ? 'rgba(255,107,0,0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${selectedExportCols.has(col.key) ? 'rgba(255,107,0,0.25)' : 'var(--border-glass)'}`, cursor: 'pointer', fontSize: '0.8rem', transition: 'all 0.15s' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedExportCols.has(col.key)}
+                      onChange={e => {
+                        const next = new Set(selectedExportCols);
+                        e.target.checked ? next.add(col.key) : next.delete(col.key);
+                        setSelectedExportCols(next);
+                      }}
+                      style={{ width: 14, height: 14, accentColor: 'var(--orange-primary)', cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    {col.label}
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{selectedExportCols.size} column{selectedExportCols.size !== 1 ? 's' : ''} selected</span>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-glass" onClick={() => setShowExportModal(false)}>Cancel</button>
+                  <button className="btn btn-primary" onClick={handleExport} disabled={selectedExportCols.size === 0}>
+                    <Download size={15} /> Export {filtered.length} rows
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
