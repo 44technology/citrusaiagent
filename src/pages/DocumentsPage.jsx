@@ -19,17 +19,30 @@ const FileIcon = ({ mimeType }) => {
   return <File size={20} style={{ color: 'var(--orange-primary)' }} />;
 };
 
-const CATEGORIES = ['All', 'BOL', 'Phytosanitary', 'Invoice', 'Certificate', 'General'];
+const DOC_TYPES = [
+  'SWB','BOL','PL-Grower','PL-Customer','INV','PO','ISF',
+  'Manifest','Phyto','FA','REL/SWB','Photo',
+  'Phytosanitary','Invoice','Certificate','General','Other',
+];
 
 const categoryColor = (cat) => {
   const map = {
-    BOL: { bg: 'rgba(99,102,241,0.12)', color: '#818cf8' },
-    Phytosanitary: { bg: 'rgba(34,197,94,0.12)', color: '#22c55e' },
-    Invoice: { bg: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)' },
-    Certificate: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
-    General: { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' },
+    BOL:           { bg: 'rgba(99,102,241,0.12)',  color: '#818cf8' },
+    SWB:           { bg: 'rgba(99,102,241,0.12)',  color: '#818cf8' },
+    'PL-Grower':   { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
+    'PL-Customer': { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8' },
+    INV:           { bg: 'rgba(255,107,0,0.12)',   color: 'var(--orange-primary)' },
+    Invoice:       { bg: 'rgba(255,107,0,0.12)',   color: 'var(--orange-primary)' },
+    Phyto:         { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
+    Phytosanitary: { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
+    Certificate:   { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
+    FA:            { bg: 'rgba(139,92,246,0.12)',  color: '#8b5cf6' },
+    'REL/SWB':     { bg: 'rgba(139,92,246,0.12)',  color: '#8b5cf6' },
+    Photo:         { bg: 'rgba(236,72,153,0.12)',  color: '#ec4899' },
+    General:       { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' },
+    Other:         { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' },
   };
-  return map[cat] || map.General;
+  return map[cat] || { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' };
 };
 
 // ─── Upload Modal ─────────────────────────────────────────────────────────────
@@ -109,7 +122,7 @@ const UploadModal = ({ onClose, onUploaded, contacts, orders, shipments, invoice
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Category</label>
             <select className="ui-input" value={form.category} onChange={e => set('category', e.target.value)}>
-              {['BOL', 'Phytosanitary', 'Invoice', 'Certificate', 'General'].map(c => <option key={c}>{c}</option>)}
+              {DOC_TYPES.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
 
@@ -315,6 +328,12 @@ const DocumentsPage = ({ selectedCompany }) => {
 
   const countByCategory = (cat) => docs.filter(d => d.category === cat).length;
 
+  // Dynamic category chips — only show categories that exist in current docs, sorted by DOC_TYPES order
+  const activeCategories = ['All', ...DOC_TYPES.filter(t => docs.some(d => d.category === t)),
+    ...docs.map(d => d.category).filter(c => c && !DOC_TYPES.includes(c))
+      .filter((c, i, arr) => arr.indexOf(c) === i)
+  ];
+
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
 
@@ -333,9 +352,9 @@ const DocumentsPage = ({ selectedCompany }) => {
         )}
       </div>
 
-      {/* Category summary chips */}
+      {/* Category summary chips — dynamic from actual docs */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {CATEGORIES.map(cat => (
+        {activeCategories.map(cat => (
           <button
             key={cat}
             onClick={() => setCategoryFilter(cat)}
