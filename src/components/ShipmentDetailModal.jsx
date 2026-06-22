@@ -1321,7 +1321,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                     {growers.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                   </select>
                 </Field>
-                <Field label="Product" value={getProductForVariety(shipment.variety)} editing={editingSection === 'cargo'}>
+                <Field label="Product" value={shipment.product || getProductForVariety(shipment.variety) || null} editing={editingSection === 'cargo'}>
                   <select
                     className="ui-input"
                     style={{ padding: '6px 10px', fontSize: '0.84rem' }}
