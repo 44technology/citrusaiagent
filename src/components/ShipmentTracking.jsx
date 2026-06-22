@@ -17,7 +17,9 @@ const STAGES = [
   { id: 'In Transit',    label: 'In Transit',     icon: Ship,          color: '#06b6d4' },
   { id: 'Arrived',       label: 'Arrived',        icon: MapPin,        color: '#10b981' },
   { id: 'Customs',       label: 'Customs',        icon: FileText,      color: '#f97316' },
-  { id: 'Delivered',     label: 'Delivered',      icon: CheckCircle2,  color: '#22c55e' },
+  { id: 'Delivered',            label: 'Delivered',     icon: CheckCircle2, color: '#22c55e' },
+  { id: 'Empty Return Pending', label: 'Empty Ret.Pend', icon: AlertCircle,  color: '#ef4444' },
+  { id: 'Empty Returned',       label: 'Empty Ret.',    icon: CheckCircle2, color: '#94a3b8' },
 ];
 
 const getStageIndex = (status) => STAGES.findIndex(s => s.id === status);
