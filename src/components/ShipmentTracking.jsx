@@ -315,17 +315,15 @@ const ShipmentTracking = ({ selectedCompany }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, overflow: 'hidden', padding: '20px 24px 0' }}>
       {/* Header */}
-      <div className="flex-between">
-        <div className="page-header">
-          <div className="page-icon-box">
-            <Navigation size={24} className="text-orange" />
-          </div>
-          <div>
-            <h1 className="page-title">Tracking</h1>
-            <p className="page-subtitle">{filtered.length} shipments across {STAGES.filter(s => filtered.some(sh => sh.status === s.id)).length} stages</p>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <Navigation size={24} style={{ color: 'var(--orange-primary)' }} />
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Tracking</h1>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+            {filtered.length} shipments across {STAGES.filter(s => filtered.some(sh => sh.status === s.id)).length} stages
+          </p>
         </div>
       </div>
 
@@ -399,12 +397,12 @@ const ShipmentTracking = ({ selectedCompany }) => {
       })()}
 
       {/* Kanban board */}
-      <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', gap: 12, paddingBottom: 16, alignItems: 'flex-start' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'hidden', display: 'flex', gap: 12, paddingBottom: 16, alignItems: 'stretch' }}>
         {STAGES.map(stage => {
           const Icon = stage.icon;
           const cards = filtered.filter(s => s.status === stage.id);
           return (
-            <div key={stage.id} style={{ flexShrink: 0, width: 220, display: 'flex', flexDirection: 'column' }}>
+            <div key={stage.id} style={{ flexShrink: 0, width: 220, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {/* Column header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
@@ -422,7 +420,7 @@ const ShipmentTracking = ({ selectedCompany }) => {
 
               {/* Cards container */}
               <div style={{
-                flex: 1, minHeight: 120, maxHeight: 'calc(100vh - 240px)', overflowY: 'auto',
+                flex: 1, minHeight: 0, overflowY: 'auto',
                 background: 'rgba(255,255,255,0.02)',
                 border: `1px solid ${stage.color}20`,
                 borderTop: `2px solid ${stage.color}`,
