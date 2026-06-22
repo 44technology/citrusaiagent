@@ -6,7 +6,7 @@
  * @param {Object} options - toLocaleDateString options
  * @returns {string} Formatted date or "—"
  */
-export const formatDateUTC = (dateString, options = { day: '2-digit', month: '2-digit', year: 'numeric' }) => {
+export const formatDateUTC = (dateString, options = { day: '2-digit', month: '2-digit', year: '2-digit' }) => {
   if (!dateString) return '—';
   
   let date;
