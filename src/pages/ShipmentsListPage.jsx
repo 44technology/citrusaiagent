@@ -35,11 +35,12 @@ const STATUS_COLORS = {
 };
 
 const getLfdWarning = (s) => {
+  if (s.containerReleased) return null;
   const today = new Date();
   const check = (dateStr, label) => {
     if (!dateStr) return null;
     const days = Math.ceil((new Date(dateStr) - today) / 86400000);
-    if (days < 0)  return { label: `${label} OVERDUE ${Math.abs(days)}d`, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' };
+    if (days < 0)  return { label: `${label} ${Math.abs(days)}d OVERDUE`, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' };
     if (days <= 3) return { label: `${label} ${days}d left`, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' };
     return null;
   };

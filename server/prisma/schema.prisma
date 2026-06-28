@@ -167,6 +167,7 @@ model Shipment {
   demurrageLastFreeDay  DateTime?  // Last free day at port (demurrage)
   detentionLastFreeDay  DateTime?  // Last free day at customer (per diem/detention)
   emptyReturnDate       DateTime?  // Actual date empty container was returned
+  containerReleased     Boolean   @default(false)  // Manually marked released by admin/logistics
 
   companyId        String?
   company          Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)

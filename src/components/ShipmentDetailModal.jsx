@@ -1022,6 +1022,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   })();
   const canEdit    = ['admin', 'operation', 'super admin', 'logistics', 'sales'].includes(currentUser.role);
   const isSuperAdmin = currentUser.role === 'super admin';
+  const isLogistics  = currentUser.role === 'logistics';
 
   useEffect(() => {
     ordersApi.getAll().then(setOrders).catch(() => {});
@@ -1064,6 +1065,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
       detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
       emptyReturnDate: shipment.emptyReturnDate?.split('T')[0] || '',
+      containerReleased: shipment.containerReleased ?? false,
     });
     setRefIdInput(shipment.order?.referenceId ? String(shipment.order.referenceId) : (shipment.shipmentRefId || ''));
     setMatchedOrder(shipment.order || null);
@@ -1461,6 +1463,29 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 >
                   <Inp type="date" value={ed.emptyReturnDate} onChange={e => set('emptyReturnDate', e.target.value)} />
                 </Field>
+                {/* Released checkbox — super admin + logistics only */}
+                {(isSuperAdmin || isLogistics) && (
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Container Released</div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '6px 0' }}>
+                      <input
+                        type="checkbox"
+                        checked={shipment.containerReleased ?? false}
+                        onChange={async e => {
+                          const val = e.target.checked;
+                          try {
+                            const updated = await shipmentsApi.update(shipment.id, { containerReleased: val });
+                            onUpdate(updated);
+                          } catch (err) { alert('Failed: ' + err.message); }
+                        }}
+                        style={{ width: 16, height: 16, accentColor: 'var(--orange-primary)', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '0.85rem', color: (shipment.containerReleased) ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                        {shipment.containerReleased ? 'Released' : 'Not Released'}
+                      </span>
+                    </label>
+                  </div>
+                )}
                 {/* Status — always visible, auto-saves on change */}
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Status</div>
