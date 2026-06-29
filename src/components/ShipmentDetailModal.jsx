@@ -1478,11 +1478,11 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                             onUpdate(updated);
                           } catch (err) { alert('Failed: ' + err.message); }
                         }}
-                        style={{ width: 16, height: 16, accentColor: 'var(--orange-primary)', cursor: 'pointer' }}
+                        style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize: '0.85rem', color: (shipment.containerReleased) ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-                        {shipment.containerReleased ? 'Released' : 'Not Released'}
-                      </span>
+                      {shipment.containerReleased && (
+                        <span style={{ fontSize: '0.85rem', color: '#22c55e', fontWeight: 600 }}>Released</span>
+                      )}
                     </label>
                   </div>
                 )}
