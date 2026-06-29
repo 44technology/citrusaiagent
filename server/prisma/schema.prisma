@@ -177,6 +177,7 @@ model Shipment {
   documents        Document[]
   events           ShipmentEvent[]
   expenses         ShipmentExpense[]
+  activities       ShipmentActivity[]
 }
 
 model Setting {
@@ -213,6 +214,16 @@ model ShipmentEvent {
   tempReading Float?   // Optional temperature recorded at this milestone (°C)
   createdAt   DateTime @default(now())
   shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+}
+
+model ShipmentActivity {
+  id         String   @id @default(uuid())
+  shipmentId String
+  userName   String
+  action     String
+  detail     String?
+  createdAt  DateTime @default(now())
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 }
 
 model User {

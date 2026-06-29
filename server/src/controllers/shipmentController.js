@@ -27,7 +27,14 @@ const SHIPMENT_INCLUDE = {
   contact: { select: { id: true, name: true, company: true } },
   order: { select: { id: true, referenceId: true, product: true, variety: true } },
   events: { orderBy: { eventDate: 'asc' } },
-  expenses: { orderBy: { createdAt: 'asc' } }
+  expenses: { orderBy: { createdAt: 'asc' } },
+  activities: { orderBy: { createdAt: 'desc' }, take: 50 },
+};
+
+const logActivity = async (shipmentId, userName, action, detail = null) => {
+  try {
+    await prisma.shipmentActivity.create({ data: { shipmentId, userName, action, detail } });
+  } catch {}
 };
 
 // ─── Shipments ────────────────────────────────────────────────
@@ -150,6 +157,8 @@ export const createShipment = async (req, res) => {
 
 export const updateShipment = async (req, res) => {
   try {
+    const existing = await prisma.shipment.findUnique({ where: { id: req.params.id }, select: { status: true, containerReleased: true } });
+    const userName = req.user?.username || 'Unknown';
     const data = { ...req.body };
 
     if (data.vesselEta !== undefined) data.vesselEta = parseDateUTC(data.vesselEta);
@@ -246,6 +255,29 @@ export const updateShipment = async (req, res) => {
       data,
       include: SHIPMENT_INCLUDE
     });
+
+    // Activity logging
+    const sid = req.params.id;
+    const rawData = req.body;
+    if (rawData.status && existing && rawData.status !== existing.status) {
+      await logActivity(sid, userName, 'Status changed', `${existing.status} → ${rawData.status}`);
+    } else if (rawData.containerReleased !== undefined && existing && rawData.containerReleased !== existing.containerReleased) {
+      await logActivity(sid, userName, rawData.containerReleased ? 'Container released' : 'Container release unmarked');
+    } else if (rawData.status) {
+      await logActivity(sid, userName, 'Status updated', rawData.status);
+    } else {
+      const cargoFields = ['grower','variety','product','cargoDescription','grossWeight','numberOfBoxes','pallets','packType','advancePaymentStatus','soNumber'];
+      const portsFields = ['portOfLoading','portOfDischarge','transshipmentPort','vesselName','shippingLine','bolNumber','vesselDeparture','vesselEta','vesselArrival','demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate'];
+      const reeferFields = ['reeferTempSet','reeferTempActual','humidity','ventilation','co2Level'];
+      const keys = Object.keys(rawData);
+      if (keys.some(k => reeferFields.includes(k))) await logActivity(sid, userName, 'Updated reefer settings');
+      else if (keys.some(k => portsFields.includes(k))) await logActivity(sid, userName, 'Updated ports & schedule');
+      else if (keys.some(k => cargoFields.includes(k))) await logActivity(sid, userName, 'Updated cargo details');
+      else if (rawData.notes !== undefined) await logActivity(sid, userName, 'Updated notes');
+      else if (rawData.contactId !== undefined) await logActivity(sid, userName, 'Changed customer');
+      else await logActivity(sid, userName, 'Updated shipment');
+    }
+
     res.json(shipment);
   } catch (error) {
     console.error('Error updating shipment:', error);

@@ -59,6 +59,10 @@ export const uploadDocument = async (req, res) => {
       },
       include: { contact: { select: { id: true, name: true, company: true } }, order: { select: { id: true, referenceId: true } }, shipment: { select: { id: true, label: true, containerNumber: true } }, invoice: { select: { id: true, invoiceNumber: true } } }
     });
+    if (shipmentId) {
+      const userName = req.user?.username || 'Unknown';
+      await prisma.shipmentActivity.create({ data: { shipmentId, userName, action: 'Uploaded document', detail: `${req.file.originalname} (${category || 'General'})` } }).catch(() => {});
+    }
     res.status(201).json(doc);
   } catch (error) {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
@@ -115,6 +119,10 @@ export const deleteDocument = async (req, res) => {
 
     if (fs.existsSync(doc.path)) fs.unlinkSync(doc.path);
     await prisma.document.delete({ where: { id } });
+    if (doc.shipmentId) {
+      const userName = req.user?.username || 'Unknown';
+      await prisma.shipmentActivity.create({ data: { shipmentId: doc.shipmentId, userName, action: 'Deleted document', detail: doc.originalName } }).catch(() => {});
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

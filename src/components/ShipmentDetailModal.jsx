@@ -15,7 +15,7 @@ import {
   CheckCircle2, Navigation, Package, Thermometer, Droplets,
   Wind, Plus, ChevronRight, Truck, Flag, ArrowRight, AlertTriangle,
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
-  Search, Paperclip, Upload, Download, Eye
+  Search, Paperclip, Upload, Download, Eye, Activity
 } from 'lucide-react';
 import { shipmentsApi, ordersApi, documentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -1536,6 +1536,39 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                   value={ed.notes} onChange={e => set('notes', e.target.value)} />
               </Field>
             </div>
+
+            {/* Activity Feed */}
+            {shipment.activities && shipment.activities.length > 0 && (
+              <div className="glass-panel" style={{ padding: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <Activity size={15} style={{ color: 'var(--orange-primary)' }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Activity</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {shipment.activities.map((a, i) => {
+                    const dt = new Date(a.createdAt);
+                    const dateStr = dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                    const timeStr = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    const isLast = i === shipment.activities.length - 1;
+                    return (
+                      <div key={a.id} style={{ display: 'flex', gap: 12, position: 'relative' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--orange-primary)', marginTop: 4, flexShrink: 0 }} />
+                          {!isLast && <div style={{ width: 1, flex: 1, background: 'rgba(255,255,255,0.08)', minHeight: 16 }} />}
+                        </div>
+                        <div style={{ paddingBottom: isLast ? 0 : 12, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{a.action}</div>
+                          {a.detail && <div style={{ fontSize: '0.75rem', color: 'var(--orange-primary)', marginTop: 1 }}>{a.detail}</div>}
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                            {a.userName} · {dateStr} {timeStr}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {!editingSection && (onClone || isSuperAdmin) && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
