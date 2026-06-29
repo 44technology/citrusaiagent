@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, AlertTriangle, Ship, X } from 'lucide-react';
+import { Bell, Search, AlertTriangle, Ship, X, Lock } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
 import '../index.css';
 
@@ -28,19 +28,38 @@ const Header = ({ company }) => {
       const now = new Date();
       const urgent = [];
       (Array.isArray(ships) ? ships : []).forEach(s => {
-        if (!s.vesselEta) return;
-        const eta = new Date(s.vesselEta);
-        const daysLeft = Math.ceil((eta - now) / (1000 * 60 * 60 * 24));
-        if (daysLeft >= 0 && daysLeft <= 10) {
-          urgent.push({ ...s, daysLeft });
+        // ETA reminders
+        if (s.vesselEta) {
+          const eta = new Date(s.vesselEta);
+          const daysLeft = Math.ceil((eta - now) / (1000 * 60 * 60 * 24));
+          if (daysLeft >= 0 && daysLeft <= 10) {
+            urgent.push({ ...s, daysLeft, type: 'eta' });
+          }
+        }
+        // LFD overdue warnings — only if not released
+        if (!s.containerReleased) {
+          const checkLfd = (dateStr, lfdType) => {
+            if (!dateStr) return;
+            const days = Math.ceil((new Date(dateStr) - now) / 86400000);
+            if (days <= 3) {
+              urgent.push({ ...s, lfdDays: days, lfdType, type: 'lfd' });
+            }
+          };
+          checkLfd(s.demurrageLastFreeDay, 'DEM');
+          checkLfd(s.detentionLastFreeDay, 'DET');
         }
       });
-      urgent.sort((a, b) => a.daysLeft - b.daysLeft);
+      urgent.sort((a, b) => {
+        if (a.type === 'lfd' && b.type !== 'lfd') return -1;
+        if (a.type !== 'lfd' && b.type === 'lfd') return 1;
+        if (a.type === 'lfd') return a.lfdDays - b.lfdDays;
+        return a.daysLeft - b.daysLeft;
+      });
       setAlerts(urgent);
     } catch {}
   };
 
-  const urgentCount = alerts.filter(a => a.daysLeft <= 7).length;
+  const urgentCount = alerts.filter(a => a.type === 'lfd' || a.daysLeft <= 7).length;
   const totalCount  = alerts.length;
 
   return (
@@ -85,7 +104,7 @@ const Header = ({ company }) => {
             }}>
               <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <Bell size={15} style={{ color: 'var(--orange-primary)' }} /> ETA Reminders
+                  <Bell size={15} style={{ color: 'var(--orange-primary)' }} /> Reminders
                 </span>
                 <button onClick={() => setShowPanel(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
                   <X size={14} />
@@ -94,16 +113,43 @@ const Header = ({ company }) => {
 
               {alerts.length === 0 ? (
                 <div style={{ padding: '24px 18px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                  No upcoming ETAs in the next 10 days
+                  No upcoming reminders
                 </div>
               ) : (
                 <div style={{ maxHeight: 360, overflowY: 'auto' }}>
-                  {alerts.map(s => {
+                  {alerts.map((s, idx) => {
+                    if (s.type === 'lfd') {
+                      const overdue = s.lfdDays < 0;
+                      const color = overdue ? '#ef4444' : s.lfdDays === 0 ? '#ef4444' : '#f59e0b';
+                      const msg = overdue
+                        ? `🔴 ${s.lfdType} ${Math.abs(s.lfdDays)}d overdue — container not released!`
+                        : s.lfdDays === 0
+                        ? `🔴 ${s.lfdType} last free day TODAY — return container!`
+                        : `⚠️ ${s.lfdType} last free day in ${s.lfdDays}d — arrange return`;
+                      return (
+                        <div key={`${s.id}-lfd-${s.lfdType}`} style={{
+                          padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                          display: 'flex', gap: 12, alignItems: 'flex-start',
+                          background: 'rgba(239,68,68,0.07)',
+                        }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                            <Lock size={15} style={{ color }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                              {s.containerNumber || s.bolNumber || '—'}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color, fontWeight: 700, marginTop: 3 }}>{msg}</div>
+                          </div>
+                        </div>
+                      );
+                    }
                     const is7  = s.daysLeft <= 7;
                     const color = s.daysLeft <= 3 ? '#ef4444' : is7 ? '#f59e0b' : '#94a3b8';
                     const etaStr = new Date(s.vesselEta).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
                     return (
-                      <div key={s.id} style={{
+                      <div key={`${s.id}-eta`} style={{
                         padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)',
                         display: 'flex', gap: 12, alignItems: 'flex-start',
                         background: s.daysLeft <= 3 ? 'rgba(239,68,68,0.05)' : is7 ? 'rgba(245,158,11,0.05)' : 'transparent',
