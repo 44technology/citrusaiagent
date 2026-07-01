@@ -8,8 +8,7 @@ const PORTS = [
     region: 'USA — East Coast',
     ports: [
       { name: 'Philadelphia, PA', terminals: [
-        { name: 'PhilaPort Vessel Schedules', url: 'https://www.philaport.com/vessel-schedules/' },
-        { name: 'Packer Marine Terminal', url: 'https://www.philaport.com/vessel-schedules/' },
+        { name: 'Holt Logistics Vessel Schedule', url: 'https://system.holtlogistics.com/VeslSched/VeslSchedule.php' },
       ]},
       { name: 'Newark / New York, NJ', terminals: [
         { name: 'APM Terminals Port Elizabeth', url: 'https://www.apmterminals.com/en/port-elizabeth/schedule' },
@@ -26,6 +25,9 @@ const PORTS = [
       ]},
       { name: 'Miami, FL', terminals: [
         { name: 'PortMiami Vessel Schedules', url: 'https://www.portmiami.com/business/vessel-schedules' },
+      ]},
+      { name: 'Port Everglades, FL', terminals: [
+        { name: 'Port Everglades Vessel Traffic', url: 'https://pevvesseltraffic.broward.org/webx/' },
       ]},
       { name: 'Boston, MA', terminals: [
         { name: 'Conley Terminal', url: 'https://www.massport.com/conley-terminal/about-conley/vessel-schedules/' },
