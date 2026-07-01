@@ -1102,6 +1102,20 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       onUpdate(updated); setEvents(updated.events || []);
       setIsEditing(false);
       setEditingSection(null);
+
+      // Vessel ETA sync check
+      if (section === 'ports' && ed.vesselName && ed.vesselEta !== (shipment.vesselEta?.split('T')[0] || '')) {
+        try {
+          const others = await shipmentsApi.getByVessel(ed.vesselName, shipment.id);
+          if (others.length > 0) {
+            const names = others.map(s => `• ${s.label || s.containerNumber || s.id}`).join('\n');
+            const ok = window.confirm(
+              `${others.length} other shipment(s) found on "${ed.vesselName}":\n\n${names}\n\nUpdate their ETA to ${ed.vesselEta} as well?`
+            );
+            if (ok) await shipmentsApi.syncVesselEta(ed.vesselName, ed.vesselEta, shipment.id);
+          }
+        } catch {}
+      }
     } catch (err) { alert('Save failed: ' + err.message); }
     finally { setLoading(false); }
   };

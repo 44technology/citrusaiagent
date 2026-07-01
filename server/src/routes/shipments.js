@@ -2,7 +2,8 @@ import { Router } from 'express';
 import {
   getShipments, getShipment, getShipmentsByContact,
   createShipment, updateShipment, deleteShipment, importShipments,
-  getEvents, createEvent, updateEvent, deleteEvent
+  getEvents, createEvent, updateEvent, deleteEvent,
+  getShipmentsByVessel, syncVesselEta
 } from '../controllers/shipmentController.js';
 import {
   getExpenses, createExpense, updateExpense, deleteExpense
@@ -14,6 +15,8 @@ const router = Router();
 router.get('/', getShipments);
 router.post('/', createShipment);
 router.post('/import', importShipments);
+router.get('/by-vessel', getShipmentsByVessel);
+router.post('/sync-vessel-eta', syncVesselEta);
 router.get('/contact/:contactId', getShipmentsByContact);
 router.get('/:id', getShipment);
 router.patch('/:id', updateShipment);

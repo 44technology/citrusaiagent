@@ -107,6 +107,9 @@ export const shipmentsApi = {
   createExpense: (id, data) => request(`/shipments/${id}/expenses`, { method: 'POST', body: JSON.stringify(data) }),
   updateExpense: (id, expenseId, data) => request(`/shipments/${id}/expenses/${expenseId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteExpense: (id, expenseId) => request(`/shipments/${id}/expenses/${expenseId}`, { method: 'DELETE' }),
+  // Vessel ETA sync
+  getByVessel: (vesselName, excludeId) => request(`/shipments/by-vessel?vesselName=${encodeURIComponent(vesselName)}&excludeId=${excludeId || ''}`),
+  syncVesselEta: (vesselName, vesselEta, excludeId) => request('/shipments/sync-vessel-eta', { method: 'POST', body: JSON.stringify({ vesselName, vesselEta, excludeId }) }),
 };
 // ─── Orders ──────────────────────────────────────────
 export const ordersApi = {

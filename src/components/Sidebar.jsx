@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, BarChart3, Settings, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List } from 'lucide-react';
+import { Users, BarChart3, Settings, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List, Anchor } from 'lucide-react';
 import '../index.css';
 
 const COMPANIES = [
@@ -16,6 +16,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
     { id: 'orders',     label: 'Orders',     icon: ShoppingBag },
     { id: 'shipments',  label: 'Shipments',  icon: List },
     { id: 'tracking',   label: 'Tracking',   icon: Navigation },
+    { id: 'vessels',    label: 'Vessels',    icon: Anchor },
     { id: 'growers',    label: 'Growers',    icon: Leaf },
     { id: 'accounting', label: 'Accounting', icon: Receipt },
     { id: 'outreach',   label: 'Outreach',   icon: Mail },

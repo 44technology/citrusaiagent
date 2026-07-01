@@ -527,3 +527,40 @@ export const deleteEvent = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete event' });
   }
 };
+
+// ─── Vessel ETA Sync ──────────────────────────────────────────────────────────
+
+export const getShipmentsByVessel = async (req, res) => {
+  const { vesselName, excludeId } = req.query;
+  if (!vesselName) return res.json([]);
+  try {
+    const where = { vesselName, ...(excludeId ? { NOT: { id: excludeId } } : {}) };
+    if (req.companyId) where.companyId = req.companyId;
+    const ships = await prisma.shipment.findMany({
+      where,
+      select: { id: true, label: true, containerNumber: true, vesselEta: true, status: true }
+    });
+    res.json(ships);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const syncVesselEta = async (req, res) => {
+  const { vesselName, vesselEta, excludeId } = req.body;
+  const userName = req.user?.username || 'Unknown';
+  if (!vesselName) return res.json({ updated: 0 });
+  try {
+    const where = { vesselName, ...(excludeId ? { NOT: { id: excludeId } } : {}) };
+    if (req.companyId) where.companyId = req.companyId;
+    const ships = await prisma.shipment.findMany({ where, select: { id: true } });
+    const etaValue = parseDateUTC(vesselEta);
+    for (const s of ships) {
+      await prisma.shipment.update({ where: { id: s.id }, data: { vesselEta: etaValue } });
+      await logActivity(s.id, userName, 'ETA updated via vessel sync', vesselEta || '—');
+    }
+    res.json({ updated: ships.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

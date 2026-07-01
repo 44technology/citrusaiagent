@@ -13,6 +13,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import GrowersPage from './pages/GrowersPage';
 import OutreachPage from './pages/OutreachPage';
 import ShipmentsListPage from './pages/ShipmentsListPage';
+import VesselSchedulePage from './pages/VesselSchedulePage';
 import PLPage from './pages/PLPage';
 
 // Protected Route Component
@@ -23,7 +24,7 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
 
 const TAB_TO_PATH = {
   leads: '/leads', customers: '/customers', orders: '/orders',
-  shipments: '/shipments', tracking: '/tracking', growers: '/growers',
+  shipments: '/shipments', tracking: '/tracking', vessels: '/vessels', growers: '/growers',
   accounting: '/accounting', outreach: '/outreach', documents: '/documents',
   analytics: '/pl', settings: '/settings',
 };
@@ -54,6 +55,7 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
             {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
             {activeTab === 'tracking' && <ShipmentTracking selectedCompany={selectedCompany} />}
+            {activeTab === 'vessels' && <VesselSchedulePage selectedCompany={selectedCompany} />}
             {activeTab === 'orders' && <OrdersPage selectedCompany={selectedCompany} />}
             {activeTab === 'accounting' && <AccountingPage selectedCompany={selectedCompany} />}
             {activeTab === 'documents' && <DocumentsPage selectedCompany={selectedCompany} />}
