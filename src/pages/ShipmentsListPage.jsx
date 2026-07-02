@@ -183,6 +183,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'pallets',        label: 'PALLETS',         width: 9,  get: s => s.pallets || '' },
     { key: 'packType',       label: 'PACK',            width: 10, get: s => s.packType || '' },
     { key: 'soNumber',       label: 'SO NUMBER',       width: 14, get: s => s.soNumber || '' },
+    { key: 'poNumber',       label: 'PO NUMBER',       width: 14, get: s => s.poNumber || '' },
     { key: 'advPayment',     label: 'ADV. PAYMENT',    width: 14, get: s => s.advancePaymentStatus || '' },
     { key: 'demLFD',         label: 'DEM. LFD (DD/MM/YY)', width: 16, get: s => s.demurrageLastFreeDay ? formatDateUTC(s.demurrageLastFreeDay) : '' },
     { key: 'detLFD',         label: 'DET. LFD (DD/MM/YY)', width: 16, get: s => s.detentionLastFreeDay ? formatDateUTC(s.detentionLastFreeDay) : '' },
@@ -546,6 +547,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
               <tr>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>REF ID</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>SU</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PO</th>
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />
@@ -567,7 +569,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 17 : 16;
+                const colCount = isAdmin ? 18 : 17;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -585,6 +587,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   </td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8' }}>
                     {s.soNumber || '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {s.poNumber || '—'}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
                   <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>

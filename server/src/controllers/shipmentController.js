@@ -243,7 +243,7 @@ export const updateShipment = async (req, res) => {
       'pallets','packType','product','variety','grower',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
-      'advToGrower','qcArrival','soNumber',
+      'advToGrower','qcArrival','soNumber','poNumber',
       'demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate','containerReleased',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });

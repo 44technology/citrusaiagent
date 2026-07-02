@@ -164,6 +164,7 @@ model Shipment {
   co2Level         Float?    // CO2 % (optional, controlled atmosphere)
 
   // ── Demurrage & Detention ────────────────────────
+  poNumber              String?    // Purchase Order number
   demurrageLastFreeDay  DateTime?  // Last free day at port (demurrage)
   detentionLastFreeDay  DateTime?  // Last free day at customer (per diem/detention)
   emptyReturnDate       DateTime?  // Actual date empty container was returned

@@ -1062,6 +1062,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       orderId: shipment.orderId || '',
       contactId: shipment.contactId || '',
       soNumber: shipment.soNumber || '',
+      poNumber: shipment.poNumber || '',
       demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
       detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
       emptyReturnDate: shipment.emptyReturnDate?.split('T')[0] || '',
@@ -1372,6 +1373,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 </Field>
                 <Field label="SU (BC SO#)" value={shipment.soNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. SO-12345" value={ed.soNumber} onChange={e => set('soNumber', e.target.value)} />
+                </Field>
+                <Field label="PO Number" value={shipment.poNumber} editing={editingSection === 'cargo'}>
+                  <Inp placeholder="e.g. PO-2026-001" value={ed.poNumber} onChange={e => set('poNumber', e.target.value)} />
                 </Field>
 
                 {/* Advance Payment Status — spans full row */}
