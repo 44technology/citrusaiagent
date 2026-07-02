@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Ship, ExternalLink, Search, Calendar, Package } from 'lucide-react';
+import { Ship, ExternalLink, Search, Calendar, Package, Check, X } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 
@@ -124,6 +124,9 @@ export default function VesselSchedulePage({ selectedCompany }) {
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [editingEta, setEditingEta] = useState(null); // vesselName being edited
+  const [etaInput, setEtaInput] = useState('');
+  const [savingEta, setSavingEta] = useState(false);
 
   useEffect(() => {
     shipmentsApi.getAll().then(all => {
@@ -146,6 +149,21 @@ export default function VesselSchedulePage({ selectedCompany }) {
     const etaB = b.shipments[0]?.vesselEta || '9999';
     return etaA.localeCompare(etaB);
   });
+
+  const handleEtaSave = async (vesselName) => {
+    setSavingEta(true);
+    try {
+      await shipmentsApi.syncVesselEta(vesselName, etaInput, null);
+      // Update local state so UI reflects immediately
+      setShipments(prev => prev.map(s =>
+        s.vesselName?.trim().toUpperCase() === vesselName.trim().toUpperCase()
+          ? { ...s, vesselEta: etaInput ? etaInput + 'T00:00:00.000Z' : s.vesselEta }
+          : s
+      ));
+      setEditingEta(null);
+    } catch (err) { alert('Failed: ' + err.message); }
+    finally { setSavingEta(false); }
+  };
 
   const filteredPorts = PORTS.map(region => ({
     ...region,
@@ -192,12 +210,41 @@ export default function VesselSchedulePage({ selectedCompany }) {
                         {v.shipments.length} container{v.shipments.length > 1 ? 's' : ''}
                       </span>
                     </div>
-                    {earliestEta && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: '#38bdf8' }}>
-                        <Calendar size={13} />
-                        ETA {formatDateUTC(earliestEta)}
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {editingEta === v.name ? (
+                        <>
+                          <input
+                            type="date"
+                            className="ui-input"
+                            value={etaInput}
+                            onChange={e => setEtaInput(e.target.value)}
+                            style={{ padding: '4px 8px', fontSize: '0.78rem', width: 140 }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleEtaSave(v.name)}
+                            disabled={savingEta || !etaInput}
+                            style={{ background: '#22c55e', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          ><Check size={13} color="#fff" /></button>
+                          <button
+                            onClick={() => setEditingEta(null)}
+                            style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          ><X size={13} color="#fff" /></button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => { setEditingEta(v.name); setEtaInput(earliestEta ? earliestEta.split('T')[0] : ''); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: '#38bdf8',
+                            background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)',
+                            borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
+                          }}
+                        >
+                          <Calendar size={13} />
+                          {earliestEta ? `ETA ${formatDateUTC(earliestEta)}` : 'Set ETA'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                     {v.shipments.map(s => (
