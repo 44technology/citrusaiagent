@@ -334,3 +334,21 @@ export const importLeads = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// PATCH /api/contacts/assign-by-city
+export const assignByCity = async (req, res) => {
+  const { city, userId, type } = req.body;
+  if (!city) return res.status(400).json({ error: 'city is required' });
+  try {
+    const where = { city };
+    if (req.companyId) where.companyId = req.companyId;
+    if (type) where.type = type;
+    const result = await prisma.contact.updateMany({
+      where,
+      data: { assignedTo: userId || null },
+    });
+    res.json({ updated: result.count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

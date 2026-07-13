@@ -56,6 +56,7 @@ export const contactsApi = {
   addNote: (id, text, isSystem = false) =>
     request(`/contacts/${id}/notes`, { method: 'POST', body: JSON.stringify({ text, isSystem }) }),
   getNotes: (id) => request(`/contacts/${id}/notes`),
+  assignByCity: (city, userId, type) => request('/contacts/assign-by-city', { method: 'PATCH', body: JSON.stringify({ city, userId, type }) }),
 };
 
 // ─── Upload ──────────────────────────────────────────

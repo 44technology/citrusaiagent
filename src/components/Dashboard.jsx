@@ -5,7 +5,7 @@ import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
 import ImportLeadsModal from './ImportLeadsModal';
 import { contactsApi, shipmentsApi, usersApi } from '../services/api';
-import { FileSpreadsheet, Search, X } from 'lucide-react';
+import { FileSpreadsheet, Search, X, MapPin } from 'lucide-react';
 import '../index.css';
 
 const Dashboard = ({ activeTab, selectedCompany }) => {
@@ -17,6 +17,10 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
   const [shipments, setShipments] = useState([]);
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
+  const [showCityAssign, setShowCityAssign] = useState(false);
+  const [cityAssignments, setCityAssignments] = useState({}); // { city: userId }
+  const [savingCities, setSavingCities] = useState(new Set());
+  const [citySearch, setCitySearch] = useState('');
 
   const currentUser = (() => {
     try {
@@ -205,6 +209,13 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
                   )}
                   <button
                     className="btn btn-glass"
+                    onClick={() => { setShowCityAssign(true); setCityAssignments({}); setCitySearch(''); }}
+                    title="Assign contacts by city"
+                  >
+                    <MapPin size={14} /> City Assign
+                  </button>
+                  <button
+                    className="btn btn-glass"
                     onClick={() => setIsModalOpen(true)}
                   >
                     {activeTab === 'leads' ? '+ Add Lead' : '+ Add Customer'}
@@ -248,6 +259,106 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
             onImported={fetchContacts}
             importType={activeTab === 'customers' ? 'Customer' : 'Lead'}
           />
+
+          {/* City Assignments Modal */}
+          {showCityAssign && (() => {
+            const type = activeTab === 'leads' ? 'Lead' : 'Customer';
+            const cityContacts = contacts.filter(c => c.type === type && c.city);
+            const cityMap = {};
+            cityContacts.forEach(c => {
+              if (!cityMap[c.city]) cityMap[c.city] = { count: 0, assigned: {} };
+              cityMap[c.city].count++;
+              if (c.assignedTo) cityMap[c.city].assigned[c.assignedTo] = (cityMap[c.city].assigned[c.assignedTo] || 0) + 1;
+            });
+            const cities = Object.entries(cityMap)
+              .sort((a, b) => b[1].count - a[1].count)
+              .filter(([city]) => !citySearch || city.toLowerCase().includes(citySearch.toLowerCase()));
+
+            const handleAssignCity = async (city, userId) => {
+              setSavingCities(p => new Set([...p, city]));
+              try {
+                await contactsApi.assignByCity(city, userId || null, type);
+                await fetchContacts();
+                setCityAssignments(p => ({ ...p, [city]: userId }));
+              } catch (err) { alert('Failed: ' + err.message); }
+              finally { setSavingCities(p => { const n = new Set(p); n.delete(city); return n; }); }
+            };
+
+            return (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                <div style={{ background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  {/* Header */}
+                  <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <MapPin size={18} style={{ color: 'var(--orange-primary)' }} />
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>City Assignments</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>Assign all contacts in a city to a team member</div>
+                      </div>
+                    </div>
+                    <button onClick={() => setShowCityAssign(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div style={{ padding: '12px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ position: 'relative' }}>
+                      <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        className="ui-input"
+                        placeholder="Search city…"
+                        value={citySearch}
+                        onChange={e => setCitySearch(e.target.value)}
+                        style={{ paddingLeft: 30, fontSize: '0.82rem', width: '100%' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* City list */}
+                  <div style={{ overflowY: 'auto', flex: 1 }}>
+                    {cities.length === 0 ? (
+                      <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No cities found</div>
+                    ) : cities.map(([city, info]) => {
+                      const topUserId = Object.entries(info.assigned).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+                      const currentVal = cityAssignments[city] !== undefined ? cityAssignments[city] : topUserId;
+                      const saving = savingCities.has(city);
+                      return (
+                        <div key={city} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                          <MapPin size={13} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{city}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>{info.count} contact{info.count !== 1 ? 's' : ''}</div>
+                          </div>
+                          <select
+                            className="ui-input"
+                            value={currentVal}
+                            onChange={e => setCityAssignments(p => ({ ...p, [city]: e.target.value }))}
+                            style={{ fontSize: '0.82rem', padding: '5px 8px', minWidth: 150 }}
+                          >
+                            <option value="">— Unassigned —</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                          </select>
+                          <button
+                            className="btn btn-primary"
+                            style={{ fontSize: '0.75rem', padding: '5px 12px', flexShrink: 0, opacity: saving ? 0.6 : 1 }}
+                            disabled={saving}
+                            onClick={() => handleAssignCity(city, cityAssignments[city] !== undefined ? cityAssignments[city] : topUserId)}
+                          >
+                            {saving ? '…' : 'Assign All'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ padding: '12px 22px', borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    {cities.length} cities · Changes save immediately when you click "Assign All"
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
         </div>
       </div>
