@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
+  color-scheme: dark;
   --font-main: 'Outfit', sans-serif;
   
   /* Citrus Dark Theme */
@@ -19,8 +20,8 @@
   --lemon-accent: #FFD600;
   
   --text-primary: #FFFFFF;
-  --text-secondary: #c0c5c3;
-  --text-muted: #8a9490;
+  --text-secondary: #ccd2d0;
+  --text-muted: #9aa5a1;
 
   --radius-sm: 8px;
   --radius-md: 16px;
@@ -43,6 +44,19 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Form elements without a class fall back to readable dark-theme colors */
+input, select, textarea, button {
+  font-family: inherit;
+  color: var(--text-primary);
+}
+select option {
+  background: #1a1a2e;
+  color: var(--text-primary);
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
 }
 
 /* Base App Layout */
