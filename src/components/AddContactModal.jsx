@@ -9,13 +9,14 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
   const [department, setDepartment] = useState('');
   const [language,   setLanguage]   = useState('English');
 
-  // Reset form when opened
   useEffect(() => {
     if (isOpen) {
       setName(''); setPhone(''); setEmail('');
       setCompany(''); setDepartment(''); setLanguage('English');
     }
   }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,31 +34,31 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
   };
 
   return (
-    <>
-      {/* Backdrop — subtle, doesn't block whole screen */}
-      {isOpen && (
-        <div
-          onClick={onClose}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.35)',
-            backdropFilter: 'blur(2px)',
-          }}
-        />
-      )}
-
-      {/* Drawer panel */}
-      <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 400, zIndex: 201,
-        background: 'var(--bg-card)',
-        borderLeft: '1px solid var(--border-glass)',
-        boxShadow: '-16px 0 48px rgba(0,0,0,0.4)',
-        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-glass)',
+          borderRadius: 16,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          width: '100%',
+          maxWidth: 480,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
         {/* Header */}
         <div style={{
           padding: '20px 24px 16px',
@@ -73,10 +74,8 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
           }}>
             <UserPlus size={17} style={{ color: 'var(--orange-primary)' }} />
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '1rem' }}>
-              {defaultType === 'Customer' ? 'Add New Customer' : 'Add New Lead'}
-            </div>
+          <div style={{ flex: 1, fontWeight: 700, fontSize: '1rem' }}>
+            {defaultType === 'Customer' ? 'Add New Customer' : 'Add New Lead'}
           </div>
           <button
             onClick={onClose}
@@ -87,8 +86,10 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-
+        <form
+          onSubmit={handleSubmit}
+          style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>NAME *</label>
             <input className="ui-input" placeholder="e.g. John Doe" value={name} onChange={e => setName(e.target.value)} required />
@@ -125,14 +126,13 @@ const AddContactModal = ({ isOpen, onClose, onAdd, defaultType = 'Lead' }) => {
             </select>
           </div>
 
-          {/* Actions — pinned to bottom */}
-          <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', gap: 10 }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 10 }}>
             <button type="button" className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>Add Contact</button>
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 };
 
