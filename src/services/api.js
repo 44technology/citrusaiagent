@@ -147,6 +147,13 @@ export const usersApi = {
   changePassword: (currentPassword, newPassword) => request('/users/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 };
 
+// ─── Ports / Locations ───────────────────────────────
+export const portsApi = {
+  getAll: () => request('/ports'),
+  create: (name) => request('/ports', { method: 'POST', body: JSON.stringify({ name }) }),
+  delete: (id) => request(`/ports/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Vendor Packages ─────────────────────────────────
 export const vendorPackagesApi = {
   getAll: (growerId) => request(`/vendor-packages${growerId ? `?growerId=${growerId}` : ''}`),

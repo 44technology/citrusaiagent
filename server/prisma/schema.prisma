@@ -257,9 +257,12 @@ model Order {
   departureWeek Int?
   arrivalWeek   Int?
   status        String   @default("pending")
-  advancePaymentTerms  Int?      // Payment terms in days (e.g. 15, 30)
-  advancePaymentPct    Float?    // Advance payment percentage (e.g. 70)
-  advancePaymentAmount Float?    // Calculated advance amount ($)
+  advancePaymentTerms  Int?
+  advancePaymentPct    Float?
+  advancePaymentAmount Float?
+  note          String?
+  departurePort String?
+  arrivalPort   String?
   userId        String?
   contactId     String
   createdAt     DateTime @default(now())
@@ -273,6 +276,13 @@ model Order {
   invoices      Invoice[]
   documents     Document[]
   shipments     Shipment[]
+}
+
+model PortLocation {
+  id        String   @id @default(uuid())
+  name      String
+  companyId String?
+  createdAt DateTime @default(now())
 }
 
 model PurchaseOrder {

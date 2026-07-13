@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, X, Loader2, Plus, Trash2, Calculator } from 'lucide-react';
-import { contactsApi } from '../services/api';
+import { contactsApi, portsApi } from '../services/api';
+import PortSelect from './PortSelect';
 
 // ── Product / Variety catalogue ──────────────────────────────
 const PRODUCTS = {
@@ -24,6 +25,9 @@ const EMPTY = {
   week: '',
   departureWeek: '',
   arrivalWeek: '',
+  departurePort: '',
+  arrivalPort: '',
+  note: '',
   contactId: '',
   advancePaymentTerms: '',
   advancePaymentPct: '',
@@ -135,15 +139,18 @@ const OrderPLCalculator = ({ totalPrice, totalBoxQty }) => {
 const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, userRole, userContactId }) => {
   const isEdit = !!initialData;
   const isCustomer = userRole === 'customer';
+  const isSuperAdmin = userRole === 'super admin';
 
   const [form, setForm] = useState({ ...EMPTY });
   const [boxRows, setBoxRows] = useState([{ ...EMPTY_ROW }]);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', email: '', company: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [ports, setPorts] = useState([]);
 
   useEffect(() => {
     if (!isOpen) return;
+    portsApi.getAll().then(setPorts).catch(() => {});
     if (initialData) {
       setForm({
         grower:        initialData.grower || '',
@@ -157,6 +164,9 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
         week:          initialData.week || '',
         departureWeek: initialData.departureWeek || '',
         arrivalWeek:   initialData.arrivalWeek || '',
+        departurePort: initialData.departurePort || '',
+        arrivalPort:   initialData.arrivalPort || '',
+        note:          initialData.note || '',
         contactId:     initialData.contactId || '',
         advancePaymentTerms:  initialData.advancePaymentTerms || '',
         advancePaymentPct:    initialData.advancePaymentPct || '',
@@ -242,6 +252,9 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
         advancePaymentTerms: clean(form.advancePaymentTerms),
         advancePaymentPct: clean(form.advancePaymentPct),
         advancePaymentAmount: clean(form.advancePaymentAmount),
+        note: form.note || null,
+        departurePort: form.departurePort || null,
+        arrivalPort: form.arrivalPort || null,
       };
       if (isEdit) await onEdit(initialData.id, data);
       else await onAdd(data);
@@ -445,15 +458,56 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             )}
           </div>
 
-          {/* Weeks */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <Field label="DEPARTURE WEEK">
-              <input type="number" className="ui-input" placeholder="e.g. 22" min="1" max="53" value={form.departureWeek || ''} onChange={e => set('departureWeek', e.target.value)} />
-            </Field>
-            <Field label="ARRIVAL WEEK">
-              <input type="number" className="ui-input" placeholder="e.g. 25" min="1" max="53" value={form.arrivalWeek || ''} onChange={e => set('arrivalWeek', e.target.value)} />
-            </Field>
+          {/* Departure / Arrival */}
+          <div>
+            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>DEPARTURE / ARRIVAL</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <Field label="DEPARTURE PORT / CITY">
+                <PortSelect
+                  value={form.departurePort}
+                  onChange={v => set('departurePort', v)}
+                  ports={ports}
+                  onAddPort={async (name) => {
+                    const p = await portsApi.create(name);
+                    setPorts(prev => [...prev, p].sort((a, b) => a.name.localeCompare(b.name)));
+                  }}
+                  isSuperAdmin={isSuperAdmin}
+                  placeholder="Select departure..."
+                />
+              </Field>
+              <Field label="ARRIVAL PORT / CITY">
+                <PortSelect
+                  value={form.arrivalPort}
+                  onChange={v => set('arrivalPort', v)}
+                  ports={ports}
+                  onAddPort={async (name) => {
+                    const p = await portsApi.create(name);
+                    setPorts(prev => [...prev, p].sort((a, b) => a.name.localeCompare(b.name)));
+                  }}
+                  isSuperAdmin={isSuperAdmin}
+                  placeholder="Select arrival..."
+                />
+              </Field>
+              <Field label="DEPARTURE WEEK">
+                <input type="number" className="ui-input" placeholder="e.g. 22" min="1" max="53" value={form.departureWeek || ''} onChange={e => set('departureWeek', e.target.value)} />
+              </Field>
+              <Field label="ARRIVAL WEEK">
+                <input type="number" className="ui-input" placeholder="e.g. 25" min="1" max="53" value={form.arrivalWeek || ''} onChange={e => set('arrivalWeek', e.target.value)} />
+              </Field>
+            </div>
           </div>
+
+          {/* Note */}
+          <Field label="NOTE">
+            <textarea
+              className="ui-input"
+              placeholder="Order notes, special instructions..."
+              value={form.note}
+              onChange={e => set('note', e.target.value)}
+              rows={3}
+              style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '0.84rem' }}
+            />
+          </Field>
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>

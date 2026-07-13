@@ -55,7 +55,8 @@ export const createOrder = async (req, res) => {
       grower, shipper, product, label, variety, boxType,
       boxQuantity, purchasePrice, salePrice, expense,
       receiver, week, departureWeek, arrivalWeek, status, contactId,
-      advancePaymentTerms, advancePaymentPct, advancePaymentAmount
+      advancePaymentTerms, advancePaymentPct, advancePaymentAmount,
+      note, departurePort, arrivalPort
     } = req.body;
 
     const referenceId = await generateRefId();
@@ -84,6 +85,9 @@ export const createOrder = async (req, res) => {
         advancePaymentTerms: advancePaymentTerms ? parseInt(advancePaymentTerms) : null,
         advancePaymentPct: advancePaymentPct ? parseFloat(advancePaymentPct) : null,
         advancePaymentAmount: advancePaymentAmount ? parseFloat(advancePaymentAmount) : null,
+        note: note || null,
+        departurePort: departurePort || null,
+        arrivalPort: arrivalPort || null,
       },
       include: { contact: true }
     });
