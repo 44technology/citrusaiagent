@@ -327,7 +327,7 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
                         <div key={city} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                           <MapPin size={13} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{city}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>{city}</div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>{info.count} contact{info.count !== 1 ? 's' : ''}</div>
                           </div>
                           <select
