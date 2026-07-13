@@ -153,6 +153,13 @@ const KanbanCard = ({ shipment, color, onClick }) => {
           {[shipment.product || shipment.order?.product, shipment.variety || shipment.order?.variety].filter(Boolean).join(' · ')}
         </div>
       )}
+
+      {/* Grower */}
+      {(shipment.grower || shipment.order?.grower) && (
+        <div style={{ marginTop: 3, fontSize: '0.68rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          🌱 {shipment.grower || shipment.order?.grower}
+        </div>
+      )}
     </div>
   );
 };

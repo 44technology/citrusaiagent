@@ -225,14 +225,22 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
   };
 
   const handleUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     setUploading(true);
     try {
       const { documentsApi } = await import('../services/api');
-      await documentsApi.upload(file, { contactId: grower.id, category: 'General' });
+      const failed = [];
+      for (const file of files) {
+        try {
+          await documentsApi.upload(file, { contactId: grower.id, category: 'General' });
+        } catch (err) {
+          failed.push(`${file.name}: ${err.message}`);
+        }
+      }
       const data = await documentsApi.getAll({ contactId: grower.id });
       setDocs(Array.isArray(data) ? data : []);
+      if (failed.length > 0) alert('Some uploads failed:\n' + failed.join('\n'));
     } catch (err) { alert('Upload failed: ' + err.message); }
     finally { setUploading(false); e.target.value = ''; }
   };
@@ -499,9 +507,9 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <label style={{ cursor: 'pointer' }}>
-                    <input type="file" style={{ display: 'none' }} onChange={handleUpload} />
+                    <input type="file" multiple style={{ display: 'none' }} onChange={handleUpload} />
                     <span className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      {uploading ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Plus size={13} /> Upload Document</>}
+                      {uploading ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Plus size={13} /> Upload Documents</>}
                     </span>
                   </label>
                 </div>
