@@ -5,7 +5,7 @@ import AddContactModal from './AddContactModal';
 import ContactDetail from './ContactDetail';
 import ImportLeadsModal from './ImportLeadsModal';
 import { contactsApi, shipmentsApi, usersApi } from '../services/api';
-import { FileSpreadsheet, Search, X, MapPin } from 'lucide-react';
+import { FileSpreadsheet, Search, X, MapPin, Filter } from 'lucide-react';
 import '../index.css';
 
 const Dashboard = ({ activeTab, selectedCompany }) => {
@@ -21,6 +21,9 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
   const [cityAssignments, setCityAssignments] = useState({}); // { city: userId }
   const [savingCities, setSavingCities] = useState(new Set());
   const [citySearch, setCitySearch] = useState('');
+  const [filterAssigned, setFilterAssigned] = useState('');
+  const [filterCity, setFilterCity] = useState('');
+  const [filterState, setFilterState] = useState('');
 
   const currentUser = (() => {
     try {
@@ -109,9 +112,21 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
     fetchContacts(); // Refresh after viewing detail
   };
 
-  const filteredContacts = contacts.filter(c => {
-    const matchType = activeTab === 'leads' ? c.type === 'Lead' : c.type === 'Customer';
-    if (!matchType) return false;
+  const typeContacts = contacts.filter(c =>
+    activeTab === 'leads' ? c.type === 'Lead' : c.type === 'Customer'
+  );
+
+  // Distinct filter options from current tab's contacts
+  const cityOptions  = [...new Set(typeContacts.map(c => c.city).filter(Boolean))].sort();
+  const stateOptions = [...new Set(typeContacts.map(c => c.state).filter(Boolean))].sort();
+
+  const hasFilters = filterAssigned || filterCity || filterState;
+
+  const filteredContacts = typeContacts.filter(c => {
+    if (filterAssigned === 'unassigned') { if (c.assignedTo) return false; }
+    else if (filterAssigned && c.assignedTo !== filterAssigned) return false;
+    if (filterCity && c.city !== filterCity) return false;
+    if (filterState && c.state !== filterState) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -173,12 +188,65 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
             </div>
           </div>
 
+          {/* Filter bar */}
+          {typeContacts.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              <Filter size={14} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+              <select
+                className="ui-select"
+                value={filterAssigned}
+                onChange={e => setFilterAssigned(e.target.value)}
+                style={{ width: 'auto', minWidth: 170, padding: '7px 10px', fontSize: '0.82rem' }}
+              >
+                <option value="">Assigned: All</option>
+                <option value="unassigned">— Unassigned —</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+              </select>
+              <select
+                className="ui-select"
+                value={filterCity}
+                onChange={e => setFilterCity(e.target.value)}
+                style={{ width: 'auto', minWidth: 140, padding: '7px 10px', fontSize: '0.82rem' }}
+              >
+                <option value="">City: All</option>
+                {cityOptions.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select
+                className="ui-select"
+                value={filterState}
+                onChange={e => setFilterState(e.target.value)}
+                style={{ width: 'auto', minWidth: 130, padding: '7px 10px', fontSize: '0.82rem' }}
+              >
+                <option value="">State: All</option>
+                {stateOptions.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {hasFilters && (
+                <button
+                  onClick={() => { setFilterAssigned(''); setFilterCity(''); setFilterState(''); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                    borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                    color: '#ef4444', fontSize: '0.78rem', fontWeight: 600,
+                  }}
+                >
+                  <X size={12} /> Clear Filters
+                </button>
+              )}
+              {hasFilters && (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  {filteredContacts.length} result{filteredContacts.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          )}
+
 
           {loading ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               Loading contacts...
             </div>
-          ) : filteredContacts.length === 0 && activeTab === 'leads' ? (
+          ) : typeContacts.length === 0 && activeTab === 'leads' ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
               <div className="flex-center gap-3">
                 <button className="btn btn-primary" onClick={() => setShowImport(true)}>
@@ -187,7 +255,7 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
                 <button className="btn btn-glass" onClick={() => setIsModalOpen(true)}>+ Add Manually</button>
               </div>
             </div>
-          ) : filteredContacts.length === 0 && activeTab === 'customers' ? (
+          ) : typeContacts.length === 0 && activeTab === 'customers' ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
               <div style={{ color: 'var(--text-muted)' }}>No customers yet. Promote a Lead or add one manually.</div>
               <button className="btn btn-glass" onClick={() => setIsModalOpen(true)}>+ Add Customer Manually</button>
