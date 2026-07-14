@@ -176,8 +176,8 @@ export const updateShipment = async (req, res) => {
     }
     delete data.contactId;
 
-    // Empty string foreign keys must be null
-    if (data.orderId === '' || data.orderId === undefined) data.orderId = null;
+    // Empty string foreign keys must be null (undefined stays undefined = "not provided")
+    if (data.orderId === '') data.orderId = null;
 
     // Parse float fields
     const floatFields = ['reeferTempSet', 'reeferTempActual', 'humidity', 'ventilation', 'co2Level', 'grossWeight', 'oceanFreight', 'advToGrower'];

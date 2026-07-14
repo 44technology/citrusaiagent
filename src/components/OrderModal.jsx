@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, X, Loader2, Plus, Trash2, Calculator } from 'lucide-react';
-import { contactsApi, portsApi } from '../services/api';
+import { ShoppingBag, X, Loader2, Plus, Trash2, Calculator, FileText, Receipt, Ship, CheckCircle2, Link2, Unlink } from 'lucide-react';
+import { contactsApi, portsApi, shipmentsApi } from '../services/api';
 import PortSelect from './PortSelect';
 
 // ── Product / Variety catalogue ──────────────────────────────
@@ -32,6 +32,51 @@ const EMPTY = {
   advancePaymentTerms: '',
   advancePaymentPct: '',
   advancePaymentAmount: '',
+};
+
+// ── Order pipeline strip: Order → PO → Invoice → Shipment → Delivered ──
+const PipelineStrip = ({ order, linkedShipments }) => {
+  const poCount   = order.purchaseOrders?.length || 0;
+  const invCount  = order.invoices?.length || 0;
+  const shipCount = linkedShipments.length;
+  const delivered = order.status === 'completed' ||
+    (shipCount > 0 && linkedShipments.every(s => ['Delivered', 'Empty Return Pending', 'Empty Returned'].includes(s.status)));
+
+  const steps = [
+    { label: 'Order',     icon: ShoppingBag,  done: true,          detail: `#${order.referenceId}` },
+    { label: 'PO',        icon: FileText,     done: poCount > 0,   detail: poCount > 0 ? `${poCount} PO` : 'Not created' },
+    { label: 'Invoice',   icon: Receipt,      done: invCount > 0,  detail: invCount > 0 ? `${invCount} invoice${invCount > 1 ? 's' : ''}` : 'Not issued' },
+    { label: 'Shipment',  icon: Ship,         done: shipCount > 0, detail: shipCount > 0 ? `${shipCount} container${shipCount > 1 ? 's' : ''}` : 'Not linked' },
+    { label: 'Delivered', icon: CheckCircle2, done: delivered,     detail: delivered ? 'Complete' : 'Pending' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', padding: '14px 8px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid var(--border-glass-light)' }}>
+      {steps.map((step, idx) => {
+        const Icon = step.icon;
+        const color = step.done ? '#22c55e' : 'var(--text-muted)';
+        return (
+          <React.Fragment key={step.label}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto', width: 92 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: step.done ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)',
+                border: `2px solid ${step.done ? '#22c55e' : 'rgba(255,255,255,0.12)'}`,
+              }}>
+                <Icon size={16} style={{ color }} />
+              </div>
+              <div style={{ marginTop: 5, fontSize: '0.72rem', fontWeight: 700, color: step.done ? 'var(--text-primary)' : 'var(--text-muted)' }}>{step.label}</div>
+              <div style={{ fontSize: '0.62rem', color, marginTop: 1, textAlign: 'center' }}>{step.detail}</div>
+            </div>
+            {idx < steps.length - 1 && (
+              <div style={{ flex: 1, height: 2, marginTop: 19, minWidth: 12, background: steps[idx + 1].done ? '#22c55e' : 'rgba(255,255,255,0.1)' }} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
 };
 
 const Field = ({ label, children, span2 = false }) => (
@@ -147,6 +192,40 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', email: '', company: '' });
   const [submitting, setSubmitting] = useState(false);
   const [ports, setPorts] = useState([]);
+  const [allShipments, setAllShipments] = useState([]);
+  const [linkShipmentId, setLinkShipmentId] = useState('');
+  const [linking, setLinking] = useState(false);
+
+  // Load shipments for linking (edit mode only)
+  useEffect(() => {
+    if (isOpen && isEdit) {
+      shipmentsApi.getAll().then(d => setAllShipments(Array.isArray(d) ? d : [])).catch(() => {});
+    }
+  }, [isOpen, initialData?.id]);
+
+  const linkedShipments    = isEdit ? allShipments.filter(s => s.orderId === initialData.id) : [];
+  const availableShipments = isEdit ? allShipments.filter(s => !s.orderId) : [];
+
+  const handleLinkShipment = async () => {
+    if (!linkShipmentId) return;
+    setLinking(true);
+    try {
+      await shipmentsApi.update(linkShipmentId, { orderId: initialData.id });
+      setAllShipments(p => p.map(s => s.id === linkShipmentId ? { ...s, orderId: initialData.id } : s));
+      setLinkShipmentId('');
+    } catch (err) { alert('Link failed: ' + err.message); }
+    finally { setLinking(false); }
+  };
+
+  const handleUnlinkShipment = async (shipmentId) => {
+    if (!window.confirm('Unlink this container from the order?')) return;
+    setLinking(true);
+    try {
+      await shipmentsApi.update(shipmentId, { orderId: '' });
+      setAllShipments(p => p.map(s => s.id === shipmentId ? { ...s, orderId: null } : s));
+    } catch (err) { alert('Unlink failed: ' + err.message); }
+    finally { setLinking(false); }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -317,14 +396,8 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             </div>
           )}
 
-          {/* Ref ID (read-only on edit) */}
-          {isEdit && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,107,0,0.06)', borderRadius: 8, border: '1px solid rgba(255,107,0,0.2)' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>REF ID</span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--orange-primary)' }}>#{initialData?.referenceId}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>Auto-generated</span>
-            </div>
-          )}
+          {/* Pipeline: Order → PO → Invoice → Shipment → Delivered (edit only) */}
+          {isEdit && <PipelineStrip order={initialData} linkedShipments={linkedShipments} />}
 
           {/* Product & Variety */}
           <div>
@@ -508,6 +581,69 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
               style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '0.84rem' }}
             />
           </Field>
+
+          {/* Linked Shipments (edit only) */}
+          {isEdit && !isCustomer && (
+            <div>
+              <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>
+                LINKED SHIPMENTS ({linkedShipments.length})
+              </p>
+
+              {/* Linked list */}
+              {linkedShipments.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                  {linkedShipments.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8 }}>
+                      <Ship size={13} style={{ color: '#22c55e', flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700 }}>{s.containerNumber || 'No Container'}</span>
+                      {s.vesselName && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>🚢 {s.vesselName}</span>}
+                      <span style={{ fontSize: '0.72rem', color: '#22c55e', marginLeft: 'auto', fontWeight: 600 }}>{s.status}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleUnlinkShipment(s.id)}
+                        disabled={linking}
+                        title="Unlink from order"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.6)', padding: 2, flexShrink: 0 }}
+                      >
+                        <Unlink size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Link new */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  className="ui-select"
+                  value={linkShipmentId}
+                  onChange={e => setLinkShipmentId(e.target.value)}
+                  style={{ flex: 1, fontSize: '0.82rem' }}
+                >
+                  <option value="">-- Select unlinked container --</option>
+                  {availableShipments.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {[s.containerNumber || 'No Container', s.vesselName, s.status].filter(Boolean).join(' · ')}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-glass"
+                  disabled={!linkShipmentId || linking}
+                  onClick={handleLinkShipment}
+                  style={{ fontSize: '0.8rem', flexShrink: 0 }}
+                >
+                  {linking ? <Loader2 size={14} className="animate-spin" /> : <><Link2 size={14} /> Link</>}
+                </button>
+              </div>
+              {availableShipments.length === 0 && linkedShipments.length === 0 && (
+                <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  No unlinked shipments available. Create a shipment first, then link it here.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
