@@ -261,6 +261,7 @@ const ShipmentTracking = ({ selectedCompany }) => {
   const [selected, setSelected]     = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch]         = useState('');
+  const [etaSort, setEtaSort]       = useState('asc'); // 'asc' | 'desc' | 'none'
   const [filters, setFilters]       = useState({
     customer: '', grower: '', variety: '', advPayment: '',
     pol: '', pod: '', etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
@@ -345,6 +346,13 @@ const ShipmentTracking = ({ selectedCompany }) => {
             value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>}
         </div>
+        <button
+          className={`btn ${etaSort !== 'none' ? 'btn-primary' : 'btn-glass'}`}
+          onClick={() => setEtaSort(p => p === 'asc' ? 'desc' : p === 'desc' ? 'none' : 'asc')}
+          title="Sort cards by ETA"
+        >
+          <Clock size={15} /> ETA {etaSort === 'asc' ? '↑' : etaSort === 'desc' ? '↓' : ''}
+        </button>
         <button className={`btn ${showFilters ? 'btn-primary' : 'btn-glass'}`} onClick={() => setShowFilters(v => !v)}>
           <Filter size={15} /> Filters
           {hasFilters && <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{Object.values(filters).filter(Boolean).length}</span>}
@@ -410,6 +418,16 @@ const ShipmentTracking = ({ selectedCompany }) => {
         {STAGES.map(stage => {
           const Icon = stage.icon;
           const cards = filtered.filter(s => s.status === stage.id);
+          if (etaSort !== 'none') {
+            cards.sort((a, b) => {
+              if (!a.vesselEta && !b.vesselEta) return 0;
+              if (!a.vesselEta) return 1;  // no ETA sinks to bottom
+              if (!b.vesselEta) return -1;
+              return etaSort === 'asc'
+                ? a.vesselEta.localeCompare(b.vesselEta)
+                : b.vesselEta.localeCompare(a.vesselEta);
+            });
+          }
           return (
             <div key={stage.id} style={{ flexShrink: 0, width: 220, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {/* Column header */}
