@@ -9,7 +9,7 @@ const EMPTY_FORM = {
   vesselEta: '', vesselDeparture: '', vesselArrival: '',
   shippingLine: '', status: 'Pending', notes: '',
   portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
-  containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
+  containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
   variety: '', product: '', grower: '', soNumber: '',
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
@@ -54,6 +54,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           cargoDescription: initialData.cargoDescription || '',
           grossWeight:      initialData.grossWeight   ? String(initialData.grossWeight) : '',
           numberOfBoxes:    initialData.numberOfBoxes ? String(initialData.numberOfBoxes) : '',
+          packType:         initialData.packType      || '',
           reeferTempSet:    initialData.reeferTempSet ? String(initialData.reeferTempSet) : '',
           reeferTempActual: initialData.reeferTempActual ? String(initialData.reeferTempActual) : '',
           humidity:         initialData.humidity      ? String(initialData.humidity) : '',
@@ -97,12 +98,20 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const applyOrder = (order) => {
     setMatchedOrder(order);
     setRefIdInput(String(order.referenceId || ''));
+    // Derive pack type from the order's box rows (e.g. "17 KG" or "10 / 17 KG")
+    let orderPackType = '';
+    try {
+      const rows = JSON.parse(order.boxType || '[]');
+      const kinds = [...new Set((Array.isArray(rows) ? rows : []).map(r => r.boxType).filter(Boolean))];
+      if (kinds.length > 0) orderPackType = kinds.join(' / ') + ' KG';
+    } catch { if (order.boxType) orderPackType = order.boxType; }
     setForm(prev => ({
       ...prev,
       orderId: order.id,
       contactId: order.contactId || prev.contactId,
       cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
       numberOfBoxes: order.boxQuantity ? String(order.boxQuantity) : prev.numberOfBoxes,
+      packType: orderPackType || prev.packType,
       grower: order.grower || prev.grower,
     }));
   };
@@ -182,7 +191,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
         vesselEta: '', vesselDeparture: '', vesselArrival: '',
         shippingLine: '', status: 'Pending', notes: '',
         portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
-        containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '',
+        containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
         reeferTempSet: '', humidity: '', ventilation: '',
         customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
       });
@@ -446,7 +455,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
             </div>
 
             {/* Cargo */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
               <div>
                 <label className="shipment-label">Cargo Description</label>
                 <input type="text" className="ui-input" placeholder="e.g. Citrus - Clementines"
@@ -461,6 +470,11 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">Number of Boxes</label>
                 <input type="number" className="ui-input" placeholder="e.g. 1120"
                   value={form.numberOfBoxes} onChange={e => handleChange('numberOfBoxes', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">Box Type</label>
+                <input type="text" className="ui-input" placeholder="e.g. 18 KG"
+                  value={form.packType} onChange={e => handleChange('packType', e.target.value)} />
               </div>
             </div>
 
