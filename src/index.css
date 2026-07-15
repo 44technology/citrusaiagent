@@ -44,6 +44,12 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  text-transform: uppercase;
+}
+
+/* Emails and URLs stay lowercase for readability */
+a[href^="mailto:"], .no-uppercase {
+  text-transform: none;
 }
 
 /* Form elements without a class fall back to readable dark-theme colors */
