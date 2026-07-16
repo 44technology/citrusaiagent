@@ -1054,6 +1054,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       variety: shipment.variety || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
+      packType: shipment.packType || '',
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
@@ -1370,6 +1371,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 </Field>
                 <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={editingSection === 'cargo'}>
                   <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
+                </Field>
+                <Field label="Pack Type" value={shipment.packType} editing={editingSection === 'cargo'}>
+                  <Inp placeholder="e.g. 18 KG" value={ed.packType} onChange={e => set('packType', e.target.value)} />
                 </Field>
                 <Field label="SU (BC SO#)" value={shipment.soNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. SO-12345" value={ed.soNumber} onChange={e => set('soNumber', e.target.value)} />
