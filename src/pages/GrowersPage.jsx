@@ -73,6 +73,14 @@ const AddGrowerModal = ({ onClose, onSaved }) => {
   );
 };
 
+// ── Offer form field wrapper (module-level so inputs keep focus) ──
+const F = ({ label, children }) => (
+  <div>
+    <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{label}</label>
+    {children}
+  </div>
+);
+
 // ── Add Offer Modal ───────────────────────────────────────────
 const AddOfferModal = ({ grower, onClose, onSaved }) => {
   const [form, setForm] = useState({
@@ -136,12 +144,6 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
   };
 
   const varieties = PRODUCTS[form.product] || [];
-  const F = ({ label, children }) => (
-    <div>
-      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{label}</label>
-      {children}
-    </div>
-  );
 
   return (
     <div className="modal-overlay" onClick={onClose}>

@@ -165,6 +165,26 @@ const KanbanCard = ({ shipment, color, onClick }) => {
   );
 };
 
+// ── Filter panel field wrappers (module-level so inputs keep focus) ──
+const Sel = ({ label, value, onChange, opts, placeholder }) => (
+  <div>
+    <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
+    <select className="ui-select" value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }}>
+      <option value="">{placeholder}</option>
+      {opts.map(o => typeof o === 'object'
+        ? <option key={o.value} value={o.value}>{o.label}</option>
+        : <option key={o} value={o}>{o}</option>
+      )}
+    </select>
+  </div>
+);
+const Inp = ({ label, type = 'text', value, onChange, placeholder }) => (
+  <div>
+    <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
+    <input type={type} className="ui-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', fontSize: '0.82rem' }} />
+  </div>
+);
+
 // ── Detail drawer ─────────────────────────────────────────────
 const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Ready for Pickup','Delivered'];
 
@@ -366,24 +386,6 @@ const ShipmentTracking = ({ selectedCompany }) => {
         const varieties = [...new Set(shipments.map(s => s.variety || s.order?.variety).filter(Boolean))];
         const pols      = [...new Set(shipments.map(s => s.portOfLoading).filter(Boolean))];
         const pods      = [...new Set(shipments.map(s => s.portOfDischarge).filter(Boolean))];
-        const Sel = ({ label, value, onChange, opts, placeholder }) => (
-          <div>
-            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
-            <select className="ui-select" value={value} onChange={e => onChange(e.target.value)} style={{ width: '100%', fontSize: '0.82rem' }}>
-              <option value="">{placeholder}</option>
-              {opts.map(o => typeof o === 'object'
-                ? <option key={o.value} value={o.value}>{o.label}</option>
-                : <option key={o} value={o}>{o}</option>
-              )}
-            </select>
-          </div>
-        );
-        const Inp = ({ label, type = 'text', value, onChange, placeholder }) => (
-          <div>
-            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4, letterSpacing: '0.05em' }}>{label}</label>
-            <input type={type} className="ui-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', fontSize: '0.82rem' }} />
-          </div>
-        );
         return (
           <div className="glass-panel" style={{ padding: '18px 20px', border: '1px solid rgba(255,107,0,0.2)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px 16px' }}>
