@@ -96,17 +96,19 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
     }
     setSaving(true);
     try {
-      await ordersApi.create({
+      // One order per container — each gets its own reference number
+      const containers = Math.max(1, parseInt(form.fclCount) || 1);
+      const boxesPerContainer = parseInt(form.fclBoxes) || Math.round(totalBoxes / containers);
+      const base = {
         product: form.product,
         variety: form.variety,
         boxType: form.boxType,
-        boxQuantity: totalBoxes,
         purchasePrice: form.purchasePrice,
         oceanFreight: form.oceanFreight,
         paymentTerms: form.paymentTerms,
         departureWeek: form.departureWeek,
         producer: form.producer,
-        fclCount: form.fclCount,
+        fclCount: 1,
         fclBoxes: form.fclBoxes,
         arrivalPort: form.arrivalPort,
         quality: form.quality,
@@ -114,7 +116,16 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
         grower: grower.name,
         contactId: grower.id,
         status: 'offer',
-      });
+      };
+      const created = [];
+      // Sequential — server generates consecutive reference IDs
+      for (let i = 0; i < containers; i++) {
+        const o = await ordersApi.create({ ...base, boxQuantity: boxesPerContainer });
+        created.push(o.referenceId);
+      }
+      if (containers > 1) {
+        alert(`${containers} orders created: ${created.map(r => '#' + r).join(', ')}`);
+      }
       onSaved();
       onClose();
     } catch (err) {
@@ -205,6 +216,11 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
                 <span>+ Freight: <strong style={{ color: '#38bdf8' }}>
                   ${(parseFloat(form.oceanFreight) * totalBoxes).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </strong></span>
+              )}
+              {(parseInt(form.fclCount) || 1) > 1 && (
+                <span style={{ color: '#a3e635' }}>
+                  → will create <strong>{form.fclCount} separate orders</strong> (one ref # per container)
+                </span>
               )}
             </div>
           )}
