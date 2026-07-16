@@ -263,6 +263,14 @@ model Order {
   note          String?
   departurePort String?
   arrivalPort   String?
+  oceanFreight  Float?    // $/box ocean freight in offer
+  paymentTerms  String?   // e.g. "100% UPFRONT"
+  producer      String?   // producing company on the offer
+  quality       String?   // e.g. "CAT 1"
+  sizes         String?   // e.g. "100s 50% AND 113s 50%"
+  fclCount      Int?      // number of containers offered
+  fclBoxes      Int?      // boxes per FCL
+  createdBy     String?   // username who entered the offer/order
   userId        String?
   contactId     String
   createdAt     DateTime @default(now())

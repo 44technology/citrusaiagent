@@ -55,13 +55,14 @@ const generateRefId = async () => {
 
 export const createOrder = async (req, res) => {
   try {
-    const { userId } = req.user || {};
+    const { userId, username } = req.user || {};
     const {
       grower, shipper, product, label, variety, boxType,
       boxQuantity, purchasePrice, salePrice, expense,
       receiver, week, departureWeek, arrivalWeek, status, contactId,
       advancePaymentTerms, advancePaymentPct, advancePaymentAmount,
-      note, departurePort, arrivalPort
+      note, departurePort, arrivalPort,
+      oceanFreight, paymentTerms, producer, quality, sizes, fclCount, fclBoxes
     } = req.body;
 
     const referenceId = await generateRefId();
@@ -93,6 +94,14 @@ export const createOrder = async (req, res) => {
         note: note || null,
         departurePort: departurePort || null,
         arrivalPort: arrivalPort || null,
+        oceanFreight: oceanFreight ? parseFloat(oceanFreight) : null,
+        paymentTerms: paymentTerms || null,
+        producer: producer || null,
+        quality: quality || null,
+        sizes: sizes || null,
+        fclCount: fclCount ? parseInt(fclCount) : null,
+        fclBoxes: fclBoxes ? parseInt(fclBoxes) : null,
+        createdBy: username || null,
       },
       include: { contact: true }
     });
@@ -133,6 +142,10 @@ export const updateOrder = async (req, res) => {
     if (data.advancePaymentTerms !== undefined) data.advancePaymentTerms = data.advancePaymentTerms ? parseInt(data.advancePaymentTerms) : null;
     if (data.advancePaymentPct !== undefined) data.advancePaymentPct = data.advancePaymentPct ? parseFloat(data.advancePaymentPct) : null;
     if (data.advancePaymentAmount !== undefined) data.advancePaymentAmount = data.advancePaymentAmount ? parseFloat(data.advancePaymentAmount) : null;
+    if (data.oceanFreight !== undefined) data.oceanFreight = data.oceanFreight ? parseFloat(data.oceanFreight) : null;
+    if (data.fclCount !== undefined) data.fclCount = data.fclCount ? parseInt(data.fclCount) : null;
+    if (data.fclBoxes !== undefined) data.fclBoxes = data.fclBoxes ? parseInt(data.fclBoxes) : null;
+    delete data.createdBy; // creation-time audit field, never updated
 
     const order = await prisma.order.update({
       where: { id },
