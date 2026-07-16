@@ -263,7 +263,8 @@ model Order {
   note          String?
   departurePort String?
   arrivalPort   String?
-  oceanFreight  Float?    // $/box ocean freight in offer
+  oceanFreight  Float?    // $/box ocean freight in offer (legacy)
+  incoterm      String?   // FOB | CIF | DDP — price basis of the offer
   paymentTerms  String?   // e.g. "100% UPFRONT"
   producer      String?   // producing company on the offer
   quality       String?   // e.g. "CAT 1"

@@ -62,7 +62,7 @@ export const createOrder = async (req, res) => {
       receiver, week, departureWeek, arrivalWeek, status, contactId,
       advancePaymentTerms, advancePaymentPct, advancePaymentAmount,
       note, departurePort, arrivalPort,
-      oceanFreight, paymentTerms, producer, quality, sizes, fclCount, fclBoxes
+      oceanFreight, paymentTerms, producer, quality, sizes, fclCount, fclBoxes, incoterm
     } = req.body;
 
     const referenceId = await generateRefId();
@@ -95,6 +95,7 @@ export const createOrder = async (req, res) => {
         departurePort: departurePort || null,
         arrivalPort: arrivalPort || null,
         oceanFreight: oceanFreight ? parseFloat(oceanFreight) : null,
+        incoterm: incoterm || null,
         paymentTerms: paymentTerms || null,
         producer: producer || null,
         quality: quality || null,

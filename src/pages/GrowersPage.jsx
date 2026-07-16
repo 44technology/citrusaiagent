@@ -77,7 +77,7 @@ const AddGrowerModal = ({ onClose, onSaved }) => {
 const AddOfferModal = ({ grower, onClose, onSaved }) => {
   const [form, setForm] = useState({
     product: 'Mandarin', variety: 'Nadorcott',
-    purchasePrice: '', oceanFreight: '', paymentTerms: '',
+    purchasePrice: '', incoterm: 'FOB', paymentTerms: '',
     departureWeek: '', producer: grower.name || '',
     fclCount: '', arrivalPort: '', quality: '', sizes: '',
     fclBoxes: '', boxType: '', boxQuantity: '',
@@ -104,7 +104,7 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
         variety: form.variety,
         boxType: form.boxType,
         purchasePrice: form.purchasePrice,
-        oceanFreight: form.oceanFreight,
+        incoterm: form.incoterm,
         paymentTerms: form.paymentTerms,
         departureWeek: form.departureWeek,
         producer: form.producer,
@@ -167,11 +167,15 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
                 {varieties.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </F>
-            <F label="PRICE ($ FOB) *">
+            <F label="PRICE ($) *">
               <input type="number" className="ui-input" placeholder="e.g. 15.50" step="0.01" value={form.purchasePrice} onChange={e => set('purchasePrice', e.target.value)} />
             </F>
-            <F label="OCEAN FREIGHT ($)">
-              <input type="number" className="ui-input" placeholder="e.g. 4.50" step="0.01" value={form.oceanFreight} onChange={e => set('oceanFreight', e.target.value)} />
+            <F label="INCOTERM *">
+              <select className="ui-select" value={form.incoterm} onChange={e => set('incoterm', e.target.value)}>
+                <option value="FOB">FOB</option>
+                <option value="CIF">CIF</option>
+                <option value="DDP">DDP</option>
+              </select>
             </F>
             <F label="PAYMENT">
               <input className="ui-input" placeholder="e.g. 100% UPFRONT" value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} />
@@ -210,13 +214,8 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
             <div style={{ padding: '10px 14px', background: 'rgba(255,107,0,0.06)', borderRadius: 8, fontSize: '0.85rem', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <span>Total Boxes: <strong>{totalBoxes.toLocaleString()}</strong></span>
               <span>Offer Value: <strong style={{ color: 'var(--orange-primary)' }}>
-                ${(parseFloat(form.purchasePrice) * totalBoxes).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(parseFloat(form.purchasePrice) * totalBoxes).toLocaleString('en-US', { minimumFractionDigits: 2 })} {form.incoterm}
               </strong></span>
-              {form.oceanFreight && (
-                <span>+ Freight: <strong style={{ color: '#38bdf8' }}>
-                  ${(parseFloat(form.oceanFreight) * totalBoxes).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </strong></span>
-              )}
               {(parseInt(form.fclCount) || 1) > 1 && (
                 <span style={{ color: '#a3e635' }}>
                   → will create <strong>{form.fclCount} separate orders</strong> (one ref # per container)
@@ -499,7 +498,10 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                               <td style={{ padding: '8px 12px' }}>{o.variety}</td>
                               <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.boxType || '—'}</td>
                               <td style={{ padding: '8px 12px', fontWeight: 600 }}>{(o.boxQuantity || 0).toLocaleString()}</td>
-                              <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600 }}>{o.purchasePrice ? `$${parseFloat(o.purchasePrice).toFixed(2)}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {o.purchasePrice ? `$${parseFloat(o.purchasePrice).toFixed(2)}` : '—'}
+                                {o.incoterm && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 4 }}>{o.incoterm}</span>}
+                              </td>
                               <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>{total > 0 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}</td>
                               <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.departureWeek ? `W${o.departureWeek}` : '—'}</td>
                               <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.arrivalWeek ? `W${o.arrivalWeek}` : '—'}</td>
