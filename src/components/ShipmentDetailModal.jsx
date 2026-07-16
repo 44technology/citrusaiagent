@@ -345,12 +345,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
 
 // ─── Product / Variety options ───────────────────────────────────────────────
 
-const PRODUCTS = {
-  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
-  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
-  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
-  'Lime':     ['Persian', 'Key Lime', 'Other'],
-};
+import { PRODUCTS, ALL_VARIETIES } from '../constants/products';
 
 const getDemurrageColor = (dateStr) => {
   if (!dateStr) return null;
@@ -1365,7 +1360,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                     onChange={e => set('variety', e.target.value)}
                   >
                     <option value="">— Select Variety —</option>
-                    {(ed.product ? PRODUCTS[ed.product] : Object.values(PRODUCTS).flat()).map(v => (
+                    {(ed.product ? PRODUCTS[ed.product] : ALL_VARIETIES).map(v => (
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>

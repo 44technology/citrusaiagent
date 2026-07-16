@@ -3,13 +3,7 @@ import { ShoppingBag, X, Loader2, Plus, Trash2, Calculator, FileText, Receipt, S
 import { contactsApi, portsApi, shipmentsApi } from '../services/api';
 import PortSelect from './PortSelect';
 
-// ── Product / Variety catalogue ──────────────────────────────
-const PRODUCTS = {
-  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
-  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
-  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
-  'Lime':     ['Persian', 'Key Lime', 'Kaffir', 'Other'],
-};
+import { PRODUCTS } from '../constants/products';
 
 const EMPTY_ROW = { boxType: '', size: '', boxQty: '', price: '' };
 

@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen, Edit3, Save } from 'lucide-react';
 import { contactsApi, ordersApi } from '../services/api';
 
-// ── Product / Variety catalogue (same as OrderModal) ─────────
-const PRODUCTS = {
-  'Orange':   ['Navel', 'Valencia', 'Blood Orange', 'Cara Cara', 'Other'],
-  'Mandarin': ['Nadorcott', 'W Murcot', 'Clementines', 'Tango', 'Other'],
-  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
-  'Lime':     ['Persian', 'Key Lime', 'Kaffir', 'Other'],
-};
+import { PRODUCTS } from '../constants/products';
 
 // ── Add Grower Modal ──────────────────────────────────────────
 const AddGrowerModal = ({ onClose, onSaved }) => {

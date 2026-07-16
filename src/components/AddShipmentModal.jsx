@@ -15,12 +15,7 @@ const EMPTY_FORM = {
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
 };
 
-const PRODUCTS = {
-  'Mandarin': ['Nadorcott', 'W Murcott', 'Clementines', 'Tango', 'Other'],
-  'Orange':   ['Navel', 'Valencia', 'Maroc Late', 'Blood Orange', 'Cara Cara', 'Other'],
-  'Lemon':    ['Eureka', 'Lisbon', 'Meyer', 'Other'],
-  'Lime':     ['Persian', 'Key Lime', 'Other'],
-};
+import { PRODUCTS, ALL_VARIETIES } from '../constants/products';
 
 const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
@@ -498,7 +493,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">Variety</label>
                 <select className="ui-input" value={form.variety} onChange={e => handleChange('variety', e.target.value)}>
                   <option value="">— Select Variety —</option>
-                  {(form.product ? PRODUCTS[form.product] : Object.values(PRODUCTS).flat()).map(v => (
+                  {(form.product ? PRODUCTS[form.product] : ALL_VARIETIES).map(v => (
                     <option key={v} value={v}>{v}</option>
                   ))}
                 </select>
