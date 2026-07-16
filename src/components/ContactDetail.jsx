@@ -538,6 +538,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                           'In Transit':    'rgba(6,182,212,0.15)',
                           'Arrived':       'rgba(16,185,129,0.15)',
                           'Customs':       'rgba(249,115,22,0.15)',
+                          'Ready for Pickup': 'rgba(163,230,53,0.15)',
                           'Delivered':     'rgba(34,197,94,0.2)',
                         }[s.status] || 'rgba(255,255,255,0.07)',
                         color: {
@@ -548,6 +549,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                           'In Transit':    '#06b6d4',
                           'Arrived':       '#10b981',
                           'Customs':       '#f97316',
+                          'Ready for Pickup': '#a3e635',
                           'Delivered':     '#22c55e',
                         }[s.status] || '#94a3b8',
                       }}>

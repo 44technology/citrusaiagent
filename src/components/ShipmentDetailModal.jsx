@@ -421,7 +421,7 @@ const PHASE_LABELS = {
 };
 
 const CONTAINER_TYPES = ['40RF', '40HC-RF', '20RF', '40DRY', '40HC-DRY', '20DRY'];
-const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Delivered', 'Empty Return Pending', 'Empty Returned'];
+const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Ready for Pickup', 'Delivered', 'Empty Return Pending', 'Empty Returned'];
 
 const isReefer = (type) => type && type.includes('RF');
 
@@ -1188,13 +1188,20 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                     REF #{shipment.order.referenceId}
                   </span>
                 )}
+                {shipment.grower && shipment.order?.grower &&
+                  shipment.grower.trim().toLowerCase() !== shipment.order.grower.trim().toLowerCase() && (
+                  <span style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderRadius: 6, padding: '1px 8px', fontWeight: 700, fontSize: '0.72rem' }}
+                    title={`Shipment grower "${shipment.grower}" does not match order grower "${shipment.order.grower}"`}>
+                    ⚠ GROWER MISMATCH: {shipment.grower} ≠ {shipment.order.grower}
+                  </span>
+                )}
               </div>
             </div>
             {!isEditing && (
               <span style={{
                 padding: '3px 12px', borderRadius: 20, fontSize: '0.74rem', fontWeight: 600, flexShrink: 0,
-                background: shipment.status === 'Delivered' ? 'rgba(34,197,94,0.2)' : shipment.status === 'Arrived' ? 'rgba(16,185,129,0.15)' : shipment.status === 'Customs' ? 'rgba(249,115,22,0.15)' : shipment.status === 'In Transit' ? 'rgba(6,182,212,0.15)' : shipment.status === 'Transshipment' ? 'rgba(139,92,246,0.15)' : shipment.status === 'Departed' ? 'rgba(59,130,246,0.15)' : shipment.status === 'Loading' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.07)',
-                color: shipment.status === 'Delivered' ? '#22c55e' : shipment.status === 'Arrived' ? '#10b981' : shipment.status === 'Customs' ? '#f97316' : shipment.status === 'In Transit' ? '#06b6d4' : shipment.status === 'Transshipment' ? '#8b5cf6' : shipment.status === 'Departed' ? '#3b82f6' : shipment.status === 'Loading' ? '#f59e0b' : 'var(--text-muted)',
+                background: shipment.status === 'Delivered' ? 'rgba(34,197,94,0.2)' : shipment.status === 'Ready for Pickup' ? 'rgba(163,230,53,0.15)' : shipment.status === 'Arrived' ? 'rgba(16,185,129,0.15)' : shipment.status === 'Customs' ? 'rgba(249,115,22,0.15)' : shipment.status === 'In Transit' ? 'rgba(6,182,212,0.15)' : shipment.status === 'Transshipment' ? 'rgba(139,92,246,0.15)' : shipment.status === 'Departed' ? 'rgba(59,130,246,0.15)' : shipment.status === 'Loading' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.07)',
+                color: shipment.status === 'Delivered' ? '#22c55e' : shipment.status === 'Ready for Pickup' ? '#a3e635' : shipment.status === 'Arrived' ? '#10b981' : shipment.status === 'Customs' ? '#f97316' : shipment.status === 'In Transit' ? '#06b6d4' : shipment.status === 'Transshipment' ? '#8b5cf6' : shipment.status === 'Departed' ? '#3b82f6' : shipment.status === 'Loading' ? '#f59e0b' : 'var(--text-muted)',
               }}>{shipment.status}</span>
             )}
             {canEdit && (isEditing ? (

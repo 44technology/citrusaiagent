@@ -191,6 +191,35 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
   const [editingInfo, setEditingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({});
   const [savingInfo, setSavingInfo] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [orderForm, setOrderForm] = useState({});
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  const startEditOrder = (o) => {
+    setEditingOrderId(o.id);
+    setOrderForm({
+      referenceId:   o.referenceId || '',
+      product:       o.product || '',
+      variety:       o.variety || '',
+      boxType:       o.boxType || '',
+      boxQuantity:   o.boxQuantity ?? '',
+      purchasePrice: o.purchasePrice ?? '',
+      departureWeek: o.departureWeek ?? '',
+      arrivalWeek:   o.arrivalWeek ?? '',
+      advancePaymentAmount: o.advancePaymentAmount ?? '',
+      status:        o.status || 'offer',
+    });
+  };
+
+  const saveOrderEdit = async () => {
+    setSavingOrder(true);
+    try {
+      await ordersApi.update(editingOrderId, orderForm);
+      setEditingOrderId(null);
+      onRefresh();
+    } catch (err) { alert('Save failed: ' + err.message); }
+    finally { setSavingOrder(false); }
+  };
 
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
   const isSuperAdmin = currentUser.role === 'super admin';
@@ -342,14 +371,70 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                       <thead>
                         <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Purchase Price', 'Total', 'Dep. Week', 'Arr. Week', 'Adv. Payment', 'Status'].map(h => (
-                            <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
+                          {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Purchase Price', 'Total', 'Dep. Week', 'Arr. Week', 'Adv. Payment', 'Status', ...(isSuperAdmin ? [''] : [])].map((h, hi) => (
+                            <th key={hi} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {growerOrders.map((o, i) => {
                           const total = (o.purchasePrice || 0) * (o.boxQuantity || 0);
+                          const isEditingRow = editingOrderId === o.id;
+                          const inp = (key, opts = {}) => (
+                            <input
+                              className="ui-input"
+                              type={opts.num ? 'number' : 'text'}
+                              step={opts.step}
+                              value={orderForm[key]}
+                              onChange={e => setOrderForm(p => ({ ...p, [key]: e.target.value }))}
+                              style={{ padding: '4px 8px', fontSize: '0.78rem', width: opts.w || 80 }}
+                            />
+                          );
+                          if (isEditingRow) {
+                            return (
+                              <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: 'rgba(255,107,0,0.05)' }}>
+                                <td style={{ padding: '6px 10px' }}>{inp('referenceId', { w: 90 })}</td>
+                                <td style={{ padding: '6px 10px' }}>
+                                  <select className="ui-select" value={orderForm.product}
+                                    onChange={e => setOrderForm(p => ({ ...p, product: e.target.value, variety: (PRODUCTS[e.target.value] || [])[0] || '' }))}
+                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 100 }}>
+                                    {Object.keys(PRODUCTS).map(p => <option key={p} value={p}>{p}</option>)}
+                                  </select>
+                                </td>
+                                <td style={{ padding: '6px 10px' }}>
+                                  <select className="ui-select" value={orderForm.variety}
+                                    onChange={e => setOrderForm(p => ({ ...p, variety: e.target.value }))}
+                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 110 }}>
+                                    {(PRODUCTS[orderForm.product] || []).map(v => <option key={v} value={v}>{v}</option>)}
+                                  </select>
+                                </td>
+                                <td style={{ padding: '6px 10px' }}>{inp('boxType', { w: 70 })}</td>
+                                <td style={{ padding: '6px 10px' }}>{inp('boxQuantity', { num: true, w: 75 })}</td>
+                                <td style={{ padding: '6px 10px' }}>{inp('purchasePrice', { num: true, step: '0.01', w: 80 })}</td>
+                                <td style={{ padding: '6px 10px', fontWeight: 700, color: 'var(--orange-primary)', whiteSpace: 'nowrap' }}>
+                                  ${((parseFloat(orderForm.purchasePrice) || 0) * (parseInt(orderForm.boxQuantity) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </td>
+                                <td style={{ padding: '6px 10px' }}>{inp('departureWeek', { num: true, w: 55 })}</td>
+                                <td style={{ padding: '6px 10px' }}>{inp('arrivalWeek', { num: true, w: 55 })}</td>
+                                <td style={{ padding: '6px 10px' }}>{inp('advancePaymentAmount', { num: true, step: '0.01', w: 80 })}</td>
+                                <td style={{ padding: '6px 10px' }}>
+                                  <select className="ui-select" value={orderForm.status}
+                                    onChange={e => setOrderForm(p => ({ ...p, status: e.target.value }))}
+                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 110 }}>
+                                    {['offer', 'pending', 'confirmed', 'pending shipment', 'in-transit', 'completed'].map(s => <option key={s} value={s}>{s}</option>)}
+                                  </select>
+                                </td>
+                                <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                                  <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '0.72rem', marginRight: 6 }}
+                                    disabled={savingOrder} onClick={saveOrderEdit}>
+                                    {savingOrder ? '…' : 'Save'}
+                                  </button>
+                                  <button className="btn btn-glass" style={{ padding: '4px 8px', fontSize: '0.72rem' }}
+                                    onClick={() => setEditingOrderId(null)}>✕</button>
+                                </td>
+                              </tr>
+                            );
+                          }
                           return (
                             <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
                               <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>#{o.referenceId}</td>
@@ -373,6 +458,14 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                                   {o.status || 'pending'}
                                 </span>
                               </td>
+                              {isSuperAdmin && (
+                                <td style={{ padding: '8px 12px' }}>
+                                  <button onClick={() => startEditOrder(o)} title="Edit offer"
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
+                                    <Edit3 size={13} />
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           );
                         })}
@@ -384,7 +477,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                             <td style={{ padding: '8px 12px', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</td>
                             <td style={{ padding: '8px 12px', fontWeight: 700, color: '#f59e0b' }}>${avgPrice} avg</td>
                             <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                            <td colSpan={4} />
+                            <td colSpan={isSuperAdmin ? 5 : 4} />
                           </tr>
                         </tfoot>
                       )}

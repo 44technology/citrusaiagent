@@ -112,8 +112,17 @@ export const updateOrder = async (req, res) => {
     }
 
     const data = { ...req.body };
-    // Strip read-only and relation fields
-    ['referenceId', 'id', 'contact', 'user', 'createdAt', 'updatedAt', 'purchaseOrders', 'invoices', 'documents', 'shipments', 'tenant'].forEach(k => delete data[k]);
+    // Strip read-only and relation fields (super admin may change referenceId)
+    const strip = ['id', 'contact', 'user', 'createdAt', 'updatedAt', 'purchaseOrders', 'invoices', 'documents', 'shipments', 'tenant'];
+    if (role !== 'super admin') strip.push('referenceId');
+    strip.forEach(k => delete data[k]);
+    if (data.referenceId !== undefined) {
+      const refId = String(data.referenceId).trim();
+      if (!refId) return res.status(400).json({ error: 'Reference ID cannot be empty' });
+      const dup = await prisma.order.findFirst({ where: { referenceId: refId, NOT: { id } } });
+      if (dup) return res.status(400).json({ error: `Reference ID "${refId}" is already used by another order` });
+      data.referenceId = refId;
+    }
     // Parse numeric fields
     if (data.purchasePrice !== undefined) data.purchasePrice = data.purchasePrice ? parseFloat(data.purchasePrice) : null;
     if (data.salePrice !== undefined) data.salePrice = data.salePrice ? parseFloat(data.salePrice) : null;

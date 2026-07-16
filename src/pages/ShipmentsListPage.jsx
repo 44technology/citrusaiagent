@@ -28,6 +28,7 @@ const STATUS_COLORS = {
   'In Transit':           { bg: 'rgba(6,182,212,0.15)',   color: '#06b6d4' },
   'Arrived':              { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
   'Customs':              { bg: 'rgba(249,115,22,0.15)',  color: '#f97316' },
+  'Ready for Pickup':     { bg: 'rgba(163,230,53,0.15)',  color: '#a3e635' },
   'Delivered':            { bg: 'rgba(34,197,94,0.2)',    color: '#22c55e' },
   'Empty Return Pending': { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444' },
   'Empty Returned':       { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
@@ -602,7 +603,18 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                       ) : null; })()}
                     </div>
                   </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.grower || s.order?.grower || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
+                    {(() => {
+                      const mismatch = s.grower && s.order?.grower &&
+                        s.grower.trim().toLowerCase() !== s.order.grower.trim().toLowerCase();
+                      return (
+                        <span style={mismatch ? { color: '#ef4444', fontWeight: 700 } : {}}
+                          title={mismatch ? `Grower mismatch! Shipment: "${s.grower}" / Order #${s.order.referenceId}: "${s.order.grower}"` : undefined}>
+                          {mismatch && '⚠ '}{s.grower || s.order?.grower || '—'}
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ fontWeight: 600 }}>{s.contact?.name || '—'}</div>
                   </td>

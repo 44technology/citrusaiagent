@@ -17,6 +17,7 @@ const STAGES = [
   { id: 'In Transit',    label: 'In Transit',     icon: Ship,          color: '#06b6d4' },
   { id: 'Arrived',       label: 'Arrived',        icon: MapPin,        color: '#10b981' },
   { id: 'Customs',       label: 'Customs',        icon: FileText,      color: '#f97316' },
+  { id: 'Ready for Pickup', label: 'Ready Pickup', icon: Package,      color: '#a3e635' },
   { id: 'Delivered',            label: 'Delivered',     icon: CheckCircle2, color: '#22c55e' },
   { id: 'Empty Return Pending', label: 'Empty Ret.Pend', icon: AlertCircle,  color: '#ef4444' },
   { id: 'Empty Returned',       label: 'Empty Ret.',    icon: CheckCircle2, color: '#94a3b8' },
@@ -165,7 +166,7 @@ const KanbanCard = ({ shipment, color, onClick }) => {
 };
 
 // ── Detail drawer ─────────────────────────────────────────────
-const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Delivered'];
+const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Ready for Pickup','Delivered'];
 
 const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
   const [savingStatus, setSavingStatus] = useState(false);
