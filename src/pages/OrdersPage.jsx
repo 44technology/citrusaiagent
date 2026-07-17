@@ -85,6 +85,43 @@ const OrdersPage = ({ selectedCompany }) => {
     }
   };
 
+  const handleCreatePO = async (order) => {
+    try {
+      // Find the grower's contact record to use as PO supplier
+      const growerContacts = await contactsApi.getAll('Grower');
+      let supplier = null;
+      if (order.grower) {
+        supplier = growerContacts.find(g => g.name?.trim().toLowerCase() === order.grower.trim().toLowerCase());
+      }
+      if (!supplier && order.contact?.type === 'Grower') supplier = order.contact;
+      if (!supplier) {
+        alert(`No grower contact found for "${order.grower || '—'}".\nAdd the grower on the Growers page first, then create the PO.`);
+        return;
+      }
+
+      // Default amount: unit price × boxes (editable before confirm)
+      const suggested = ((order.purchasePrice || 0) * (order.boxQuantity || 0)) || order.purchasePrice || 0;
+      const amountStr = window.prompt(
+        `Create PO for order #${order.referenceId}\nSupplier: ${supplier.name}\n\nPO total amount ($):`,
+        suggested.toFixed(2)
+      );
+      if (amountStr === null) return;
+      const amount = parseFloat(amountStr);
+      if (isNaN(amount) || amount <= 0) { alert('Invalid amount'); return; }
+
+      const po = await accountingApi.createPO({
+        orderId: order.id,
+        supplierId: supplier.id,
+        totalAmount: amount,
+        poNumber: `PO-${order.referenceId}`,
+      });
+      alert(`Purchase Order ${po.poNumber} created (Draft).\nYou can manage it in the Accounting tab.`);
+      loadData();
+    } catch (err) {
+      alert('Create PO failed: ' + err.message);
+    }
+  };
+
   const openAddModal = () => {
     setSelectedOrder(null);
     setIsModalOpen(true);
@@ -222,13 +259,22 @@ const OrdersPage = ({ selectedCompany }) => {
                           >
                             Conv. to Invoice
                           </button>
-                          <button 
-                            className="btn btn-glass" 
-                            style={{ fontSize: '0.7rem', padding: '4px 8px' }}
-                            onClick={() => alert('Create PO feature coming in Accounting tab')}
-                          >
-                            Create PO
-                          </button>
+                          {o.purchaseOrders?.length > 0 ? (
+                            <span
+                              title={o.purchaseOrders.map(p => `${p.poNumber} (${p.status})`).join(', ')}
+                              style={{ fontSize: '0.7rem', padding: '4px 8px', borderRadius: 8, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontWeight: 700, whiteSpace: 'nowrap' }}
+                            >
+                              PO ✓
+                            </span>
+                          ) : (
+                            <button
+                              className="btn btn-glass"
+                              style={{ fontSize: '0.7rem', padding: '4px 8px' }}
+                              onClick={() => handleCreatePO(o)}
+                            >
+                              Create PO
+                            </button>
+                          )}
                         </div>
                       </>
                     ) : (
