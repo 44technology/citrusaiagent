@@ -67,10 +67,18 @@ const ProfitCalculator = ({ onClose }) => {
   );
 
   return (
-    <div style={{
-      position: 'fixed', right: 24, top: '50%', transform: 'translateY(-50%)',
-      width: 360, maxHeight: '92vh', zIndex: 200,
-      background: '#1a1f2e',
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.65)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+    <div onClick={e => e.stopPropagation()} style={{
+      width: 380, maxHeight: '92vh',
+      background: '#161b26',
       border: '1px solid rgba(255,107,0,0.3)',
       borderRadius: 16,
       boxShadow: '0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(255,107,0,0.15)',
@@ -230,6 +238,7 @@ const ProfitCalculator = ({ onClose }) => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };
