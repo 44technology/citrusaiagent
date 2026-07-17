@@ -256,9 +256,14 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       return true;
     });
 
-    // Sort
+    // Sort — computed fields need getters
+    const SORT_GET = {
+      refId: s => s.order?.referenceId || s.shipmentRefId || '',
+      'contact.name': s => s.contact?.name || '',
+    };
+    const getV = (s) => (SORT_GET[sort.field] ? SORT_GET[sort.field](s) : s[sort.field]);
     list = [...list].sort((a, b) => {
-      let av = a[sort.field] ?? '', bv = b[sort.field] ?? '';
+      let av = getV(a) ?? '', bv = getV(b) ?? '';
       if (typeof av === 'string') av = av.toLowerCase();
       if (typeof bv === 'string') bv = bv.toLowerCase();
       return sort.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
@@ -546,9 +551,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-secondary)' }}>
               <tr>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>REF ID</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>SU</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PO</th>
+                <SortTh label="REF ID"       field="refId"            sort={sort} setSort={setSort} />
+                <SortTh label="SO"           field="soNumber"         sort={sort} setSort={setSort} />
+                <SortTh label="PO"           field="poNumber"         sort={sort} setSort={setSort} />
                 <SortTh label="BOL #"        field="bolNumber"        sort={sort} setSort={setSort} />
                 <SortTh label="CONTAINER #"  field="containerNumber"  sort={sort} setSort={setSort} />
                 <SortTh label="STATUS"       field="status"           sort={sort} setSort={setSort} />

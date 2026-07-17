@@ -1377,7 +1377,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="Pack Type" value={shipment.packType} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. 18 KG" value={ed.packType} onChange={e => set('packType', e.target.value)} />
                 </Field>
-                <Field label="SU (BC SO#)" value={shipment.soNumber} editing={editingSection === 'cargo'}>
+                <Field label="SO Number" value={shipment.soNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. SO-12345" value={ed.soNumber} onChange={e => set('soNumber', e.target.value)} />
                 </Field>
                 <Field label="PO Number" value={shipment.poNumber} editing={editingSection === 'cargo'}>
