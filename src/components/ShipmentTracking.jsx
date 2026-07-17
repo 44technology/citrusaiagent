@@ -186,7 +186,7 @@ const Inp = ({ label, type = 'text', value, onChange, placeholder }) => (
 );
 
 // ── Detail drawer ─────────────────────────────────────────────
-const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Ready for Pickup','Delivered'];
+const STATUS_OPTIONS = ['Pending','Loading','Departed','Transshipment','In Transit','Arrived','Customs','Ready for Pickup','Delivered','Empty Return Pending','Empty Returned'];
 
 const ShipmentDrawer = ({ shipment, onClose, onUpdate, onDelete }) => {
   const [savingStatus, setSavingStatus] = useState(false);

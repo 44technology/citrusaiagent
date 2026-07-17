@@ -278,6 +278,23 @@ export const updateShipment = async (req, res) => {
       else await logActivity(sid, userName, 'Updated shipment');
     }
 
+    // Sync linked order status when shipment status changes
+    if (rawData.status && shipment.orderId && existing && rawData.status !== existing.status) {
+      const ORDER_STATUS_MAP = {
+        'Departed':             'in-transit',
+        'In Transit':           'in-transit',
+        'Delivered':            'completed',
+        'Empty Return Pending': 'completed',
+        'Empty Returned':       'completed',
+      };
+      const newOrderStatus = ORDER_STATUS_MAP[rawData.status];
+      if (newOrderStatus) {
+        try {
+          await prisma.order.update({ where: { id: shipment.orderId }, data: { status: newOrderStatus } });
+        } catch {}
+      }
+    }
+
     res.json(shipment);
   } catch (error) {
     console.error('Error updating shipment:', error);
