@@ -309,6 +309,7 @@ model PurchaseOrder {
   order       Order    @relation(fields: [orderId], references: [id])
   supplier    Contact  @relation(fields: [supplierId], references: [id])
   invoices    Invoice[]
+  documents   Document[]
 }
 
 model Invoice {
@@ -358,6 +359,7 @@ model Document {
   orderId     String?
   shipmentId  String?
   invoiceId   String?
+  poId        String?
   uploadedBy  String?
   createdAt   DateTime @default(now())
   tenant     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -365,6 +367,7 @@ model Document {
   order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
   invoice     Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id], onDelete: SetNull)
 }
 
 model VendorPackage {

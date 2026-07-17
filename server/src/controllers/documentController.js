@@ -12,13 +12,14 @@ const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploa
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 export const getAllDocuments = async (req, res) => {
-  const { contactId, orderId, shipmentId, invoiceId } = req.query;
+  const { contactId, orderId, shipmentId, invoiceId, poId } = req.query;
   try {
     const where = {};
     if (contactId)     where.contactId  = contactId;
     if (orderId)       where.orderId    = orderId;
     if (shipmentId)    where.shipmentId = shipmentId;
     if (invoiceId)     where.invoiceId  = invoiceId;
+    if (poId)          where.poId       = poId;
     if (req.companyId) where.companyId  = req.companyId;
 
     const docs = await prisma.document.findMany({
@@ -35,7 +36,7 @@ export const getAllDocuments = async (req, res) => {
 export const uploadDocument = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file provided' });
 
-  const { category, contactId, orderId, shipmentId, invoiceId } = req.body;
+  const { category, contactId, orderId, shipmentId, invoiceId, poId } = req.body;
   const filename = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
   const filePath = path.join(UPLOADS_DIR, filename);
 
@@ -54,6 +55,7 @@ export const uploadDocument = async (req, res) => {
         orderId:    orderId    || null,
         shipmentId: shipmentId || null,
         invoiceId:  invoiceId  || null,
+        poId:       poId       || null,
         companyId:  req.companyId || null,
         uploadedBy: req.user?.username || null
       },

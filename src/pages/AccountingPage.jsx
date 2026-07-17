@@ -4,7 +4,107 @@ import {
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
   ChevronDown, ChevronRight, Trash2, ArrowLeft
 } from 'lucide-react';
-import { accountingApi, paymentsApi, shipmentsApi } from '../services/api';
+import { accountingApi, paymentsApi, shipmentsApi, documentsApi } from '../services/api';
+import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
+
+// ─── PO Documents Modal ─────────────────────────────────────────────────────
+const PODocsModal = ({ po, onClose }) => {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  const load = () => {
+    documentsApi.getAll({ poId: po.id })
+      .then(d => setDocs(Array.isArray(d) ? d : []))
+      .catch(() => setDocs([]))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [po.id]);
+
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of files) {
+        await documentsApi.upload(file, { poId: po.id, category: 'PO' });
+      }
+      load();
+    } catch (err) { alert('Upload failed: ' + err.message); }
+    finally { setUploading(false); e.target.value = ''; }
+  };
+
+  const fetchBlob = (doc, mode) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token = localStorage.getItem('citrus_token');
+    return fetch(`${apiBase}/documents/${doc.id}/${mode}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error('Request failed'); return r.blob(); });
+  };
+  const handleView = (doc) => fetchBlob(doc, 'view')
+    .then(blob => window.open(URL.createObjectURL(blob), '_blank'))
+    .catch(err => alert('View failed: ' + err.message));
+  const handleDownload = (doc) => fetchBlob(doc, 'download')
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = doc.originalName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    })
+    .catch(err => alert('Download failed: ' + err.message));
+  const handleDelete = async (doc) => {
+    if (!window.confirm(`Delete "${doc.originalName}"?`)) return;
+    try { await documentsApi.delete(doc.id); setDocs(p => p.filter(d => d.id !== doc.id)); }
+    catch (err) { alert('Delete failed: ' + err.message); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
+      <div className="modal-content glass-panel" style={{ maxWidth: 560, padding: 0, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <FolderOpen size={18} className="text-orange" />
+            <div>
+              <div style={{ fontWeight: 700 }}>{po.poNumber} Documents</div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{po.supplier?.name}</div>
+            </div>
+          </div>
+          <button className="icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div style={{ padding: '14px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <label style={{ cursor: 'pointer', display: 'block' }}>
+            <input type="file" multiple style={{ display: 'none' }} onChange={handleUpload} />
+            <span className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '0.84rem' }}>
+              {uploading ? <><Loader2 size={15} className="animate-spin" /> Uploading…</> : <><UploadCloud size={15} /> Upload Documents</>}
+            </span>
+          </label>
+        </div>
+
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {loading ? (
+            <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>Loading…</div>
+          ) : docs.length === 0 ? (
+            <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>No documents yet</div>
+          ) : docs.map(d => (
+            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <FileText size={15} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.originalName}</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                  {(d.size / 1024).toFixed(0)} KB · {new Date(d.createdAt).toLocaleDateString('en-GB')}{d.uploadedBy ? ` · ${d.uploadedBy}` : ''}
+                </div>
+              </div>
+              <button onClick={() => handleView(d)} title="View" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#38bdf8', padding: 3 }}><Eye size={15} /></button>
+              <button onClick={() => handleDownload(d)} title="Download" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#22c55e', padding: 3 }}><Download size={15} /></button>
+              <button onClick={() => handleDelete(d)} title="Delete" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.7)', padding: 3 }}><Trash2 size={15} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ADV_STATUSES_LIST = ['Pending', 'Requested', 'Paid', 'Not Required'];
 
@@ -340,6 +440,7 @@ const AccountingPage = ({ selectedCompany }) => {
   const [activeTab, setActiveTab] = useState('invoices');
   const [advPayFilter, setAdvPayFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [docsPo, setDocsPo] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -536,13 +637,14 @@ const AccountingPage = ({ selectedCompany }) => {
                 <th>LINKED SO</th>
                 <th>STATUS</th>
                 <th>DATE</th>
+                <th>DOCS</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
               ) : filteredPOs.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40 }}>No purchase orders found.</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: 40 }}>No purchase orders found.</td></tr>
               ) : filteredPOs.map(po => (
                 <tr key={po.id} className="shipment-card">
                   <td style={{ fontWeight: 600 }}>{po.poNumber}</td>
@@ -553,6 +655,12 @@ const AccountingPage = ({ selectedCompany }) => {
                     <span style={{ background: 'rgba(255,107,0,0.1)', color: 'var(--orange-primary)', padding: '3px 12px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 600 }}>{po.status}</span>
                   </td>
                   <td className="text-muted" style={{ fontSize: '0.85rem' }}>{new Date(po.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <button className="btn btn-glass" style={{ fontSize: '0.74rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                      onClick={() => setDocsPo(po)}>
+                      <FolderOpen size={13} /> Docs
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -666,6 +774,7 @@ const AccountingPage = ({ selectedCompany }) => {
       })()}
 
       {showCreateModal && <CreateInvoiceModal onClose={() => setShowCreateModal(false)} onSaved={() => { setShowCreateModal(false); loadData(); }} />}
+      {docsPo && <PODocsModal po={docsPo} onClose={() => setDocsPo(null)} />}
     </div>
   );
 };
