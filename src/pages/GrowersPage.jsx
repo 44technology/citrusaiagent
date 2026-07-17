@@ -82,13 +82,38 @@ const F = ({ label, children }) => (
 );
 
 // ── Add Offer Modal ───────────────────────────────────────────
-const AddOfferModal = ({ grower, onClose, onSaved }) => {
-  const [form, setForm] = useState({
+const PAYMENT_OPTIONS = ['100% UPFRONT', 'ADVANCE', 'ON ARRIVAL', 'NET 15', 'NET 30', 'NET 60'];
+
+const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
+  const isEdit = !!initialData;
+  const [form, setForm] = useState(() => isEdit ? {
+    referenceId:   initialData.referenceId || '',
+    product:       initialData.product || 'Mandarin',
+    variety:       initialData.variety || '',
+    purchasePrice: initialData.purchasePrice ?? '',
+    incoterm:      initialData.incoterm || 'FOB',
+    paymentTerms:  initialData.paymentTerms || '',
+    advancePaymentPct:    initialData.advancePaymentPct ?? '',
+    advancePaymentAmount: initialData.advancePaymentAmount ?? '',
+    departureWeek: initialData.departureWeek ?? '',
+    producer:      initialData.producer || grower.name || '',
+    fclCount:      initialData.fclCount ?? '',
+    arrivalPort:   initialData.arrivalPort || '',
+    quality:       initialData.quality || '',
+    sizes:         initialData.sizes || '',
+    fclBoxes:      initialData.fclBoxes ?? '',
+    boxType:       initialData.boxType || '',
+    boxQuantity:   initialData.boxQuantity ?? '',
+    status:        initialData.status || 'offer',
+  } : {
+    referenceId: '',
     product: 'Mandarin', variety: 'Nadorcott',
     purchasePrice: '', incoterm: 'FOB', paymentTerms: '',
+    advancePaymentPct: '', advancePaymentAmount: '',
     departureWeek: '', producer: grower.name || '',
     fclCount: '', arrivalPort: '', quality: '', sizes: '',
     fclBoxes: '', boxType: '', boxQuantity: '',
+    status: 'offer',
   });
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -96,6 +121,7 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
   // Total boxes auto-derives from FCL × FCL BOXES unless typed manually
   const autoTotal = (parseInt(form.fclCount) || 0) * (parseInt(form.fclBoxes) || 0);
   const totalBoxes = form.boxQuantity !== '' ? parseInt(form.boxQuantity) || 0 : autoTotal;
+  const offerValue = (parseFloat(form.purchasePrice) || 0) * totalBoxes;
 
   const handleSave = async () => {
     if (!form.product || !form.variety || !form.purchasePrice || totalBoxes === 0) {
@@ -104,9 +130,6 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
     }
     setSaving(true);
     try {
-      // One order per container — each gets its own reference number
-      const containers = Math.max(1, parseInt(form.fclCount) || 1);
-      const boxesPerContainer = parseInt(form.fclBoxes) || Math.round(totalBoxes / containers);
       const base = {
         product: form.product,
         variety: form.variety,
@@ -114,25 +137,39 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
         purchasePrice: form.purchasePrice,
         incoterm: form.incoterm,
         paymentTerms: form.paymentTerms,
+        advancePaymentPct: form.paymentTerms === 'ADVANCE' ? form.advancePaymentPct : '',
+        advancePaymentAmount: form.paymentTerms === 'ADVANCE' ? form.advancePaymentAmount : '',
         departureWeek: form.departureWeek,
         producer: form.producer,
-        fclCount: 1,
         fclBoxes: form.fclBoxes,
         arrivalPort: form.arrivalPort,
         quality: form.quality,
         sizes: form.sizes,
         grower: grower.name,
         contactId: grower.id,
-        status: 'offer',
       };
-      const created = [];
-      // Sequential — server generates consecutive reference IDs
-      for (let i = 0; i < containers; i++) {
-        const o = await ordersApi.create({ ...base, boxQuantity: boxesPerContainer });
-        created.push(o.referenceId);
-      }
-      if (containers > 1) {
-        alert(`${containers} orders created: ${created.map(r => '#' + r).join(', ')}`);
+
+      if (isEdit) {
+        await ordersApi.update(initialData.id, {
+          ...base,
+          referenceId: form.referenceId,
+          boxQuantity: totalBoxes,
+          fclCount: form.fclCount || 1,
+          status: form.status,
+        });
+      } else {
+        // One order per container — each gets its own reference number
+        const containers = Math.max(1, parseInt(form.fclCount) || 1);
+        const boxesPerContainer = parseInt(form.fclBoxes) || Math.round(totalBoxes / containers);
+        const created = [];
+        // Sequential — server generates consecutive reference IDs
+        for (let i = 0; i < containers; i++) {
+          const o = await ordersApi.create({ ...base, fclCount: 1, boxQuantity: boxesPerContainer, status: 'offer' });
+          created.push(o.referenceId);
+        }
+        if (containers > 1) {
+          alert(`${containers} orders created: ${created.map(r => '#' + r).join(', ')}`);
+        }
       }
       onSaved();
       onClose();
@@ -151,7 +188,7 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 5 }}>
           <div>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <DollarSign size={18} className="text-orange" /> Add Purchase Offer
+              <DollarSign size={18} className="text-orange" /> {isEdit ? `Edit Offer #${initialData.referenceId}` : 'Add Purchase Offer'}
             </h3>
             <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>from {grower.name}</p>
           </div>
@@ -159,6 +196,18 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
         </div>
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {isEdit && (
+              <>
+                <F label="REF ID (SUPER ADMIN)">
+                  <input className="ui-input" value={form.referenceId} onChange={e => set('referenceId', e.target.value)} />
+                </F>
+                <F label="STATUS">
+                  <select className="ui-select" value={form.status} onChange={e => set('status', e.target.value)}>
+                    {['offer', 'pending', 'confirmed', 'pending shipment', 'in-transit', 'completed'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </F>
+              </>
+            )}
             <F label="PRODUCT *">
               <select className="ui-select" value={form.product} onChange={e => { set('product', e.target.value); set('variety', PRODUCTS[e.target.value]?.[0] || ''); }}>
                 {Object.keys(PRODUCTS).map(p => <option key={p} value={p}>{p}</option>)}
@@ -180,8 +229,36 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
               </select>
             </F>
             <F label="PAYMENT">
-              <input className="ui-input" placeholder="e.g. 100% UPFRONT" value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} />
+              <select className="ui-select" value={form.paymentTerms}
+                onChange={e => {
+                  const v = e.target.value;
+                  setForm(p => ({ ...p, paymentTerms: v, ...(v !== 'ADVANCE' ? { advancePaymentPct: '', advancePaymentAmount: '' } : {}) }));
+                }}>
+                <option value="">— Select —</option>
+                {PAYMENT_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
             </F>
+            {form.paymentTerms === 'ADVANCE' && (
+              <>
+                <F label="ADVANCE (%)">
+                  <input type="number" className="ui-input" placeholder="e.g. 50" min="0" max="100"
+                    value={form.advancePaymentPct}
+                    onChange={e => {
+                      const pct = e.target.value;
+                      setForm(p => ({
+                        ...p,
+                        advancePaymentPct: pct,
+                        advancePaymentAmount: pct && offerValue > 0 ? ((parseFloat(pct) / 100) * offerValue).toFixed(2) : p.advancePaymentAmount,
+                      }));
+                    }} />
+                </F>
+                <F label="ADVANCE AMOUNT ($)">
+                  <input type="number" className="ui-input" placeholder="or enter amount" step="0.01"
+                    value={form.advancePaymentAmount}
+                    onChange={e => setForm(p => ({ ...p, advancePaymentAmount: e.target.value, advancePaymentPct: '' }))} />
+                </F>
+              </>
+            )}
             <F label="ETD WEEK">
               <input type="number" className="ui-input" placeholder="e.g. 30" min="1" max="53" value={form.departureWeek} onChange={e => set('departureWeek', e.target.value)} />
             </F>
@@ -218,10 +295,16 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
               <span>Offer Value: <strong style={{ color: 'var(--orange-primary)' }}>
                 ${(parseFloat(form.purchasePrice) * totalBoxes).toLocaleString('en-US', { minimumFractionDigits: 2 })} {form.incoterm}
               </strong></span>
-              {(parseInt(form.fclCount) || 1) > 1 && (
+              {!isEdit && (parseInt(form.fclCount) || 1) > 1 && (
                 <span style={{ color: '#a3e635' }}>
                   → will create <strong>{form.fclCount} separate orders</strong> (one ref # per container)
                 </span>
+              )}
+              {form.paymentTerms === 'ADVANCE' && form.advancePaymentAmount && (
+                <span>Advance: <strong style={{ color: '#22c55e' }}>
+                  ${parseFloat(form.advancePaymentAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {form.advancePaymentPct ? ` (${form.advancePaymentPct}%)` : ''}
+                </strong></span>
               )}
             </div>
           )}
@@ -229,7 +312,7 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
           <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
             <button className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
             <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
-              {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : 'Add Offer'}
+              {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : isEdit ? 'Save Changes' : 'Add Offer'}
             </button>
           </div>
         </div>
@@ -239,7 +322,7 @@ const AddOfferModal = ({ grower, onClose, onSaved }) => {
 };
 
 // ── Grower Card ───────────────────────────────────────────────
-const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
+const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState('orders');
   const [docs, setDocs] = useState([]);
@@ -248,35 +331,6 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
   const [editingInfo, setEditingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({});
   const [savingInfo, setSavingInfo] = useState(false);
-  const [editingOrderId, setEditingOrderId] = useState(null);
-  const [orderForm, setOrderForm] = useState({});
-  const [savingOrder, setSavingOrder] = useState(false);
-
-  const startEditOrder = (o) => {
-    setEditingOrderId(o.id);
-    setOrderForm({
-      referenceId:   o.referenceId || '',
-      product:       o.product || '',
-      variety:       o.variety || '',
-      boxType:       o.boxType || '',
-      boxQuantity:   o.boxQuantity ?? '',
-      purchasePrice: o.purchasePrice ?? '',
-      departureWeek: o.departureWeek ?? '',
-      arrivalWeek:   o.arrivalWeek ?? '',
-      advancePaymentAmount: o.advancePaymentAmount ?? '',
-      status:        o.status || 'offer',
-    });
-  };
-
-  const saveOrderEdit = async () => {
-    setSavingOrder(true);
-    try {
-      await ordersApi.update(editingOrderId, orderForm);
-      setEditingOrderId(null);
-      onRefresh();
-    } catch (err) { alert('Save failed: ' + err.message); }
-    finally { setSavingOrder(false); }
-  };
 
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
   const isSuperAdmin = currentUser.role === 'super admin';
@@ -428,7 +482,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                       <thead>
                         <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Purchase Price', 'Total', 'Dep. Week', 'Arr. Week', 'Adv. Payment', 'Status', 'Entered', ...(isSuperAdmin ? [''] : [])].map((h, hi) => (
+                          {['Ref ID', 'Product', 'Variety', 'Box Type', 'Qty', 'Price', 'Incoterm', 'Total', 'Payment', 'Adv. Payment', 'Dep. Week', 'Status', 'Entered', ...(isSuperAdmin ? [''] : [])].map((h, hi) => (
                             <th key={hi} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
@@ -436,63 +490,6 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                       <tbody>
                         {growerOrders.map((o, i) => {
                           const total = (o.purchasePrice || 0) * (o.boxQuantity || 0);
-                          const isEditingRow = editingOrderId === o.id;
-                          const inp = (key, opts = {}) => (
-                            <input
-                              className="ui-input"
-                              type={opts.num ? 'number' : 'text'}
-                              step={opts.step}
-                              value={orderForm[key]}
-                              onChange={e => setOrderForm(p => ({ ...p, [key]: e.target.value }))}
-                              style={{ padding: '4px 8px', fontSize: '0.78rem', width: opts.w || 80 }}
-                            />
-                          );
-                          if (isEditingRow) {
-                            return (
-                              <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: 'rgba(255,107,0,0.05)' }}>
-                                <td style={{ padding: '6px 10px' }}>{inp('referenceId', { w: 90 })}</td>
-                                <td style={{ padding: '6px 10px' }}>
-                                  <select className="ui-select" value={orderForm.product}
-                                    onChange={e => setOrderForm(p => ({ ...p, product: e.target.value, variety: (PRODUCTS[e.target.value] || [])[0] || '' }))}
-                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 100 }}>
-                                    {Object.keys(PRODUCTS).map(p => <option key={p} value={p}>{p}</option>)}
-                                  </select>
-                                </td>
-                                <td style={{ padding: '6px 10px' }}>
-                                  <select className="ui-select" value={orderForm.variety}
-                                    onChange={e => setOrderForm(p => ({ ...p, variety: e.target.value }))}
-                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 110 }}>
-                                    {(PRODUCTS[orderForm.product] || []).map(v => <option key={v} value={v}>{v}</option>)}
-                                  </select>
-                                </td>
-                                <td style={{ padding: '6px 10px' }}>{inp('boxType', { w: 70 })}</td>
-                                <td style={{ padding: '6px 10px' }}>{inp('boxQuantity', { num: true, w: 75 })}</td>
-                                <td style={{ padding: '6px 10px' }}>{inp('purchasePrice', { num: true, step: '0.01', w: 80 })}</td>
-                                <td style={{ padding: '6px 10px', fontWeight: 700, color: 'var(--orange-primary)', whiteSpace: 'nowrap' }}>
-                                  ${((parseFloat(orderForm.purchasePrice) || 0) * (parseInt(orderForm.boxQuantity) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </td>
-                                <td style={{ padding: '6px 10px' }}>{inp('departureWeek', { num: true, w: 55 })}</td>
-                                <td style={{ padding: '6px 10px' }}>{inp('arrivalWeek', { num: true, w: 55 })}</td>
-                                <td style={{ padding: '6px 10px' }}>{inp('advancePaymentAmount', { num: true, step: '0.01', w: 80 })}</td>
-                                <td style={{ padding: '6px 10px' }}>
-                                  <select className="ui-select" value={orderForm.status}
-                                    onChange={e => setOrderForm(p => ({ ...p, status: e.target.value }))}
-                                    style={{ padding: '4px 8px', fontSize: '0.78rem', width: 110 }}>
-                                    {['offer', 'pending', 'confirmed', 'pending shipment', 'in-transit', 'completed'].map(s => <option key={s} value={s}>{s}</option>)}
-                                  </select>
-                                </td>
-                                <td style={{ padding: '6px 10px', color: 'var(--text-muted)', fontSize: '0.72rem' }}>—</td>
-                                <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                                  <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '0.72rem', marginRight: 6 }}
-                                    disabled={savingOrder} onClick={saveOrderEdit}>
-                                    {savingOrder ? '…' : 'Save'}
-                                  </button>
-                                  <button className="btn btn-glass" style={{ padding: '4px 8px', fontSize: '0.72rem' }}
-                                    onClick={() => setEditingOrderId(null)}>✕</button>
-                                </td>
-                              </tr>
-                            );
-                          }
                           return (
                             <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
                               <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>#{o.referenceId}</td>
@@ -502,16 +499,20 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                               <td style={{ padding: '8px 12px', fontWeight: 600 }}>{(o.boxQuantity || 0).toLocaleString()}</td>
                               <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 600, whiteSpace: 'nowrap' }}>
                                 {o.purchasePrice ? `$${parseFloat(o.purchasePrice).toFixed(2)}` : '—'}
-                                {o.incoterm && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 4 }}>{o.incoterm}</span>}
+                              </td>
+                              <td style={{ padding: '8px 12px' }}>
+                                {o.incoterm
+                                  ? <span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.68rem', fontWeight: 700, background: 'rgba(56,189,248,0.12)', color: '#38bdf8' }}>{o.incoterm}</span>
+                                  : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                               </td>
                               <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>{total > 0 ? `$${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'}</td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.departureWeek ? `W${o.departureWeek}` : '—'}</td>
-                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.arrivalWeek ? `W${o.arrivalWeek}` : '—'}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{o.paymentTerms || '—'}</td>
                               <td style={{ padding: '8px 12px' }}>
                                 {o.advancePaymentAmount
                                   ? <span style={{ color: '#22c55e', fontWeight: 600 }}>${parseFloat(o.advancePaymentAmount).toLocaleString()}{o.advancePaymentPct ? ` (${o.advancePaymentPct}%)` : ''}</span>
                                   : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                               </td>
+                              <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.departureWeek ? `W${o.departureWeek}` : '—'}</td>
                               <td style={{ padding: '8px 12px' }}>
                                 <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 600,
                                   background: o.status === 'offer' ? 'rgba(245,158,11,0.15)' : o.status === 'confirmed' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.07)',
@@ -527,7 +528,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                               </td>
                               {isSuperAdmin && (
                                 <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
-                                  <button onClick={() => startEditOrder(o)} title="Edit offer"
+                                  <button onClick={() => onEditOffer(grower, o)} title="Edit offer"
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, marginRight: 6 }}>
                                     <Edit3 size={13} />
                                   </button>
@@ -553,6 +554,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onRefresh }) => {
                             <td colSpan={4} style={{ padding: '8px 12px', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL</td>
                             <td style={{ padding: '8px 12px', fontWeight: 700 }}>{totalBoxes.toLocaleString()}</td>
                             <td style={{ padding: '8px 12px', fontWeight: 700, color: '#f59e0b' }}>${avgPrice} avg</td>
+                            <td />
                             <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--orange-primary)' }}>${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                             <td colSpan={isSuperAdmin ? 6 : 5} />
                           </tr>
@@ -806,7 +808,7 @@ const GrowersPage = ({ selectedCompany }) => {
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
   const [showAdd, setShowAdd]   = useState(false);
-  const [offerGrower, setOfferGrower] = useState(null);
+  const [offerModal, setOfferModal] = useState(null); // { grower, offer|null }
 
   const loadData = async () => {
     setLoading(true);
@@ -906,7 +908,8 @@ const GrowersPage = ({ selectedCompany }) => {
               key={g.id}
               grower={g}
               orders={orders}
-              onAddOffer={setOfferGrower}
+              onAddOffer={g => setOfferModal({ grower: g, offer: null })}
+              onEditOffer={(g, o) => setOfferModal({ grower: g, offer: o })}
               onRefresh={loadData}
             />
           ))}
@@ -917,10 +920,12 @@ const GrowersPage = ({ selectedCompany }) => {
       {showAdd && (
         <AddGrowerModal onClose={() => setShowAdd(false)} onSaved={loadData} />
       )}
-      {offerGrower && (
+      {offerModal && (
         <AddOfferModal
-          grower={offerGrower}
-          onClose={() => setOfferGrower(null)}
+          key={offerModal.offer?.id || 'new'}
+          grower={offerModal.grower}
+          initialData={offerModal.offer}
+          onClose={() => setOfferModal(null)}
           onSaved={loadData}
         />
       )}
