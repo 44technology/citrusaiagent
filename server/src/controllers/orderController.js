@@ -1,6 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+// Never blocks the main operation
+export const logOrderActivity = async (orderId, userName, action, detail = null) => {
+  try {
+    await prisma.orderActivity.create({ data: { orderId, userName: userName || 'Unknown', action, detail } });
+  } catch {}
+};
+
 export const getAllOrders = async (req, res) => {
   try {
     const { userId, role } = req.user || {};
@@ -19,6 +26,7 @@ export const getAllOrders = async (req, res) => {
         purchaseOrders: { select: { id: true, poNumber: true, status: true, totalAmount: true } },
         invoices: { select: { id: true, invoiceNumber: true, status: true, type: true, amount: true } },
         shipments: { select: { id: true, containerNumber: true, status: true, vesselName: true, vesselEta: true } },
+        activities: { orderBy: { createdAt: 'desc' }, take: 30 },
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -106,6 +114,8 @@ export const createOrder = async (req, res) => {
       },
       include: { contact: true }
     });
+    await logOrderActivity(order.id, username, 'Order created',
+      `${order.product} ${order.variety} · ${order.boxQuantity} boxes${order.status === 'offer' ? ' (offer)' : ''}`);
     res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -114,7 +124,7 @@ export const createOrder = async (req, res) => {
 
 export const updateOrder = async (req, res) => {
   const { id } = req.params;
-  const { role } = req.user || {};
+  const { role, username } = req.user || {};
 
   try {
     if (req.body.status && role !== 'admin' && role !== 'operation' && role !== 'super admin') {
@@ -148,11 +158,25 @@ export const updateOrder = async (req, res) => {
     if (data.fclBoxes !== undefined) data.fclBoxes = data.fclBoxes ? parseInt(data.fclBoxes) : null;
     delete data.createdBy; // creation-time audit field, never updated
 
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      select: { status: true, referenceId: true }
+    });
+
     const order = await prisma.order.update({
       where: { id },
       data,
       include: { contact: true }
     });
+
+    if (data.status && existing && data.status !== existing.status) {
+      await logOrderActivity(id, username, 'Status changed', `${existing.status} → ${data.status}`);
+    } else if (data.referenceId && existing && data.referenceId !== existing.referenceId) {
+      await logOrderActivity(id, username, 'Ref ID changed', `#${existing.referenceId} → #${data.referenceId}`);
+    } else {
+      await logOrderActivity(id, username, 'Order updated');
+    }
+
     res.json(order);
   } catch (error) {
     res.status(500).json({ error: error.message });

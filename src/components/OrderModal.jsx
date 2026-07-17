@@ -639,6 +639,30 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
             </div>
           )}
 
+          {/* History (edit only) */}
+          {isEdit && initialData.activities?.length > 0 && (
+            <div>
+              <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, letterSpacing: '0.08em' }}>
+                HISTORY
+              </p>
+              <div style={{ maxHeight: 220, overflowY: 'auto', borderLeft: '2px solid rgba(255,107,0,0.25)', paddingLeft: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {initialData.activities.map(a => (
+                  <div key={a.id} style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: -19, top: 5, width: 8, height: 8, borderRadius: '50%', background: 'var(--orange-primary)' }} />
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      {a.action}
+                      {a.detail && <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}> — {a.detail}</span>}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                      {new Date(a.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {' · '}<span style={{ color: 'var(--orange-primary)' }}>{a.userName}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
             <button type="button" className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>

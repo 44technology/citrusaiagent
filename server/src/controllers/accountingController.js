@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { logOrderActivity } from './orderController.js';
 const prisma = new PrismaClient();
 
 // ─── Purchase Orders ─────────────────────────────────
@@ -35,6 +36,10 @@ export const createPurchaseOrder = async (req, res) => {
       },
       include: { order: true, supplier: true }
     });
+    if (orderId) {
+      await logOrderActivity(orderId, req.user?.username, 'PO created',
+        `${po.poNumber} · $${po.totalAmount.toLocaleString()} · ${po.supplier?.name || ''}`);
+    }
     res.status(201).json(po);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -133,6 +138,7 @@ export const convertToInvoice = async (req, res) => {
       }
     });
 
+    await logOrderActivity(order.id, req.user?.username, 'Invoice created', invoice.invoiceNumber);
     res.status(201).json(invoice);
   } catch (error) {
     res.status(500).json({ error: error.message });

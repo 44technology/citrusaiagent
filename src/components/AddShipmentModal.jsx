@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3, Search, CheckCircle2, AlertCircle } from 'lucide-react';
-import { contactsApi, ordersApi } from '../services/api';
+import { contactsApi, ordersApi, shipmentsApi } from '../services/api';
 import { formatFullDateUTC } from '../utils/dateUtils';
 
 const EMPTY_FORM = {
@@ -148,8 +148,26 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
+      // Duplicate container check
+      const cn = (form.containerNumber || '').trim().toLowerCase();
+      if (cn) {
+        try {
+          const all = await shipmentsApi.getAll();
+          const dup = (Array.isArray(all) ? all : []).find(s => (s.containerNumber || '').trim().toLowerCase() === cn);
+          if (dup) {
+            const ok = window.confirm(
+              `⚠ Container "${form.containerNumber}" already exists in the system:\n\n` +
+              `${dup.label || dup.containerNumber} — status: ${dup.status}` +
+              `${dup.contact?.name ? ` — customer: ${dup.contact.name}` : ''}\n\n` +
+              `Create another shipment with the same container anyway?`
+            );
+            if (!ok) { setLoading(false); return; }
+          }
+        } catch {}
+      }
+
       let finalContactId = form.contactId;
 
       // 1. If it's a new customer, create the contact first
