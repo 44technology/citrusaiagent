@@ -163,34 +163,38 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const EXPORT_COLS = [
-    { key: 'refId',          label: 'REF ID',         width: 12, get: s => s.order?.referenceId || s.shipmentRefId || '' },
-    { key: 'bolNumber',      label: 'BOL N',           width: 18, get: s => s.bolNumber || '' },
-    { key: 'containerNumber',label: 'CONTAINER NO.',   width: 16, get: s => s.containerNumber || '' },
-    { key: 'status',         label: 'STATUS',          width: 16, get: s => s.status || '' },
-    { key: 'customer',       label: 'CLIENT',          width: 18, get: s => s.contact?.name || '' },
+    { key: 'poNumber',       label: 'PO NUMBER',       width: 14, get: s => s.poNumber || '' },
+    { key: 'refId',          label: 'REF ID',          width: 12, get: s => s.order?.referenceId || s.shipmentRefId || '' },
+    { key: 'soNumber',       label: 'SO NUMBER',       width: 14, get: s => s.soNumber || '' },
     { key: 'grower',         label: 'GROWER',          width: 18, get: s => s.grower || s.order?.grower || '' },
     { key: 'product',        label: 'PRODUCT',         width: 12, get: s => s.product || s.order?.product || '' },
     { key: 'variety',        label: 'VARIETY',         width: 14, get: s => s.variety || s.order?.variety || '' },
-    { key: 'vesselName',     label: 'VESSEL NAME',     width: 20, get: s => s.vesselName || '' },
-    { key: 'shippingLine',   label: 'SHIPPING CO.',    width: 14, get: s => s.shippingLine || '' },
-    { key: 'etd',            label: 'ETD (DD/MM/YY)',  width: 14, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
-    { key: 'wDep',           label: 'W(DEP)',          width: 8,  get: s => getWeek(s.vesselDeparture) },
-    { key: 'pol',            label: 'POL',             width: 14, get: s => s.portOfLoading || '' },
-    { key: 'eta',            label: 'ETA (DD/MM/YY)',  width: 14, get: s => s.vesselEta ? formatDateUTC(s.vesselEta) : '' },
-    { key: 'wArr',           label: 'W(ARR)',          width: 8,  get: s => getWeek(s.vesselEta) },
-    { key: 'pod',            label: 'POD',             width: 14, get: s => s.portOfDischarge || '' },
-    { key: 'arrivalDate',    label: 'ARRIVAL (DD/MM/YY)', width: 16, get: s => s.vesselArrival ? formatDateUTC(s.vesselArrival) : '' },
+    { key: 'label',          label: 'LABEL',           width: 20, get: s => s.label || '' },
+    { key: 'category',       label: 'CAT',             width: 9,  get: s => s.category || '' },
     { key: 'numberOfBoxes',  label: 'BOXES',           width: 9,  get: s => s.numberOfBoxes || '' },
     { key: 'pallets',        label: 'PALLETS',         width: 9,  get: s => s.pallets || '' },
     { key: 'packType',       label: 'PACK',            width: 10, get: s => s.packType || '' },
-    { key: 'soNumber',       label: 'SO NUMBER',       width: 14, get: s => s.soNumber || '' },
-    { key: 'poNumber',       label: 'PO NUMBER',       width: 14, get: s => s.poNumber || '' },
+    { key: 'containerNumber',label: 'CONTAINER NO.',   width: 16, get: s => s.containerNumber || '' },
+    { key: 'bolNumber',      label: 'BOL N',           width: 18, get: s => s.bolNumber || '' },
+    { key: 'customer',       label: 'CLIENT',          width: 18, get: s => s.contact?.name || '' },
+    { key: 'shippingLine',   label: 'SHIPPING CO.',    width: 14, get: s => s.shippingLine || '' },
+    { key: 'vesselName',     label: 'VESSEL NAME',     width: 20, get: s => s.vesselName || '' },
+    { key: 'wDep',           label: 'W(DEP)',          width: 8,  get: s => getWeek(s.vesselDeparture) },
+    { key: 'etd',            label: 'ETD (DD/MM/YY)',  width: 14, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
+    { key: 'eta',            label: 'ETA (DD/MM/YY)',  width: 14, get: s => s.vesselEta ? formatDateUTC(s.vesselEta) : '' },
+    { key: 'arrivalDate',    label: 'ARRIVAL (DD/MM/YY)', width: 16, get: s => s.vesselArrival ? formatDateUTC(s.vesselArrival) : '' },
+    { key: 'wArr',           label: 'W(ARR)',          width: 8,  get: s => getWeek(s.vesselEta) },
+    { key: 'gateInEmptyDate',label: 'ATA(GATE IN EMPTY)', width: 16, get: s => s.gateInEmptyDate ? formatDateUTC(s.gateInEmptyDate) : '' },
+    { key: 'pol',            label: 'POL',             width: 14, get: s => s.portOfLoading || '' },
+    { key: 'pod',            label: 'POD',             width: 14, get: s => s.portOfDischarge || '' },
+    { key: 'qcArrival',      label: 'QC SCORE',        width: 10, get: s => s.qcArrival || '' },
     { key: 'advPayment',     label: 'ADV. PAYMENT',    width: 14, get: s => s.advancePaymentStatus || '' },
     { key: 'demLFD',         label: 'DEM. LFD (DD/MM/YY)', width: 16, get: s => s.demurrageLastFreeDay ? formatDateUTC(s.demurrageLastFreeDay) : '' },
     { key: 'detLFD',         label: 'DET. LFD (DD/MM/YY)', width: 16, get: s => s.detentionLastFreeDay ? formatDateUTC(s.detentionLastFreeDay) : '' },
+    { key: 'status',         label: 'STATUS',          width: 16, get: s => s.status || '' },
   ];
 
-  const DEFAULT_COLS = ['bolNumber','containerNumber','status','customer','grower','product','variety','vesselName','shippingLine','etd','wDep','pol','eta','wArr','pod','arrivalDate','numberOfBoxes','pallets','packType'];
+  const DEFAULT_COLS = EXPORT_COLS.map(c => c.key);
   const [selectedExportCols, setSelectedExportCols] = useState(new Set(DEFAULT_COLS));
 
   const loadData = async () => {
