@@ -12,8 +12,11 @@ const EMPTY_FORM = {
   containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
   variety: '', product: '', grower: '', soNumber: '',
+  category: '', qcArrival: '', gateInEmptyDate: '',
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
 };
+
+const CATEGORY_OPTIONS = ['Cat 1', 'Cat 1.5', 'Cat 2'];
 
 import { PRODUCTS, ALL_VARIETIES } from '../constants/products';
 
@@ -58,9 +61,10 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           variety:          initialData.variety       || '',
           product:          (() => { const v = initialData.variety; if (!v) return ''; for (const [p, vs] of Object.entries(PRODUCTS)) { if (vs.includes(v)) return p; } return ''; })(),
           grower:           initialData.grower        || '',
+          category:         initialData.category      || '',
           notes:            initialData.notes         || '',
           status:           'Pending',
-          // containerNumber, bolNumber, soNumber, vesselEta, vesselDeparture intentionally blank
+          // containerNumber, bolNumber, soNumber, vesselEta, vesselDeparture, qcArrival, gateInEmptyDate intentionally blank
         });
         setIsLabelManual(false);
         // Intentionally clear ref ID on clone — each shipment must have a unique ref
@@ -198,16 +202,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       await onAdd({ ...form, contactId: finalContactId });
 
       // 4. Reset & Close
-      setForm({
-        contactId: '', label: '', origin: 'Morocco', destination: '',
-        vesselName: '', containerNumber: '', bolNumber: '',
-        vesselEta: '', vesselDeparture: '', vesselArrival: '',
-        shippingLine: '', status: 'Pending', notes: '',
-        portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
-        containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
-        reeferTempSet: '', humidity: '', ventilation: '',
-        customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
-      });
+      setForm({ ...EMPTY_FORM });
       setIsLabelManual(false);
       setIsNewCustomer(false);
       setRefIdInput('');
@@ -515,6 +510,27 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                     <option key={v} value={v}>{v}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Category / QC Score / Gate-in Empty Date (ATA) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">Category</label>
+                <select className="ui-input" value={form.category} onChange={e => handleChange('category', e.target.value)}>
+                  <option value="">— Select Category —</option>
+                  {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="shipment-label">QC Score</label>
+                <input type="text" className="ui-input" placeholder="e.g. 92"
+                  value={form.qcArrival} onChange={e => handleChange('qcArrival', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">ATA (Gate-in Empty Date)</label>
+                <input type="date" className="ui-input"
+                  value={form.gateInEmptyDate} onChange={e => handleChange('gateInEmptyDate', e.target.value)} />
               </div>
             </div>
 

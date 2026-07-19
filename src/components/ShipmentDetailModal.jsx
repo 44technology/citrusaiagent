@@ -434,6 +434,7 @@ const PHASE_LABELS = {
 
 const CONTAINER_TYPES = ['40RF', '40HC-RF', '20RF', '40DRY', '40HC-DRY', '20DRY'];
 const STATUS_OPTIONS  = ['Pending', 'Loading', 'Departed', 'Transshipment', 'In Transit', 'Arrived', 'Customs', 'Ready for Pickup', 'Delivered', 'Empty Return Pending', 'Empty Returned'];
+const CATEGORY_OPTIONS = ['Cat 1', 'Cat 1.5', 'Cat 2'];
 
 const isReefer = (type) => type && type.includes('RF');
 
@@ -1064,6 +1065,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       grower: shipment.grower || '',
       product: shipment.product || getProductForVariety(shipment.variety) || '',
       variety: shipment.variety || '',
+      category: shipment.category || '',
+      qcArrival: shipment.qcArrival || '',
+      gateInEmptyDate: shipment.gateInEmptyDate?.split('T')[0] || '',
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
       packType: shipment.packType || '',
@@ -1381,6 +1385,23 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
+                </Field>
+                <Field label="Category" value={shipment.category} editing={editingSection === 'cargo'}>
+                  <select
+                    className="ui-input"
+                    style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                    value={ed.category}
+                    onChange={e => set('category', e.target.value)}
+                  >
+                    <option value="">— Select Category —</option>
+                    {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="QC Score" value={shipment.qcArrival} editing={editingSection === 'cargo'}>
+                  <Inp placeholder="e.g. 92" value={ed.qcArrival} onChange={e => set('qcArrival', e.target.value)} />
+                </Field>
+                <Field label="ATA (Gate-in Empty)" value={shipment.gateInEmptyDate ? new Date(shipment.gateInEmptyDate).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                  <Inp type="date" value={ed.gateInEmptyDate} onChange={e => set('gateInEmptyDate', e.target.value)} />
                 </Field>
                 <Field label="Cargo" value={shipment.cargoDescription} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. Citrus - Clementines" value={ed.cargoDescription} onChange={e => set('cargoDescription', e.target.value)} />

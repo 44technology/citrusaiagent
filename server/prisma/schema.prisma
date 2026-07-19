@@ -154,7 +154,9 @@ model Shipment {
   countryOfOrigin  String?   // COO (e.g. Morocco)
   oceanFreight     Float?    // Ocean freight cost
   advToGrower      Float?    // Advance payment to grower
-  qcArrival        String?   // QC status at arrival
+  qcArrival        String?   // QC score at arrival (e.g. "92", "A")
+  category         String?   // Quality category — Cat 1 | Cat 1.5 | Cat 2
+  gateInEmptyDate  DateTime? // ATA — Gate-in Empty Date (empty container arrival at origin)
 
   // ── Reefer settings ──────────────────────────────
   reeferTempSet    Float?    // Target temperature °C  (e.g. 6.0)
