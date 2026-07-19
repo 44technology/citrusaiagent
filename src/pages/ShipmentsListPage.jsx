@@ -153,7 +153,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
 
   const [filters, setFilters] = useState({
     status: [], advPayment: [], customer: [], grower: [], bol: '', container: '',
-    vessel: '', pol: [], pod: [], variety: [],
+    vessel: '', pol: [], pod: [], variety: [], product: [], pack: [],
     etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
   });
 
@@ -218,9 +218,11 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   // Grower names from linked orders
   const growers   = [...new Set(shipments.map(s => s.grower || s.order?.grower || null).filter(Boolean))].sort();
   const varieties = [...new Set(shipments.map(s => s.variety || s.order?.variety || null).filter(Boolean))].sort();
+  const products  = [...new Set(shipments.map(s => s.product || s.order?.product || null).filter(Boolean))].sort();
+  const packs     = [...new Set(shipments.map(s => s.packType || null).filter(Boolean))].sort();
 
   const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
-  const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
+  const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], product: [], pack: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
   const hasFilters = Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : Boolean(v));
 
   // Filter + search + sort
@@ -248,6 +250,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       if (filters.pol.length    && !filters.pol.includes(s.portOfLoading)) return false;
       if (filters.pod.length    && !filters.pod.includes(s.portOfDischarge)) return false;
       if (filters.variety.length && !filters.variety.includes(s.variety || s.order?.variety)) return false;
+      if (filters.product.length && !filters.product.includes(s.product || s.order?.product || '')) return false;
+      if (filters.pack.length    && !filters.pack.includes(s.packType || '')) return false;
       if (filters.grower.length  && !filters.grower.includes(s.grower || s.order?.grower || '')) return false;
       if (filters.etdFrom   && s.vesselDeparture && s.vesselDeparture < filters.etdFrom) return false;
       if (filters.etdTo     && s.vesselDeparture && s.vesselDeparture > filters.etdTo) return false;
@@ -499,7 +503,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <FilterInput  label="VESSEL"  value={filters.vessel}  onChange={v => setF('vessel', v)}  placeholder="Filter by vessel" />
             <MultiSelect label="POL"     value={filters.pol}     onChange={v => setF('pol', v)}     options={pols}      placeholder="All POL" />
             <MultiSelect label="POD"     value={filters.pod}     onChange={v => setF('pod', v)}     options={pods}      placeholder="All POD" />
+            <MultiSelect label="PRODUCT" value={filters.product} onChange={v => setF('product', v)} options={products}  placeholder="All Product" />
             <MultiSelect label="VARIETY" value={filters.variety} onChange={v => setF('variety', v)} options={varieties} placeholder="All Variety" />
+            <MultiSelect label="PACK"    value={filters.pack}    onChange={v => setF('pack', v)}    options={packs}     placeholder="All Pack" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, gridColumn: 'span 2' }}>
               <FilterInput label="ETD FROM" type="date" value={filters.etdFrom} onChange={v => setF('etdFrom', v)} placeholder="" />
               <FilterInput label="ETD TO"   type="date" value={filters.etdTo}   onChange={v => setF('etdTo', v)}   placeholder="" />
