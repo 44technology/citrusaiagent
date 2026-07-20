@@ -197,7 +197,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: docs.length > 0 ? 14 : 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: docs.length > 0 ? 14 : 0 }}>
         <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Paperclip size={14} style={{ color: 'var(--orange-primary)' }} />
           Documents
@@ -680,7 +680,7 @@ const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
 
   return (
     <div className="glass-panel" style={{ padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Navigation size={14} style={{ color: 'var(--orange-primary)' }} />
           Journey Log
@@ -951,7 +951,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
 
   return (
     <div className="glass-panel" style={{ padding: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <h4 style={{ margin: 0, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6 }}>
           <DollarSign size={14} style={{ color: 'var(--orange-primary)' }} />
           Expenses & Revenue
