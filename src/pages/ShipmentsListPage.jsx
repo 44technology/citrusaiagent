@@ -281,6 +281,17 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   }, [shipments, search, filters, sort]);
 
   // Export to Excel — dynamic columns
+  // 1-based column index → Excel letter (A, B, ... Z, AA, AB, ...) — supports >26 columns
+  const colLetter = (n) => {
+    let s = '';
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      s = String.fromCharCode(65 + rem) + s;
+      n = Math.floor((n - 1) / 26);
+    }
+    return s;
+  };
+
   const handleExport = async () => {
     const cols = EXPORT_COLS.filter(c => selectedExportCols.has(c.key));
     const wb = new ExcelJS.Workbook();
@@ -294,7 +305,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     const onBoard    = filtered.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
     const discharged = filtered.filter(s => ['Arrived','Delivered'].includes(s.status)).length;
     const gateIn     = filtered.filter(s => s.status === 'Loading').length;
-    const lastDataCol = String.fromCharCode(65 + cols.length); // A + n cols (col A = spacer)
+    const lastDataCol = colLetter(cols.length + 1); // col A = spacer, data cols start at B
 
     const style = (cell, { bg, color = WHITE, bold = false, sz = 10, align = 'left', wrap = false } = {}) => {
       if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + bg } };
@@ -340,8 +351,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     ];
     const statCols = cols.length >= 6 ? Math.floor(cols.length / 6) : 1;
     statDefs.forEach(([lbl, val], i) => {
-      const startCol = String.fromCharCode(66 + i * statCols);
-      const endCol   = String.fromCharCode(65 + (i + 1) * statCols);
+      const startCol = colLetter(i * statCols + 2);
+      const endCol   = colLetter((i + 1) * statCols + 1);
       const lCell = ws.getCell(`${startCol}4`);
       lCell.value = lbl;
       style(lCell, { bg: HEADER, color: MUTED, bold: true, sz: 8, align: 'center' });
@@ -391,7 +402,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       border(cell);
     });
     if (cols.length > 1) {
-      try { ws.mergeCells(`B${totRow.number}:${String.fromCharCode(64 + cols.length)}${totRow.number}`); } catch {}
+      try { ws.mergeCells(`B${totRow.number}:${colLetter(cols.length)}${totRow.number}`); } catch {}
     }
 
     // Footer
