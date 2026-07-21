@@ -6,6 +6,8 @@ import OrderModal from './OrderModal';
 import { contactsApi, campaignApi, shipmentsApi, ordersApi, customerProgramsApi } from '../services/api';
 import { PRODUCTS } from '../constants/products';
 
+const CATEGORY_OPTIONS = ['Cat 1', 'Cat 1.5', 'Cat 2'];
+
 
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const isSuperAdmin = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}').role === 'super admin'; } catch { return false; } })();
@@ -51,7 +53,11 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   };
 
   const startAddProgram = () => {
-    setProgramForm({ product: 'Mandarin', variety: '', origin: '', grower: '', incoterm: 'FOB', status: 'Active', startDate: '', notes: '' });
+    setProgramForm({
+      product: 'Mandarin', variety: '', origin: '', grower: '', incoterm: 'FOB',
+      packType: '', category: '', startWeek: '', totalWeeks: '', containersPerWeek: '',
+      status: 'Active', startDate: '', notes: '',
+    });
     setEditingProgramId(null);
     setShowAddProgram(true);
   };
@@ -59,7 +65,10 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const startEditProgram = (p) => {
     setProgramForm({
       product: p.product || 'Mandarin', variety: p.variety || '', origin: p.origin || '',
-      grower: p.grower || '', incoterm: p.incoterm || 'FOB', status: p.status || 'Active',
+      grower: p.grower || '', incoterm: p.incoterm || 'FOB',
+      packType: p.packType || '', category: p.category || '',
+      startWeek: p.startWeek ?? '', totalWeeks: p.totalWeeks ?? '', containersPerWeek: p.containersPerWeek ?? '',
+      status: p.status || 'Active',
       startDate: p.startDate ? p.startDate.split('T')[0] : '', notes: p.notes || '',
     });
     setEditingProgramId(p.id);
@@ -557,7 +566,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                   <thead>
                     <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
-                      {['Product', 'Variety', 'Origin', 'Grower', 'Incoterm', 'Started', 'Ended', 'Status', 'Notes', ''].map(h => (
+                      {['Product', 'Variety', 'Origin', 'Grower', 'Incoterm', 'Category', 'Pack', 'Schedule', 'Started', 'Ended', 'Status', 'Notes', ''].map(h => (
                         <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -577,6 +586,19 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                               color: { FOB: '#38bdf8', CIF: '#a855f7', DDP: '#22c55e' }[p.incoterm] || 'var(--text-muted)',
                             }}>{p.incoterm}</span>
                           ) : '—'}
+                        </td>
+                        <td style={{ padding: '8px 12px' }}>
+                          {p.category ? (
+                            <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700, background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)' }}>{p.category}</span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.packType || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
+                          {[
+                            p.startWeek ? `W${p.startWeek}` : null,
+                            p.totalWeeks ? `${p.totalWeeks} wks` : null,
+                            p.containersPerWeek ? `${p.containersPerWeek}/wk` : null,
+                          ].filter(Boolean).join(' · ') || '—'}
                         </td>
                         <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.startDate ? new Date(p.startDate).toLocaleDateString('en-GB') : '—'}</td>
                         <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.endDate ? new Date(p.endDate).toLocaleDateString('en-GB') : '—'}</td>
@@ -657,6 +679,29 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                           <option value="Active">Active</option>
                           <option value="Completed">Completed</option>
                         </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>CATEGORY</label>
+                        <select className="ui-select" value={programForm.category} onChange={e => setProgramForm(p => ({ ...p, category: e.target.value }))}>
+                          <option value="">— Select —</option>
+                          {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>PACK</label>
+                        <input className="ui-input" placeholder="e.g. 18 KG" value={programForm.packType} onChange={e => setProgramForm(p => ({ ...p, packType: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>WEEK (START)</label>
+                        <input type="number" className="ui-input" placeholder="e.g. 22" min="1" max="53" value={programForm.startWeek} onChange={e => setProgramForm(p => ({ ...p, startWeek: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>TOTAL WEEKS</label>
+                        <input type="number" className="ui-input" placeholder="e.g. 12" min="1" value={programForm.totalWeeks} onChange={e => setProgramForm(p => ({ ...p, totalWeeks: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>CONTAINERS / WEEK</label>
+                        <input type="number" className="ui-input" placeholder="e.g. 3" min="0" value={programForm.containersPerWeek} onChange={e => setProgramForm(p => ({ ...p, containersPerWeek: e.target.value }))} />
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
                         <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>START DATE</label>

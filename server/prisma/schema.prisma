@@ -81,6 +81,11 @@ model CustomerProgram {
   origin     String?   // grower's country/region, e.g. "Morocco", "Peru"
   grower     String?   // optional specific grower/supplier name
   incoterm   String?   // FOB | CIF | DDP
+  packType   String?   // e.g. "18 KG", "10 KG"
+  category   String?   // Cat 1 | Cat 1.5 | Cat 2
+  startWeek  Int?      // Week number the program starts (1-53)
+  totalWeeks Int?      // Program duration in weeks
+  containersPerWeek Int? // Planned containers per week
   status     String    @default("Active") // Active | Completed
   startDate  DateTime?
   endDate    DateTime?
