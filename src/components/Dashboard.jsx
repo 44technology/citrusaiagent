@@ -24,6 +24,7 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
   const [filterAssigned, setFilterAssigned] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterState, setFilterState] = useState('');
+  const [filterProgram, setFilterProgram] = useState('');
 
   const currentUser = (() => {
     try {
@@ -120,13 +121,15 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
   const cityOptions  = [...new Set(typeContacts.map(c => c.city).filter(Boolean))].sort();
   const stateOptions = [...new Set(typeContacts.map(c => c.state).filter(Boolean))].sort();
 
-  const hasFilters = filterAssigned || filterCity || filterState;
+  const hasFilters = filterAssigned || filterCity || filterState || filterProgram;
 
   const filteredContacts = typeContacts.filter(c => {
     if (filterAssigned === 'unassigned') { if (c.assignedTo) return false; }
     else if (filterAssigned && c.assignedTo !== filterAssigned) return false;
     if (filterCity && c.city !== filterCity) return false;
     if (filterState && c.state !== filterState) return false;
+    if (filterProgram === 'none') { if ((c.programs || []).length > 0) return false; }
+    else if (filterProgram && !(c.programs || []).some(p => p.incoterm === filterProgram)) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -220,9 +223,21 @@ const Dashboard = ({ activeTab, selectedCompany }) => {
                 <option value="">State: All</option>
                 {stateOptions.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
+              <select
+                className="ui-select"
+                value={filterProgram}
+                onChange={e => setFilterProgram(e.target.value)}
+                style={{ width: 'auto', minWidth: 130, padding: '7px 10px', fontSize: '0.82rem' }}
+              >
+                <option value="">Program: All</option>
+                <option value="FOB">FOB</option>
+                <option value="CIF">CIF</option>
+                <option value="DDP">DDP</option>
+                <option value="none">— Not Set —</option>
+              </select>
               {hasFilters && (
                 <button
-                  onClick={() => { setFilterAssigned(''); setFilterCity(''); setFilterState(''); }}
+                  onClick={() => { setFilterAssigned(''); setFilterCity(''); setFilterState(''); setFilterProgram(''); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 5,
                     background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',

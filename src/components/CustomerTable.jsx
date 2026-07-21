@@ -43,6 +43,7 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick, users =
         <thead>
           <tr>
             <th style={thStyle}>COMPANY</th>
+            <th style={thStyle}>PROGRAMS</th>
             <th style={thStyle}>CITY</th>
             <th style={thStyle}>STATE</th>
             <th style={thStyle}>ZIP</th>
@@ -75,6 +76,21 @@ const CustomerTable = ({ data, isCampaignRunning, onPromote, onRowClick, users =
                     </span>
                   </div>
                 )}
+              </td>
+              <td style={{ ...tdStyle, whiteSpace: 'normal', maxWidth: 200 }}>
+                {(row.programs || []).length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {row.programs.map(p => (
+                      <span key={p.id} title={[p.product, p.variety, p.origin].filter(Boolean).join(' · ')} style={{
+                        padding: '2px 8px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap',
+                        background: { FOB: 'rgba(56,189,248,0.15)', CIF: 'rgba(168,85,247,0.15)', DDP: 'rgba(34,197,94,0.15)' }[p.incoterm] || 'rgba(255,255,255,0.07)',
+                        color: { FOB: '#38bdf8', CIF: '#a855f7', DDP: '#22c55e' }[p.incoterm] || 'var(--text-muted)',
+                      }}>
+                        {p.product}{p.incoterm ? ` · ${p.incoterm}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
               </td>
               <td style={tdStyle}>{row.city || '—'}</td>
               <td style={tdStyle}>{row.state || '—'}</td>

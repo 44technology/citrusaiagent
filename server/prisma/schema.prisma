@@ -68,6 +68,26 @@ model Contact {
   documents      Document[]
   persons        ContactPerson[]
   vendorPackages VendorPackage[]
+  programs       CustomerProgram[]
+}
+
+// A customer can run several trading programs over time — e.g. Orange from
+// Morocco FOB ends, then Mandarin from Peru CIF starts with the same customer.
+model CustomerProgram {
+  id         String    @id @default(uuid())
+  contactId  String
+  product    String    // e.g. "Orange", "Mandarin"
+  variety    String?
+  origin     String?   // grower's country/region, e.g. "Morocco", "Peru"
+  grower     String?   // optional specific grower/supplier name
+  incoterm   String?   // FOB | CIF | DDP
+  status     String    @default("Active") // Active | Completed
+  startDate  DateTime?
+  endDate    DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  contact    Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 model ContactPerson {

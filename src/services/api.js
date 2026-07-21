@@ -147,6 +147,14 @@ export const usersApi = {
   changePassword: (currentPassword, newPassword) => request('/users/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 };
 
+// ─── Customer Programs ───────────────────────────────
+export const customerProgramsApi = {
+  getByContact: (contactId) => request(`/customer-programs/contact/${contactId}`),
+  create: (data) => request('/customer-programs', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/customer-programs/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => request(`/customer-programs/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Ports / Locations ───────────────────────────────
 export const portsApi = {
   getAll: () => request('/ports'),

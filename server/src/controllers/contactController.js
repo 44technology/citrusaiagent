@@ -11,7 +11,10 @@ export const getContacts = async (req, res) => {
     const contacts = await prisma.contact.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { notes: true, calls: true } } }
+      include: {
+        _count: { select: { notes: true, calls: true } },
+        programs: { where: { status: 'Active' }, orderBy: { createdAt: 'desc' } },
+      }
     });
     res.json(contacts);
   } catch (error) {
@@ -25,9 +28,10 @@ export const getContact = async (req, res) => {
   try {
     const contact = await prisma.contact.findUnique({
       where: { id: req.params.id },
-      include: { 
+      include: {
         notes: { orderBy: { createdAt: 'desc' } },
-        calls: { orderBy: { createdAt: 'desc' } }
+        calls: { orderBy: { createdAt: 'desc' } },
+        programs: { orderBy: { createdAt: 'desc' } },
       }
     });
     if (!contact) return res.status(404).json({ error: 'Contact not found' });

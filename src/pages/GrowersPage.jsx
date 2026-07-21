@@ -394,6 +394,25 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
     } catch (err) { alert('Delete failed: ' + err.message); }
   };
 
+  const fetchDocBlob = (doc, mode) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token = localStorage.getItem('citrus_token');
+    return fetch(`${apiBase}/documents/${doc.id}/${mode}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error('Request failed'); return r.blob(); });
+  };
+  const handleViewDoc = (doc) => fetchDocBlob(doc, 'view')
+    .then(blob => window.open(URL.createObjectURL(blob), '_blank'))
+    .catch(err => alert('View failed: ' + err.message));
+  const handleDownloadDoc = (doc) => fetchDocBlob(doc, 'download')
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = doc.originalName || doc.name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    })
+    .catch(err => alert('Download failed: ' + err.message));
+
   return (
     <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
       {/* Header */}
@@ -695,7 +714,8 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
                             <div style={{ fontSize: '0.82rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.originalName || d.name}</div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{d.category} · {new Date(d.createdAt).toLocaleDateString()}</div>
                           </div>
-                          <a href={`/api/documents/${d.id}/download`} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', fontSize: '0.75rem', textDecoration: 'none' }}>Download</a>
+                          <button onClick={() => handleViewDoc(d)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#38bdf8', fontSize: '0.75rem' }}>View</button>
+                          <button onClick={() => handleDownloadDoc(d)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: '0.75rem' }}>Download</button>
                           <button onClick={() => handleDeleteDoc(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
                             <Trash2 size={13} />
                           </button>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag, Users, Trash2, Check } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, DollarSign, Globe, Calendar, FileText, CheckCircle2, Pencil, Save, X, Ship, Plus, MapPin, ShoppingBag, Users, Trash2, Check, Layers, Edit3, Loader2 } from 'lucide-react';
 import CampaignSettings from './CampaignSettings';
 import AddShipmentModal from './AddShipmentModal';
 import OrderModal from './OrderModal';
-import { contactsApi, campaignApi, shipmentsApi, ordersApi } from '../services/api';
+import { contactsApi, campaignApi, shipmentsApi, ordersApi, customerProgramsApi } from '../services/api';
+import { PRODUCTS } from '../constants/products';
 
 
 const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
@@ -26,6 +27,11 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   const [editingPersonId, setEditingPersonId] = useState(null);
   const [editPersonForm, setEditPersonForm] = useState({});
   const [savingPerson, setSavingPerson] = useState(false);
+  const [programs, setPrograms] = useState(localContact.programs || []);
+  const [showAddProgram, setShowAddProgram] = useState(false);
+  const [editingProgramId, setEditingProgramId] = useState(null);
+  const [programForm, setProgramForm] = useState({});
+  const [savingProgram, setSavingProgram] = useState(false);
 
   useEffect(() => {
     setLocalContact(contact);
@@ -33,7 +39,63 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
     loadShipments();
     loadOrders();
     loadPersons();
+    loadPrograms();
   }, [contact]);
+
+  const loadPrograms = async () => {
+    try {
+      const data = await customerProgramsApi.getByContact(contact.id);
+      setPrograms(data);
+      setLocalContact(prev => ({ ...prev, programs: data }));
+    } catch (e) { console.error(e); }
+  };
+
+  const startAddProgram = () => {
+    setProgramForm({ product: 'Mandarin', variety: '', origin: '', grower: '', incoterm: 'FOB', status: 'Active', startDate: '', notes: '' });
+    setEditingProgramId(null);
+    setShowAddProgram(true);
+  };
+
+  const startEditProgram = (p) => {
+    setProgramForm({
+      product: p.product || 'Mandarin', variety: p.variety || '', origin: p.origin || '',
+      grower: p.grower || '', incoterm: p.incoterm || 'FOB', status: p.status || 'Active',
+      startDate: p.startDate ? p.startDate.split('T')[0] : '', notes: p.notes || '',
+    });
+    setEditingProgramId(p.id);
+    setShowAddProgram(true);
+  };
+
+  const handleSaveProgram = async () => {
+    if (!programForm.product) { alert('Product is required'); return; }
+    setSavingProgram(true);
+    try {
+      if (editingProgramId) {
+        await customerProgramsApi.update(editingProgramId, programForm);
+      } else {
+        await customerProgramsApi.create({ ...programForm, contactId: contact.id });
+      }
+      setShowAddProgram(false);
+      setEditingProgramId(null);
+      await loadPrograms();
+    } catch (e) { alert('Save failed: ' + e.message); }
+    finally { setSavingProgram(false); }
+  };
+
+  const handleCompleteProgram = async (p) => {
+    try {
+      await customerProgramsApi.update(p.id, { status: 'Active' === p.status ? 'Completed' : 'Active' });
+      await loadPrograms();
+    } catch (e) { alert('Update failed: ' + e.message); }
+  };
+
+  const handleDeleteProgram = async (id) => {
+    if (!window.confirm('Delete this program?')) return;
+    try {
+      await customerProgramsApi.delete(id);
+      await loadPrograms();
+    } catch (e) { alert('Delete failed: ' + e.message); }
+  };
 
   const loadPersons = async () => {
     try {
@@ -307,11 +369,21 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                 <div className="status-pill status-calling" style={{ background: 'transparent', padding: 0, border: 'none' }}>
                   <span>{localContact.status}</span>
                 </div>
+                {(localContact.programs || []).filter(p => p.status === 'Active').map(p => (
+                  <span key={p.id} style={{
+                    padding: '3px 10px', borderRadius: 8, fontSize: '0.76rem', fontWeight: 700,
+                    background: { FOB: 'rgba(56,189,248,0.15)', CIF: 'rgba(168,85,247,0.15)', DDP: 'rgba(34,197,94,0.15)' }[p.incoterm] || 'rgba(255,255,255,0.07)',
+                    color: { FOB: '#38bdf8', CIF: '#a855f7', DDP: '#22c55e' }[p.incoterm] || 'var(--text-muted)',
+                    border: `1px solid ${({ FOB: 'rgba(56,189,248,0.35)', CIF: 'rgba(168,85,247,0.35)', DDP: 'rgba(34,197,94,0.35)' }[p.incoterm] || 'rgba(255,255,255,0.15)')}`,
+                  }}>
+                    {[p.product, p.origin, p.incoterm].filter(Boolean).join(' · ')}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="flex-center gap-2">
           {localContact.type === 'Lead' && (
             <button 
@@ -463,6 +535,148 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
                 );
               })}
             </div>
+          </div>
+
+          {/* Trading Programs */}
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Layers size={18} className="text-orange" /> Trading Programs
+              </h3>
+              <button className="btn btn-glass" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={startAddProgram}>
+                <Plus size={13} /> Add Program
+              </button>
+            </div>
+
+            {programs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                No programs yet. Click <strong>+ Add Program</strong> to record what this customer is currently buying.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border-glass-light)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      {['Product', 'Variety', 'Origin', 'Grower', 'Incoterm', 'Started', 'Ended', 'Status', 'Notes', ''].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {programs.map((p, i) => (
+                      <tr key={p.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>{p.product}</td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.variety || '—'}</td>
+                        <td style={{ padding: '8px 12px' }}>{p.origin || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{p.grower || '—'}</td>
+                        <td style={{ padding: '8px 12px' }}>
+                          {p.incoterm ? (
+                            <span style={{
+                              padding: '2px 8px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 700,
+                              background: { FOB: 'rgba(56,189,248,0.15)', CIF: 'rgba(168,85,247,0.15)', DDP: 'rgba(34,197,94,0.15)' }[p.incoterm] || 'rgba(255,255,255,0.07)',
+                              color: { FOB: '#38bdf8', CIF: '#a855f7', DDP: '#22c55e' }[p.incoterm] || 'var(--text-muted)',
+                            }}>{p.incoterm}</span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.startDate ? new Date(p.startDate).toLocaleDateString('en-GB') : '—'}</td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.endDate ? new Date(p.endDate).toLocaleDateString('en-GB') : '—'}</td>
+                        <td style={{ padding: '8px 12px' }}>
+                          <button
+                            onClick={() => handleCompleteProgram(p)}
+                            style={{
+                              border: 'none', cursor: 'pointer', padding: '2px 10px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 700,
+                              background: p.status === 'Active' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.07)',
+                              color: p.status === 'Active' ? '#22c55e' : 'var(--text-muted)',
+                            }}
+                            title="Click to toggle Active / Completed"
+                          >
+                            {p.status}
+                          </button>
+                        </td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.notes || '—'}</td>
+                        <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                          <button onClick={() => startEditProgram(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, marginRight: 6 }}>
+                            <Edit3 size={13} />
+                          </button>
+                          {isSuperAdmin && (
+                            <button onClick={() => handleDeleteProgram(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.6)', padding: 2 }}>
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Add / Edit Program modal */}
+            {showAddProgram && (
+              <div className="modal-overlay" onClick={() => setShowAddProgram(false)}>
+                <div className="modal-content glass-panel" style={{ maxWidth: 480, padding: 0 }} onClick={e => e.stopPropagation()}>
+                  <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0 }}>{editingProgramId ? 'Edit Program' : 'Add Program'}</h3>
+                    <button className="icon-btn" onClick={() => setShowAddProgram(false)}><X size={18} /></button>
+                  </div>
+                  <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>PRODUCT *</label>
+                        <select className="ui-select" value={programForm.product} onChange={e => setProgramForm(p => ({ ...p, product: e.target.value }))}>
+                          {Object.keys(PRODUCTS).map(prod => <option key={prod} value={prod}>{prod}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>VARIETY</label>
+                        <select className="ui-select" value={programForm.variety} onChange={e => setProgramForm(p => ({ ...p, variety: e.target.value }))}>
+                          <option value="">— Select —</option>
+                          {(PRODUCTS[programForm.product] || []).map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>ORIGIN</label>
+                        <input className="ui-input" placeholder="e.g. Morocco, Peru" value={programForm.origin} onChange={e => setProgramForm(p => ({ ...p, origin: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>GROWER (OPTIONAL)</label>
+                        <input className="ui-input" placeholder="Grower / supplier name" value={programForm.grower} onChange={e => setProgramForm(p => ({ ...p, grower: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>INCOTERM</label>
+                        <select className="ui-select" value={programForm.incoterm} onChange={e => setProgramForm(p => ({ ...p, incoterm: e.target.value }))}>
+                          <option value="">— Select —</option>
+                          <option value="FOB">FOB</option>
+                          <option value="CIF">CIF</option>
+                          <option value="DDP">DDP</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>STATUS</label>
+                        <select className="ui-select" value={programForm.status} onChange={e => setProgramForm(p => ({ ...p, status: e.target.value }))}>
+                          <option value="Active">Active</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>START DATE</label>
+                        <input type="date" className="ui-input" value={programForm.startDate} onChange={e => setProgramForm(p => ({ ...p, startDate: e.target.value }))} style={{ width: '100%' }} />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>NOTES</label>
+                        <input className="ui-input" placeholder="Optional notes" value={programForm.notes} onChange={e => setProgramForm(p => ({ ...p, notes: e.target.value }))} style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                      <button className="btn btn-glass" style={{ flex: 1 }} onClick={() => setShowAddProgram(false)}>Cancel</button>
+                      <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSaveProgram} disabled={savingProgram}>
+                        {savingProgram ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : editingProgramId ? 'Save Changes' : 'Add Program'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
