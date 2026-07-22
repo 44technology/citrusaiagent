@@ -20,7 +20,7 @@ const FileIcon = ({ mimeType }) => {
 };
 
 const DOC_TYPES = [
-  'SWB','BOL','PL-Grower','PL-Customer','INV','PO','ISF',
+  'SWB','SWCInv','BOL','PL-Grower','PL-Customer','INV','CustomerInv','GrowerInv','PO','ISF',
   'Manifest','Phyto','FA','REL/SWB','Photo',
   'Phytosanitary','Invoice','Certificate','General','Other',
 ];
@@ -29,10 +29,13 @@ const categoryColor = (cat) => {
   const map = {
     BOL:           { bg: 'rgba(99,102,241,0.12)',  color: '#818cf8' },
     SWB:           { bg: 'rgba(99,102,241,0.12)',  color: '#818cf8' },
+    SWCInv:        { bg: 'rgba(99,102,241,0.12)',  color: '#818cf8' },
     'PL-Grower':   { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
     'PL-Customer': { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8' },
     INV:           { bg: 'rgba(255,107,0,0.12)',   color: 'var(--orange-primary)' },
     Invoice:       { bg: 'rgba(255,107,0,0.12)',   color: 'var(--orange-primary)' },
+    CustomerInv:   { bg: 'rgba(56,189,248,0.12)',  color: '#38bdf8' },
+    GrowerInv:     { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
     Phyto:         { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
     Phytosanitary: { bg: 'rgba(34,197,94,0.12)',   color: '#22c55e' },
     Certificate:   { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
