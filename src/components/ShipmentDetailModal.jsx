@@ -53,6 +53,9 @@ const DOC_TYPES = [
   { key: 'Other',    label: 'Other Document' },
 ];
 
+const CUSTOMER_DOC_KEYS = new Set(['PL-Customer', 'CustomerInv']);
+const isCustomerDocType = (key) => CUSTOMER_DOC_KEYS.has(key);
+
 const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
   const [docs, setDocs]             = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -252,7 +255,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                       <span>
                         <span style={{
                           fontWeight: 700, fontFamily: 'monospace', fontSize: '0.76rem',
-                          marginRight: 8, color: 'var(--orange-primary)'
+                          marginRight: 8, color: isCustomerDocType(t.key) ? '#38bdf8' : 'var(--orange-primary)'
                         }}>{t.key}</span>
                         {t.label}
                       </span>
@@ -311,10 +314,13 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                     title={isSuperAdmin ? 'Click to change type' : undefined}
                     style={{
                       fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
-                      background: 'rgba(255,107,0,0.12)', color: 'var(--orange-primary)',
+                      background: isCustomerDocType(typeInfo.key) ? 'rgba(56,189,248,0.12)' : 'rgba(255,107,0,0.12)',
+                      color: isCustomerDocType(typeInfo.key) ? '#38bdf8' : 'var(--orange-primary)',
                       padding: '2px 8px', borderRadius: 6,
                       cursor: isSuperAdmin ? 'pointer' : 'default',
-                      border: isSuperAdmin ? '1px solid rgba(255,107,0,0.3)' : '1px solid transparent',
+                      border: isSuperAdmin
+                        ? `1px solid ${isCustomerDocType(typeInfo.key) ? 'rgba(56,189,248,0.3)' : 'rgba(255,107,0,0.3)'}`
+                        : '1px solid transparent',
                     }}>{typeInfo.key}</span>
                 )}
 
