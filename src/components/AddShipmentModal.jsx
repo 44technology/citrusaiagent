@@ -11,8 +11,8 @@ const EMPTY_FORM = {
   portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
   containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
-  variety: '', product: '', grower: '', soNumber: '',
-  category: '', qcArrival: '', gateInEmptyDate: '',
+  variety: '', product: '', grower: '', soNumber: '', poNumber: '',
+  category: '', qcArrival: '', gateInEmptyDate: '', isfSentDate: '',
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
 };
 
@@ -64,7 +64,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           category:         initialData.category      || '',
           notes:            initialData.notes         || '',
           status:           'Pending',
-          // containerNumber, bolNumber, soNumber, vesselEta, vesselDeparture, qcArrival, gateInEmptyDate intentionally blank
+          // containerNumber, bolNumber, soNumber, poNumber, vesselEta, vesselDeparture, qcArrival, gateInEmptyDate, isfSentDate intentionally blank
         });
         setIsLabelManual(false);
         // Intentionally clear ref ID on clone — each shipment must have a unique ref
@@ -154,20 +154,31 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     setLoading(true);
 
     try {
-      // Duplicate container check
+      // Duplicate container / SO / PO check
       const cn = (form.containerNumber || '').trim().toLowerCase();
-      if (cn) {
+      const so = (form.soNumber || '').trim().toLowerCase();
+      const po = (form.poNumber || '').trim().toLowerCase();
+      if (cn || so || po) {
         try {
           const all = await shipmentsApi.getAll();
-          const dup = (Array.isArray(all) ? all : []).find(s => (s.containerNumber || '').trim().toLowerCase() === cn);
-          if (dup) {
-            const ok = window.confirm(
-              `⚠ Container "${form.containerNumber}" already exists in the system:\n\n` +
-              `${dup.label || dup.containerNumber} — status: ${dup.status}` +
-              `${dup.contact?.name ? ` — customer: ${dup.contact.name}` : ''}\n\n` +
-              `Create another shipment with the same container anyway?`
-            );
-            if (!ok) { setLoading(false); return; }
+          const list = Array.isArray(all) ? all : [];
+          const checks = [
+            { val: cn, field: 'containerNumber', label: 'Container' },
+            { val: so, field: 'soNumber', label: 'SO Number' },
+            { val: po, field: 'poNumber', label: 'PO Number' },
+          ];
+          for (const { val, field, label } of checks) {
+            if (!val) continue;
+            const dup = list.find(s => (s[field] || '').trim().toLowerCase() === val);
+            if (dup) {
+              const ok = window.confirm(
+                `⚠ ${label} "${val.toUpperCase()}" already exists in the system:\n\n` +
+                `${dup.label || dup.containerNumber} — status: ${dup.status}` +
+                `${dup.contact?.name ? ` — customer: ${dup.contact.name}` : ''}\n\n` +
+                `Create another shipment with the same ${label} anyway?`
+              );
+              if (!ok) { setLoading(false); return; }
+            }
           }
         } catch {}
       }
@@ -531,6 +542,25 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">ATA (Gate-in Empty Date)</label>
                 <input type="date" className="ui-input"
                   value={form.gateInEmptyDate} onChange={e => handleChange('gateInEmptyDate', e.target.value)} />
+              </div>
+            </div>
+
+            {/* SO / PO / ISF */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div>
+                <label className="shipment-label">SO Number</label>
+                <input type="text" className="ui-input" placeholder="e.g. SO-12345"
+                  value={form.soNumber} onChange={e => handleChange('soNumber', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">PO Number</label>
+                <input type="text" className="ui-input" placeholder="e.g. PO-2026-001"
+                  value={form.poNumber} onChange={e => handleChange('poNumber', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">ISF Sent to Customs</label>
+                <input type="date" className="ui-input"
+                  value={form.isfSentDate} onChange={e => handleChange('isfSentDate', e.target.value)} />
               </div>
             </div>
 

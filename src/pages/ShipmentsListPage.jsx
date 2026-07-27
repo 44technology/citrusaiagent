@@ -150,6 +150,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const [showFilters, setShowFilters]   = useState(false);
   const [search, setSearch]             = useState('');
   const [sort, setSort]                 = useState({ field: 'vesselEta', dir: 'asc' });
+  const [lifecycleTab, setLifecycleTab] = useState('Active'); // 'Active' | 'Completed'
 
   const [filters, setFilters] = useState({
     status: [], advPayment: [], customer: [], grower: [], bol: '', container: '',
@@ -180,11 +181,12 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'shippingLine',   label: 'SHIPPING CO.',    width: 14, get: s => s.shippingLine || '' },
     { key: 'vesselName',     label: 'VESSEL NAME',     width: 20, get: s => s.vesselName || '' },
     { key: 'wDep',           label: 'W(DEP)',          width: 8,  get: s => getWeek(s.vesselDeparture) },
-    { key: 'etd',            label: 'ETD (DD/MM/YY)',  width: 14, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
+    { key: 'etd',            label: 'ATD (DD/MM/YY)',  width: 14, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
     { key: 'eta',            label: 'ETA (DD/MM/YY)',  width: 14, get: s => s.vesselEta ? formatDateUTC(s.vesselEta) : '' },
     { key: 'arrivalDate',    label: 'ARRIVAL (DD/MM/YY)', width: 16, get: s => s.vesselArrival ? formatDateUTC(s.vesselArrival) : '' },
     { key: 'wArr',           label: 'W(ARR)',          width: 8,  get: s => getWeek(s.vesselEta) },
     { key: 'gateInEmptyDate',label: 'ATA(GATE IN EMPTY)', width: 16, get: s => s.gateInEmptyDate ? formatDateUTC(s.gateInEmptyDate) : '' },
+    { key: 'isfSentDate',    label: 'ISF SENT (DD/MM/YY)', width: 16, get: s => s.isfSentDate ? formatDateUTC(s.isfSentDate) : '' },
     { key: 'pol',            label: 'POL',             width: 14, get: s => s.portOfLoading || '' },
     { key: 'pod',            label: 'POD',             width: 14, get: s => s.portOfDischarge || '' },
     { key: 'qcArrival',      label: 'QC SCORE',        width: 10, get: s => s.qcArrival || '' },
@@ -229,9 +231,15 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], product: [], pack: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
   const hasFilters = Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : Boolean(v));
 
+  // Lifecycle bucket: Completed = container empty-returned, everything else is Active
+  const isCompleted = (s) => s.status === 'Empty Returned';
+  const activeCount    = shipments.filter(s => !isCompleted(s)).length;
+  const completedCount = shipments.filter(s => isCompleted(s)).length;
+
   // Filter + search + sort
   const filtered = useMemo(() => {
     let list = shipments.filter(s => {
+      if (lifecycleTab === 'Active' ? isCompleted(s) : !isCompleted(s)) return false;
       const q = search.toLowerCase();
       const matchSearch = !q ||
         (s.bolNumber || '').toLowerCase().includes(q) ||
@@ -278,7 +286,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     });
 
     return list;
-  }, [shipments, search, filters, sort]);
+  }, [shipments, search, filters, sort, lifecycleTab]);
 
   // Export to Excel — dynamic columns
   // 1-based column index → Excel letter (A, B, ... Z, AA, AB, ...) — supports >26 columns
@@ -486,6 +494,32 @@ const ShipmentsListPage = ({ selectedCompany }) => {
         </div>
       </div>
 
+      {/* Active / Completed lifecycle tabs */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {[
+          { id: 'Active', label: 'Active', count: activeCount },
+          { id: 'Completed', label: 'Completed', count: completedCount },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => { setLifecycleTab(tab.id); setExpandedId(null); }}
+            style={{
+              padding: '8px 18px', borderRadius: 10, cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8,
+              background: lifecycleTab === tab.id ? 'rgba(255,107,0,0.15)' : 'rgba(255,255,255,0.04)',
+              border: lifecycleTab === tab.id ? '1px solid var(--orange-primary)' : '1px solid var(--border-glass)',
+              color: lifecycleTab === tab.id ? 'var(--orange-primary)' : 'var(--text-muted)',
+            }}
+          >
+            {tab.label}
+            <span style={{
+              background: lifecycleTab === tab.id ? 'rgba(255,107,0,0.2)' : 'rgba(255,255,255,0.08)',
+              padding: '1px 8px', borderRadius: 10, fontSize: '0.75rem',
+            }}>{tab.count}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Search + Filter toggle */}
       <div style={{ display: 'flex', gap: 10 }}>
         <div style={{ position: 'relative', flex: 1 }}>
@@ -585,19 +619,20 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PACK</th>
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
-                <SortTh label="ETD"          field="vesselDeparture"  sort={sort} setSort={setSort} />
+                <SortTh label="ATD"          field="vesselDeparture"  sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (DEP)</th>
                 <SortTh label="POL"          field="portOfLoading"    sort={sort} setSort={setSort} />
                 <SortTh label="ETA"          field="vesselEta"        sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (ARR)</th>
                 <SortTh label="POD"          field="portOfDischarge"  sort={sort} setSort={setSort} />
+                <SortTh label="ISF SENT"     field="isfSentDate"      sort={sort} setSort={setSort} />
                 {isAdmin && <th style={{ padding: '10px 8px', width: 40 }} />}
               </tr>
             </thead>
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 19 : 18;
+                const colCount = isAdmin ? 20 : 19;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -655,6 +690,11 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#22c55e', fontWeight: 600 }}>{s.vesselEta ? formatDateUTC(s.vesselEta) : '—'}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#22c55e' }}>{getWeek(s.vesselEta)}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfDischarge ? s.portOfDischarge.replace('Port of ', '') : '—'}</td>
+                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                    {s.isfSentDate
+                      ? <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.78rem' }}>{formatDateUTC(s.isfSentDate)}</span>
+                      : <span style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 600 }}>Not Sent</span>}
+                  </td>
                   {isAdmin && (
                     <td style={{ padding: '10px 8px' }} onClick={e => e.stopPropagation()}>
                       <button

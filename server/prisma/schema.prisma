@@ -192,6 +192,7 @@ model Shipment {
 
   // ── Demurrage & Detention ────────────────────────
   poNumber              String?    // Purchase Order number
+  isfSentDate           DateTime?  // Date ISF filing was sent to Customs
   demurrageLastFreeDay  DateTime?  // Last free day at port (demurrage)
   detentionLastFreeDay  DateTime?  // Last free day at customer (per diem/detention)
   emptyReturnDate       DateTime?  // Actual date empty container was returned

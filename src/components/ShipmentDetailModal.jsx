@@ -54,7 +54,12 @@ const DOC_TYPES = [
 ];
 
 const CUSTOMER_DOC_KEYS = new Set(['PL-Customer', 'CustomerInv']);
-const isCustomerDocType = (key) => CUSTOMER_DOC_KEYS.has(key);
+const GROWER_DOC_KEYS = new Set(['PL-Grower', 'GrowerInv']);
+const docTypeColor = (key) => {
+  if (CUSTOMER_DOC_KEYS.has(key)) return { text: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)' };
+  if (GROWER_DOC_KEYS.has(key))   return { text: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' };
+  return { text: 'var(--orange-primary)', bg: 'rgba(255,107,0,0.12)', border: 'rgba(255,107,0,0.3)' };
+};
 
 const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
   const [docs, setDocs]             = useState([]);
@@ -255,7 +260,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                       <span>
                         <span style={{
                           fontWeight: 700, fontFamily: 'monospace', fontSize: '0.76rem',
-                          marginRight: 8, color: isCustomerDocType(t.key) ? '#38bdf8' : 'var(--orange-primary)'
+                          marginRight: 8, color: docTypeColor(t.key).text
                         }}>{t.key}</span>
                         {t.label}
                       </span>
@@ -314,12 +319,12 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                     title={isSuperAdmin ? 'Click to change type' : undefined}
                     style={{
                       fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
-                      background: isCustomerDocType(typeInfo.key) ? 'rgba(56,189,248,0.12)' : 'rgba(255,107,0,0.12)',
-                      color: isCustomerDocType(typeInfo.key) ? '#38bdf8' : 'var(--orange-primary)',
+                      background: docTypeColor(typeInfo.key).bg,
+                      color: docTypeColor(typeInfo.key).text,
                       padding: '2px 8px', borderRadius: 6,
                       cursor: isSuperAdmin ? 'pointer' : 'default',
                       border: isSuperAdmin
-                        ? `1px solid ${isCustomerDocType(typeInfo.key) ? 'rgba(56,189,248,0.3)' : 'rgba(255,107,0,0.3)'}`
+                        ? `1px solid ${docTypeColor(typeInfo.key).border}`
                         : '1px solid transparent',
                     }}>{typeInfo.key}</span>
                 )}
@@ -1093,6 +1098,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       contactId: shipment.contactId || '',
       soNumber: shipment.soNumber || '',
       poNumber: shipment.poNumber || '',
+      isfSentDate: shipment.isfSentDate?.split('T')[0] || '',
       demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
       detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
       emptyReturnDate: shipment.emptyReturnDate?.split('T')[0] || '',
@@ -1127,6 +1133,31 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   };
 
   const handleSave = async (section = null) => {
+    // Duplicate SO / PO check when cargo section changes those values
+    if (section === 'cargo') {
+      const checks = [
+        { val: (ed.soNumber || '').trim(), field: 'soNumber', label: 'SO Number', prev: shipment.soNumber },
+        { val: (ed.poNumber || '').trim(), field: 'poNumber', label: 'PO Number', prev: shipment.poNumber },
+      ];
+      for (const { val, field, label, prev } of checks) {
+        if (!val || val.toLowerCase() === (prev || '').trim().toLowerCase()) continue;
+        try {
+          const all = await shipmentsApi.getAll();
+          const dup = (Array.isArray(all) ? all : []).find(s =>
+            s.id !== shipment.id && (s[field] || '').trim().toLowerCase() === val.toLowerCase()
+          );
+          if (dup) {
+            const ok = window.confirm(
+              `⚠ ${label} "${val}" already exists on another shipment:\n\n` +
+              `${dup.label || dup.containerNumber} — status: ${dup.status}` +
+              `${dup.contact?.name ? ` — customer: ${dup.contact.name}` : ''}\n\n` +
+              `Save with the same ${label} anyway?`
+            );
+            if (!ok) return;
+          }
+        } catch {}
+      }
+    }
     setLoading(true);
     try {
       const updated = await shipmentsApi.update(shipment.id, ed);
@@ -1433,6 +1464,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 </Field>
                 <Field label="PO Number" value={shipment.poNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. PO-2026-001" value={ed.poNumber} onChange={e => set('poNumber', e.target.value)} />
+                </Field>
+                <Field label="ISF Sent to Customs" value={shipment.isfSentDate ? new Date(shipment.isfSentDate).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                  <Inp type="date" value={ed.isfSentDate} onChange={e => set('isfSentDate', e.target.value)} />
                 </Field>
 
                 {/* Advance Payment Status — spans full row */}

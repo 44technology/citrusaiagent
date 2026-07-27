@@ -89,6 +89,7 @@ export const createShipment = async (req, res) => {
       // Container & cargo
       containerType, sealNumber, cargoDescription, grossWeight, numberOfBoxes,
       pallets, packType, product, variety, grower, category, qcArrival, gateInEmptyDate,
+      soNumber, poNumber, isfSentDate,
       // Reefer
       reeferTempSet, reeferTempActual, humidity, ventilation, co2Level
     } = req.body;
@@ -141,6 +142,9 @@ export const createShipment = async (req, res) => {
         category: category || null,
         qcArrival: qcArrival || null,
         gateInEmptyDate: parseDateUTC(gateInEmptyDate),
+        soNumber: soNumber || null,
+        poNumber: poNumber || null,
+        isfSentDate: parseDateUTC(isfSentDate),
         // Reefer
         reeferTempSet: reeferTempSet !== undefined && reeferTempSet !== '' ? parseFloat(reeferTempSet) : null,
         reeferTempActual: reeferTempActual !== undefined && reeferTempActual !== '' ? parseFloat(reeferTempActual) : null,
@@ -171,6 +175,7 @@ export const updateShipment = async (req, res) => {
     if (data.detentionLastFreeDay !== undefined) data.detentionLastFreeDay = parseDateUTC(data.detentionLastFreeDay);
     if (data.emptyReturnDate !== undefined) data.emptyReturnDate = parseDateUTC(data.emptyReturnDate);
     if (data.gateInEmptyDate !== undefined) data.gateInEmptyDate = parseDateUTC(data.gateInEmptyDate);
+    if (data.isfSentDate !== undefined) data.isfSentDate = parseDateUTC(data.isfSentDate);
 
     // Handle contactId → contact relation
     let contactRelation = undefined;
@@ -247,7 +252,7 @@ export const updateShipment = async (req, res) => {
       'pallets','packType','product','variety','grower',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
-      'advToGrower','qcArrival','soNumber','poNumber','category','gateInEmptyDate',
+      'advToGrower','qcArrival','soNumber','poNumber','category','gateInEmptyDate','isfSentDate',
       'demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate','containerReleased',
     ]);
     Object.keys(data).forEach(k => { if (!ALLOWED.has(k)) delete data[k]; });
