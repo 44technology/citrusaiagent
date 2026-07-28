@@ -617,6 +617,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>PRODUCT</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>VARIETY</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PACK</th>
+                <SortTh label="BOXES"        field="numberOfBoxes"    sort={sort} setSort={setSort} />
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
                 <SortTh label="ATD"          field="vesselDeparture"  sort={sort} setSort={setSort} />
@@ -632,7 +633,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 20 : 19;
+                const colCount = isAdmin ? 21 : 20;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -682,6 +683,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{s.packType || '—'}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.numberOfBoxes ? s.numberOfBoxes.toLocaleString() : '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
