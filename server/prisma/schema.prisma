@@ -163,7 +163,8 @@ model Shipment {
   grossWeight      Float?    // kg
   numberOfBoxes    Int?
   pallets          Int?      // Number of pallets
-  packType         String?   // e.g. "18 KG", "10 KG"
+  packType         String?   // Summary, e.g. "15 KG + 16 KG" — auto-derived from packBreakdown
+  packBreakdown    String?   // JSON array of {packType, boxQty} — a container can mix weights
   product          String?   // e.g. "Mandarin", "Orange"
   variety          String?   // e.g. "NADORCOTT", "MAROC LATE"
   grower           String?   // Grower / supplier name

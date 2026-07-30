@@ -380,7 +380,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
 
 // ─── Product / Variety options ───────────────────────────────────────────────
 
-import { PRODUCTS, ALL_VARIETIES } from '../constants/products';
+import { PRODUCTS, ALL_VARIETIES, PACK_OPTIONS } from '../constants/products';
 
 const getDemurrageColor = (dateStr) => {
   if (!dateStr) return null;
@@ -1047,6 +1047,11 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   const [customers, setCustomers] = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
+  const [packRows, setPackRows] = useState([{ packType: '15 KG', boxQty: '' }]);
+
+  const updatePackRow = (idx, field, value) => setPackRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  const addPackRow = () => setPackRows(prev => [...prev, { packType: '15 KG', boxQty: '' }]);
+  const removePackRow = (idx) => setPackRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
 
   const currentUser = (() => {
     try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; }
@@ -1089,6 +1094,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       cargoDescription: shipment.cargoDescription || '',
       grossWeight: shipment.grossWeight ?? '', numberOfBoxes: shipment.numberOfBoxes ?? '',
       packType: shipment.packType || '',
+      packBreakdown: shipment.packBreakdown || '',
       reeferTempSet: shipment.reeferTempSet ?? '', reeferTempActual: shipment.reeferTempActual ?? '',
       humidity: shipment.humidity ?? '', ventilation: shipment.ventilation ?? '',
       co2Level: shipment.co2Level ?? '',
@@ -1108,6 +1114,15 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
     setMatchedOrder(shipment.order || null);
     setEvents(shipment.events || []);
     setIsEditing(false);
+    // Seed the box breakdown editor — parse packBreakdown JSON, fall back to a
+    // single row built from the legacy packType/numberOfBoxes for old shipments.
+    try {
+      const rows = JSON.parse(shipment.packBreakdown || '[]');
+      if (Array.isArray(rows) && rows.length > 0) { setPackRows(rows); return; }
+    } catch {}
+    setPackRows(shipment.numberOfBoxes
+      ? [{ packType: shipment.packType || '15 KG', boxQty: String(shipment.numberOfBoxes) }]
+      : [{ packType: '15 KG', boxQty: '' }]);
   }, [shipment]);
 
   if (!isOpen || !shipment || !ed) return null;
@@ -1133,6 +1148,21 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   };
 
   const handleSave = async (section = null) => {
+    let payload = ed;
+    // Box breakdown is required — fold packRows into numberOfBoxes/packType/packBreakdown
+    if (section === 'cargo') {
+      const validPackRows = packRows.filter(r => r.packType && parseInt(r.boxQty) > 0);
+      if (validPackRows.length === 0) {
+        alert('Please add at least one box row with Pack Type and Box Qty.');
+        return;
+      }
+      payload = {
+        ...ed,
+        numberOfBoxes: validPackRows.reduce((s, r) => s + parseInt(r.boxQty), 0),
+        packType: [...new Set(validPackRows.map(r => r.packType))].join(' + '),
+        packBreakdown: JSON.stringify(validPackRows),
+      };
+    }
     // Duplicate SO / PO check when cargo section changes those values
     if (section === 'cargo') {
       const checks = [
@@ -1160,7 +1190,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
     }
     setLoading(true);
     try {
-      const updated = await shipmentsApi.update(shipment.id, ed);
+      const updated = await shipmentsApi.update(shipment.id, payload);
       onUpdate(updated); setEvents(updated.events || []);
       setIsEditing(false);
       setEditingSection(null);
@@ -1453,12 +1483,56 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="Gross Weight" value={shipment.grossWeight ? `${Number(shipment.grossWeight).toLocaleString()} kg` : null} editing={editingSection === 'cargo'}>
                   <Inp type="number" placeholder="kg" value={ed.grossWeight} onChange={e => set('grossWeight', e.target.value)} />
                 </Field>
-                <Field label="Number of Boxes" value={shipment.numberOfBoxes?.toLocaleString()} editing={editingSection === 'cargo'}>
-                  <Inp type="number" placeholder="e.g. 1120" value={ed.numberOfBoxes} onChange={e => set('numberOfBoxes', e.target.value)} />
-                </Field>
-                <Field label="Pack Type" value={shipment.packType} editing={editingSection === 'cargo'}>
-                  <Inp placeholder="e.g. 18 KG" value={ed.packType} onChange={e => set('packType', e.target.value)} />
-                </Field>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                    Box Breakdown
+                  </div>
+                  {editingSection === 'cargo' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {packRows.map((row, idx) => {
+                        const opts = row.packType && !PACK_OPTIONS.includes(row.packType) ? [row.packType, ...PACK_OPTIONS] : PACK_OPTIONS;
+                        return (
+                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                            <select className="ui-input" style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                              value={row.packType} onChange={e => updatePackRow(idx, 'packType', e.target.value)}>
+                              {opts.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                            <Inp type="number" placeholder="Box qty" value={row.boxQty} onChange={e => updatePackRow(idx, 'boxQty', e.target.value)} />
+                            {packRows.length > 1 && (
+                              <button type="button" onClick={() => removePackRow(idx)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.6)', padding: 4 }}>
+                                <X size={15} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <button type="button" className="btn btn-glass" style={{ padding: '4px 10px', fontSize: '0.75rem', alignSelf: 'flex-start' }} onClick={addPackRow}>
+                        <Plus size={12} /> Add Row
+                      </button>
+                    </div>
+                  ) : (() => {
+                    let rows = [];
+                    try { rows = JSON.parse(shipment.packBreakdown || '[]'); } catch {}
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                      return shipment.numberOfBoxes ? (
+                        <div style={{ fontSize: '0.84rem' }}>{shipment.numberOfBoxes.toLocaleString()} boxes{shipment.packType ? ` · ${shipment.packType}` : ''}</div>
+                      ) : <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>—</div>;
+                    }
+                    return (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {rows.map((r, i) => (
+                          <span key={i} style={{ background: 'rgba(255,107,0,0.1)', color: 'var(--orange-primary)', borderRadius: 8, padding: '4px 10px', fontSize: '0.82rem', fontWeight: 600 }}>
+                            {r.packType} × {Number(r.boxQty).toLocaleString()}
+                          </span>
+                        ))}
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
+                          = {rows.reduce((s, r) => s + (parseInt(r.boxQty) || 0), 0).toLocaleString()} boxes
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
                 <Field label="SO Number" value={shipment.soNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. SO-12345" value={ed.soNumber} onChange={e => set('soNumber', e.target.value)} />
                 </Field>

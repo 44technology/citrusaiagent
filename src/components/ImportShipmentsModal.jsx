@@ -155,7 +155,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
             if (key === 'etd' || key === 'eta' || key === 'arrivalDate') {
               obj[key] = parseExcelDate(val);
             } else {
-              obj[key] = val !== undefined && val !== null ? String(val).trim() : '';
+              obj[key] = val !== undefined && val !== null ? String(val).trim().toUpperCase() : '';
             }
           });
           return obj;

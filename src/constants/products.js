@@ -9,3 +9,6 @@ export const PRODUCTS = {
 
 // Flat, de-duplicated list of every variety (single "Other")
 export const ALL_VARIETIES = [...new Set(Object.values(PRODUCTS).flat())];
+
+// Standard box weights — a container can mix several of these
+export const PACK_OPTIONS = ['10 KG', '15 KG', '16 KG', '17 KG', '18 KG'];

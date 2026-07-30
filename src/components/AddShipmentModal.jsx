@@ -18,7 +18,9 @@ const EMPTY_FORM = {
 
 const CATEGORY_OPTIONS = ['Cat 1', 'Cat 1.5', 'Cat 2'];
 
-import { PRODUCTS, ALL_VARIETIES } from '../constants/products';
+import { PRODUCTS, ALL_VARIETIES, PACK_OPTIONS } from '../constants/products';
+
+const EMPTY_PACK_ROW = { packType: '15 KG', boxQty: '' };
 
 const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(false);
@@ -30,6 +32,12 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const [matchedOrder, setMatchedOrder] = useState(null);
   const [showManualSelect, setShowManualSelect] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [packRows, setPackRows] = useState([{ ...EMPTY_PACK_ROW }]);
+
+  const updatePackRow = (idx, field, value) => setPackRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  const addPackRow = () => setPackRows(prev => [...prev, { ...EMPTY_PACK_ROW }]);
+  const removePackRow = (idx) => setPackRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+  const totalPackBoxes = packRows.reduce((s, r) => s + (parseInt(r.boxQty) || 0), 0);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,8 +59,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           containerType:    initialData.containerType || '40RF',
           cargoDescription: initialData.cargoDescription || '',
           grossWeight:      initialData.grossWeight   ? String(initialData.grossWeight) : '',
-          numberOfBoxes:    initialData.numberOfBoxes ? String(initialData.numberOfBoxes) : '',
-          packType:         initialData.packType      || '',
+          // numberOfBoxes and packType intentionally blank on clone — required, must be re-entered per container
+          numberOfBoxes:    '',
+          packType:         '',
           reeferTempSet:    initialData.reeferTempSet ? String(initialData.reeferTempSet) : '',
           reeferTempActual: initialData.reeferTempActual ? String(initialData.reeferTempActual) : '',
           humidity:         initialData.humidity      ? String(initialData.humidity) : '',
@@ -70,10 +79,13 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
         // Intentionally clear ref ID on clone — each shipment must have a unique ref
         setRefIdInput('');
         setMatchedOrder(null);
+        // Pack breakdown intentionally blank on clone — required, must be re-entered per container
+        setPackRows([{ ...EMPTY_PACK_ROW }]);
       } else {
         setForm(EMPTY_FORM);
         setRefIdInput('');
         setMatchedOrder(null);
+        setPackRows([{ ...EMPTY_PACK_ROW }]);
       }
     }
   }, [isOpen, initialData]);
@@ -97,20 +109,19 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const applyOrder = (order) => {
     setMatchedOrder(order);
     setRefIdInput(String(order.referenceId || ''));
-    // Derive pack type from the order's box rows (e.g. "17 KG" or "10 / 17 KG")
-    let orderPackType = '';
+    // Derive box breakdown rows from the order's own box rows (e.g. 400 @ 15 KG, 1006 @ 16 KG)
     try {
       const rows = JSON.parse(order.boxType || '[]');
-      const kinds = [...new Set((Array.isArray(rows) ? rows : []).map(r => r.boxType).filter(Boolean))];
-      if (kinds.length > 0) orderPackType = kinds.join(' / ') + ' KG';
-    } catch { if (order.boxType) orderPackType = order.boxType; }
+      const mapped = (Array.isArray(rows) ? rows : [])
+        .filter(r => r.boxType && r.boxQty)
+        .map(r => ({ packType: /kg/i.test(r.boxType) ? r.boxType : `${r.boxType} KG`, boxQty: String(r.boxQty) }));
+      if (mapped.length > 0) setPackRows(mapped);
+    } catch {}
     setForm(prev => ({
       ...prev,
       orderId: order.id,
       contactId: order.contactId || prev.contactId,
       cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
-      numberOfBoxes: order.boxQuantity ? String(order.boxQuantity) : prev.numberOfBoxes,
-      packType: orderPackType || prev.packType,
       grower: order.grower || prev.grower,
     }));
   };
@@ -151,6 +162,14 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Box breakdown is required — at least one row with a pack type and quantity
+    const validPackRows = packRows.filter(r => r.packType && parseInt(r.boxQty) > 0);
+    if (validPackRows.length === 0) {
+      alert('Please add at least one box row with Pack Type and Box Qty.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -210,10 +229,18 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       }
 
       // 3. Create shipment
-      await onAdd({ ...form, contactId: finalContactId });
+      const totalBoxes = validPackRows.reduce((s, r) => s + parseInt(r.boxQty), 0);
+      const packTypeSummary = [...new Set(validPackRows.map(r => r.packType))].join(' + ');
+      await onAdd({
+        ...form, contactId: finalContactId,
+        numberOfBoxes: totalBoxes,
+        packType: packTypeSummary,
+        packBreakdown: JSON.stringify(validPackRows),
+      });
 
       // 4. Reset & Close
       setForm({ ...EMPTY_FORM });
+      setPackRows([{ ...EMPTY_PACK_ROW }]);
       setIsLabelManual(false);
       setIsNewCustomer(false);
       setRefIdInput('');
@@ -474,7 +501,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
             </div>
 
             {/* Cargo */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label className="shipment-label">Cargo Description</label>
                 <input type="text" className="ui-input" placeholder="e.g. Citrus - Clementines"
@@ -485,16 +512,41 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <input type="number" className="ui-input" placeholder="e.g. 22000"
                   value={form.grossWeight} onChange={e => handleChange('grossWeight', e.target.value)} />
               </div>
-              <div>
-                <label className="shipment-label">Number of Boxes</label>
-                <input type="number" className="ui-input" placeholder="e.g. 1120"
-                  value={form.numberOfBoxes} onChange={e => handleChange('numberOfBoxes', e.target.value)} />
+            </div>
+
+            {/* Box breakdown — a container can mix several pack weights */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label className="shipment-label" style={{ margin: 0 }}>Box Breakdown *</label>
+                <button type="button" className="btn btn-glass" style={{ padding: '3px 10px', fontSize: '0.75rem' }} onClick={addPackRow}>
+                  <Plus size={12} /> Add Row
+                </button>
               </div>
-              <div>
-                <label className="shipment-label">Box Type</label>
-                <input type="text" className="ui-input" placeholder="e.g. 18 KG"
-                  value={form.packType} onChange={e => handleChange('packType', e.target.value)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {packRows.map((row, idx) => {
+                  const opts = row.packType && !PACK_OPTIONS.includes(row.packType) ? [row.packType, ...PACK_OPTIONS] : PACK_OPTIONS;
+                  return (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                      <select className="ui-input" value={row.packType} onChange={e => updatePackRow(idx, 'packType', e.target.value)}>
+                        {opts.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                      <input type="number" className="ui-input" placeholder="Box qty" required
+                        value={row.boxQty} onChange={e => updatePackRow(idx, 'boxQty', e.target.value)} />
+                      {packRows.length > 1 && (
+                        <button type="button" onClick={() => removePackRow(idx)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.6)', padding: 4 }}>
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+              {totalPackBoxes > 0 && (
+                <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Total: <strong style={{ color: 'var(--orange-primary)' }}>{totalPackBoxes.toLocaleString()} boxes</strong>
+                </div>
+              )}
             </div>
 
             {/* Grower / Product / Variety */}

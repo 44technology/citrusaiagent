@@ -388,7 +388,10 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     // Data rows
     filtered.forEach((s, i) => {
       const bg = i % 2 === 0 ? '12122A' : DARK;
-      const row = ws.addRow(['', ...cols.map(c => c.get(s))]);
+      const row = ws.addRow(['', ...cols.map(c => {
+        const v = c.get(s);
+        return typeof v === 'string' ? v.toUpperCase() : v;
+      })]);
       row.height = 18;
       row.eachCell((cell, colNum) => {
         const colKey = cols[colNum - 2]?.key;
@@ -682,7 +685,15 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{s.packType || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                    title={(() => {
+                      try {
+                        const rows = JSON.parse(s.packBreakdown || '[]');
+                        if (Array.isArray(rows) && rows.length > 0) return rows.map(r => `${r.packType} × ${r.boxQty}`).join('\n');
+                      } catch {}
+                      return undefined;
+                    })()}
+                  >{s.packType || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.numberOfBoxes ? s.numberOfBoxes.toLocaleString() : '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>

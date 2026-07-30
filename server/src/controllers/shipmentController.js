@@ -88,7 +88,7 @@ export const createShipment = async (req, res) => {
       portOfLoading, portOfDischarge, transshipmentPort,
       // Container & cargo
       containerType, sealNumber, cargoDescription, grossWeight, numberOfBoxes,
-      pallets, packType, product, variety, grower, category, qcArrival, gateInEmptyDate,
+      pallets, packType, packBreakdown, product, variety, grower, category, qcArrival, gateInEmptyDate,
       soNumber, poNumber, isfSentDate,
       // Reefer
       reeferTempSet, reeferTempActual, humidity, ventilation, co2Level
@@ -136,6 +136,7 @@ export const createShipment = async (req, res) => {
         numberOfBoxes: numberOfBoxes ? parseInt(numberOfBoxes) : null,
         pallets: pallets ? parseInt(pallets) : null,
         packType: packType || null,
+        packBreakdown: packBreakdown || null,
         product: product || null,
         variety: variety || null,
         grower: grower || null,
@@ -249,7 +250,7 @@ export const updateShipment = async (req, res) => {
       'status','notes',
       'portOfLoading','portOfDischarge','transshipmentPort',
       'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',
-      'pallets','packType','product','variety','grower',
+      'pallets','packType','packBreakdown','product','variety','grower',
       'reeferTempSet','reeferTempActual','humidity','ventilation','co2Level',
       'advancePaymentStatus','transport','countryOfOrigin','oceanFreight',
       'advToGrower','qcArrival','soNumber','poNumber','category','gateInEmptyDate','isfSentDate',
