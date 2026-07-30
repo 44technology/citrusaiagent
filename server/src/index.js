@@ -16,6 +16,7 @@ import emailRoutes from './routes/email.js';
 import vendorPackageRoutes from './routes/vendorPackages.js';
 import portRoutes from './routes/ports.js';
 import customerProgramRoutes from './routes/customerPrograms.js';
+import carrierRoutes from './routes/carriers.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -55,6 +56,7 @@ app.use('/api/email',    emailRoutes);
 app.use('/api/vendor-packages', vendorPackageRoutes);
 app.use('/api/ports', portRoutes);
 app.use('/api/customer-programs', customerProgramRoutes);
+app.use('/api/carriers', carrierRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🍊 Citrus AI Caller server running on port ${PORT}`);

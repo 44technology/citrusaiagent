@@ -155,6 +155,14 @@ export const customerProgramsApi = {
   delete: (id) => request(`/customer-programs/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Carriers (Trucking + Shipping Lines) ────────────
+export const carriersApi = {
+  getAll: () => request('/carriers'),
+  create: (data) => request('/carriers', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/carriers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => request(`/carriers/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Ports / Locations ───────────────────────────────
 export const portsApi = {
   getAll: () => request('/ports'),

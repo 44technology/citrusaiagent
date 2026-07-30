@@ -334,6 +334,23 @@ model PortLocation {
   createdAt DateTime @default(now())
 }
 
+// Trucking carriers and ocean shipping lines — one directory, distinguished by type
+model Carrier {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // "Trucking" | "Shipping Line"
+  scacCode    String?  // Standard Carrier Alpha Code, e.g. "MAEU"
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+  status      String   @default("Active") // Active | Inactive
+  companyId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  documents   Document[]
+}
+
 model PurchaseOrder {
   id          String   @id @default(uuid())
   poNumber    String   @unique
@@ -400,6 +417,7 @@ model Document {
   shipmentId  String?
   invoiceId   String?
   poId        String?
+  carrierId   String?
   uploadedBy  String?
   createdAt   DateTime @default(now())
   tenant     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -408,6 +426,7 @@ model Document {
   shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
   invoice     Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
   purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id], onDelete: SetNull)
+  carrier     Carrier?  @relation(fields: [carrierId], references: [id], onDelete: SetNull)
 }
 
 model VendorPackage {
