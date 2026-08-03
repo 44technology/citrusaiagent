@@ -1108,6 +1108,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       soNumber: shipment.soNumber || '',
       poNumber: shipment.poNumber || '',
       isfSentDate: shipment.isfSentDate?.split('T')[0] || '',
+      containerLastFreeDay: shipment.containerLastFreeDay?.split('T')[0] || '',
       demurrageLastFreeDay: shipment.demurrageLastFreeDay?.split('T')[0] || '',
       detentionLastFreeDay: shipment.detentionLastFreeDay?.split('T')[0] || '',
       emptyReturnDate: shipment.emptyReturnDate?.split('T')[0] || '',
@@ -1545,6 +1546,9 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="ISF Sent to Customs" value={shipment.isfSentDate ? new Date(shipment.isfSentDate).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
                   <Inp type="date" value={ed.isfSentDate} onChange={e => set('isfSentDate', e.target.value)} />
                 </Field>
+                <Field label="LFD (Last Free Day)" value={shipment.containerLastFreeDay ? new Date(shipment.containerLastFreeDay).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                  <Inp type="date" value={ed.containerLastFreeDay} onChange={e => set('containerLastFreeDay', e.target.value)} />
+                </Field>
 
                 {/* Advance Payment Status — spans full row */}
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -1630,7 +1634,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="BOL Number" value={shipment.bolNumber} editing={editingSection === 'ports'}>
                   <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
                 </Field>
-                <Field label="ETD" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
+                <Field label="ATD" value={shipment.vesselDeparture ? formatDateUTC(shipment.vesselDeparture) : null} editing={editingSection === 'ports'}>
                   <Inp type="date" value={ed.vesselDeparture} onChange={e => set('vesselDeparture', e.target.value)} />
                 </Field>
                 <Field label="W-Dep" value={shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0]) ? `W${shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0])}` : null} editing={editingSection === 'ports'}>

@@ -86,6 +86,10 @@ const OrdersPage = ({ selectedCompany }) => {
   };
 
   const handleCreatePO = async (order) => {
+    if (!order.referenceId) {
+      alert(`This offer (${order.offerId}) isn't linked to a shipment yet — assign it a Ref ID from the Create Shipment screen first.`);
+      return;
+    }
     try {
       // Find the grower's contact record to use as PO supplier
       const growerContacts = await contactsApi.getAll('Grower');
@@ -200,7 +204,11 @@ const OrdersPage = ({ selectedCompany }) => {
             ) : (
               filteredOrders.map((o) => (
                 <tr key={o.id} className="shipment-card" style={{ marginBottom: '8px' }}>
-                  <td style={{ fontWeight: 600 }}>{o.referenceId}</td>
+                  <td style={{ fontWeight: 600 }}>
+                    {o.referenceId ? o.referenceId : (
+                      <span title="Not yet linked to a shipment" style={{ color: '#f59e0b' }}>{o.offerId}</span>
+                    )}
+                  </td>
                   <td>
                     <div className="font-medium text-white">{o.contact?.name || 'Unknown'}</div>
                     <div className="text-muted" style={{ fontSize: '0.8rem' }}>{o.contact?.company}</div>

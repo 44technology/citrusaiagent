@@ -12,7 +12,7 @@ const EMPTY_FORM = {
   containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
   variety: '', product: '', grower: '', soNumber: '', poNumber: '',
-  category: '', qcArrival: '', gateInEmptyDate: '', isfSentDate: '',
+  category: '', qcArrival: '', gateInEmptyDate: '', isfSentDate: '', containerLastFreeDay: '',
   customerName: '', customerCompany: '', customerEmail: '', customerPhone: ''
 };
 
@@ -76,7 +76,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           category:         initialData.category      || '',
           notes:            initialData.notes         || '',
           status:           'Pending',
-          // containerNumber, bolNumber, soNumber, poNumber, vesselEta, vesselDeparture, qcArrival, gateInEmptyDate, isfSentDate intentionally blank
+          // containerNumber, bolNumber, soNumber, poNumber, vesselEta, vesselDeparture, qcArrival, gateInEmptyDate, isfSentDate, containerLastFreeDay intentionally blank
         });
         setIsLabelManual(false);
         // Intentionally clear ref ID on clone — each shipment must have a unique ref
@@ -135,14 +135,35 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     setForm(prev => ({ ...prev, orderId: '' }));
   };
 
-  // REF ID search — auto-match by referenceId
+  // Link an order/offer to this shipment — if it's still an unlinked offer
+  // (no Ref ID yet), assign it the next real Order Ref ID first.
+  const [assigningRef, setAssigningRef] = useState(false);
+  const linkOrder = async (order) => {
+    if (order.referenceId) { applyOrder(order); return; }
+    setAssigningRef(true);
+    try {
+      const updated = await ordersApi.assignRefId(order.id);
+      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+      applyOrder(updated);
+    } catch (err) {
+      alert('Failed to assign Ref ID: ' + err.message);
+    } finally {
+      setAssigningRef(false);
+    }
+  };
+
+  // REF ID / Offer ID search — auto-match by either
   const handleRefIdSearch = (val) => {
     setRefIdInput(val);
     setMatchedOrder(null);
     setForm(prev => ({ ...prev, orderId: '' }));
     if (!val.trim()) return;
-    const found = orders.find(o => String(o.referenceId).toLowerCase() === val.trim().toLowerCase());
-    if (found) applyOrder(found);
+    const v = val.trim().toLowerCase();
+    const found = orders.find(o =>
+      (o.referenceId && String(o.referenceId).toLowerCase() === v) ||
+      (o.offerId && o.offerId.toLowerCase() === v)
+    );
+    if (found) linkOrder(found);
   };
 
   const handleChange = (field, value) => {
@@ -152,7 +173,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     if (field === 'orderId') {
       if (!value) { clearOrder(); return; }
       const order = orders.find(o => o.id === value);
-      if (order) { applyOrder(order); return; }
+      if (order) { linkOrder(order); return; }
     }
 
     if (field === 'product') {
@@ -289,7 +310,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <input
                   type="text"
                   className="ui-input"
-                  placeholder="Type REF ID to auto-link order…"
+                  placeholder="Type REF ID or Offer ID (OFR-...) to auto-link…"
                   value={refIdInput}
                   onChange={e => handleRefIdSearch(e.target.value)}
                   style={{ paddingLeft: 34, width: '100%' }}
@@ -338,10 +359,13 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                   <option value="">— No order link —</option>
                   {orders.map(o => (
                     <option key={o.id} value={o.id}>
-                      #{o.referenceId} — {o.product} {o.variety} ({o.boxQuantity} boxes)
+                      {o.referenceId ? `#${o.referenceId}` : `${o.offerId} (offer)`} — {o.product} {o.variety} ({o.boxQuantity} boxes)
                     </option>
                   ))}
                 </select>
+              )}
+              {assigningRef && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>Assigning Ref ID…</div>
               )}
             </div>
 
@@ -619,8 +643,8 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
               </div>
             </div>
 
-            {/* SO / PO / ISF */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            {/* SO / PO / ISF / LFD */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
               <div>
                 <label className="shipment-label">SO Number</label>
                 <input type="text" className="ui-input" placeholder="e.g. SO-12345"
@@ -635,6 +659,11 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">ISF Sent to Customs</label>
                 <input type="date" className="ui-input"
                   value={form.isfSentDate} onChange={e => handleChange('isfSentDate', e.target.value)} />
+              </div>
+              <div>
+                <label className="shipment-label">LFD (Last Free Day)</label>
+                <input type="date" className="ui-input"
+                  value={form.containerLastFreeDay} onChange={e => handleChange('containerLastFreeDay', e.target.value)} />
               </div>
             </div>
 

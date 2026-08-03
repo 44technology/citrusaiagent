@@ -158,17 +158,17 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
           status: form.status,
         });
       } else {
-        // One order per container — each gets its own reference number
+        // One order per container — each gets its own Offer ID (a real Ref ID
+        // is only assigned later, when the offer is linked to a shipment)
         const containers = Math.max(1, parseInt(form.fclCount) || 1);
         const boxesPerContainer = parseInt(form.fclBoxes) || Math.round(totalBoxes / containers);
         const created = [];
-        // Sequential — server generates consecutive reference IDs
         for (let i = 0; i < containers; i++) {
           const o = await ordersApi.create({ ...base, fclCount: 1, boxQuantity: boxesPerContainer, status: 'offer' });
-          created.push(o.referenceId);
+          created.push(o.offerId);
         }
         if (containers > 1) {
-          alert(`${containers} orders created: ${created.map(r => '#' + r).join(', ')}`);
+          alert(`${containers} offers created: ${created.join(', ')}`);
         }
       }
       onSaved();
@@ -188,7 +188,7 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 5 }}>
           <div>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <DollarSign size={18} className="text-orange" /> {isEdit ? `Edit Offer #${initialData.referenceId}` : 'Add Purchase Offer'}
+              <DollarSign size={18} className="text-orange" /> {isEdit ? `Edit Offer ${initialData.referenceId ? '#' + initialData.referenceId : initialData.offerId}` : 'Add Purchase Offer'}
             </h3>
             <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>from {grower.name}</p>
           </div>
@@ -198,8 +198,8 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {isEdit && (
               <>
-                <F label="REF ID (SUPER ADMIN)">
-                  <input className="ui-input" value={form.referenceId} onChange={e => set('referenceId', e.target.value)} />
+                <F label={`REF ID (SUPER ADMIN)${!initialData.referenceId ? ` — Offer ${initialData.offerId}` : ''}`}>
+                  <input className="ui-input" placeholder="Not yet linked to a shipment" value={form.referenceId} onChange={e => set('referenceId', e.target.value)} />
                 </F>
                 <F label="STATUS">
                   <select className="ui-select" value={form.status} onChange={e => set('status', e.target.value)}>
@@ -511,7 +511,11 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
                           const total = (o.purchasePrice || 0) * (o.boxQuantity || 0);
                           return (
                             <tr key={o.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                              <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>#{o.referenceId}</td>
+                              <td style={{ padding: '8px 12px', color: 'var(--orange-primary)', fontWeight: 700 }}>
+                                {o.referenceId ? `#${o.referenceId}` : (
+                                  <span title="Not yet linked to a shipment" style={{ color: '#f59e0b' }}>{o.offerId}</span>
+                                )}
+                              </td>
                               <td style={{ padding: '8px 12px' }}>{o.product}</td>
                               <td style={{ padding: '8px 12px' }}>{o.variety}</td>
                               <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>{o.boxType || '—'}</td>
@@ -553,7 +557,7 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
                                   </button>
                                   <button
                                     onClick={async () => {
-                                      if (!window.confirm(`Delete offer #${o.referenceId}? This cannot be undone.`)) return;
+                                      if (!window.confirm(`Delete offer ${o.referenceId ? '#' + o.referenceId : o.offerId}? This cannot be undone.`)) return;
                                       try { await ordersApi.delete(o.id); onRefresh(); }
                                       catch (err) { alert('Delete failed: ' + err.message); }
                                     }}

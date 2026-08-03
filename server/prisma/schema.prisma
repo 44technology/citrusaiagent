@@ -195,6 +195,7 @@ model Shipment {
   // ── Demurrage & Detention ────────────────────────
   poNumber              String?    // Purchase Order number
   isfSentDate           DateTime?  // Date ISF filing was sent to Customs
+  containerLastFreeDay  DateTime?  // LFD — general container last free day (optional)
   demurrageLastFreeDay  DateTime?  // Last free day at port (demurrage)
   detentionLastFreeDay  DateTime?  // Last free day at customer (per diem/detention)
   emptyReturnDate       DateTime?  // Actual date empty container was returned
@@ -271,7 +272,8 @@ model User {
 
 model Order {
   id            String   @id @default(uuid())
-  referenceId   String   @unique
+  referenceId   String?  @unique  // Real Order Ref ID — only assigned once linked to a shipment
+  offerId       String?  @unique  // Separate sequence for grower offers, e.g. "OFR-1001"
   grower        String?
   shipper       String?
   product       String

@@ -120,6 +120,7 @@ export const ordersApi = {
   create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/orders/${id}`, { method: 'DELETE' }),
+  assignRefId: (id) => request(`/orders/${id}/assign-ref-id`, { method: 'POST' }),
 };
 
 // ─── Accounting ──────────────────────────────────────

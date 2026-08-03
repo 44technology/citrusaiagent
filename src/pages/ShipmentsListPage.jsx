@@ -45,7 +45,7 @@ const getLfdWarning = (s) => {
     if (days <= 3) return { label: `${label} ${days}d left`, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' };
     return null;
   };
-  return check(s.demurrageLastFreeDay, 'DEM') || check(s.detentionLastFreeDay, 'DET');
+  return check(s.containerLastFreeDay, 'LFD') || check(s.demurrageLastFreeDay, 'DEM') || check(s.detentionLastFreeDay, 'DET');
 };
 
 const StatusBadge = ({ status }) => {
@@ -188,6 +188,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'wArr',           label: 'W(ARR)',          width: 8,  get: s => getWeek(s.vesselEta) },
     { key: 'gateInEmptyDate',label: 'ATA(GATE IN EMPTY)', width: 16, get: s => s.gateInEmptyDate ? formatDateUTC(s.gateInEmptyDate) : '' },
     { key: 'isfSentDate',    label: 'ISF SENT (DD/MM/YY)', width: 16, get: s => s.isfSentDate ? formatDateUTC(s.isfSentDate) : '' },
+    { key: 'containerLFD',   label: 'LFD (DD/MM/YY)',  width: 14, get: s => s.containerLastFreeDay ? formatDateUTC(s.containerLastFreeDay) : '' },
     { key: 'pol',            label: 'POL',             width: 14, get: s => s.portOfLoading || '' },
     { key: 'pod',            label: 'POD',             width: 14, get: s => s.portOfDischarge || '' },
     { key: 'qcArrival',      label: 'QC SCORE',        width: 10, get: s => s.qcArrival || '' },

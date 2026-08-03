@@ -6,6 +6,7 @@ const router = express.Router();
 router.get('/', orderController.getAllOrders);
 router.get('/contact/:contactId', orderController.getContactOrders);
 router.post('/', orderController.createOrder);
+router.post('/:id/assign-ref-id', orderController.assignRefId);
 router.patch('/:id', orderController.updateOrder);
 router.delete('/:id', orderController.deleteOrder);
 

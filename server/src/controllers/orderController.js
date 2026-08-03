@@ -61,6 +61,39 @@ const generateRefId = async () => {
   return String(isNaN(num) ? START : num + 1);
 };
 
+const OFFER_PREFIX = 'OFR-';
+const generateOfferId = async () => {
+  const START = 1001;
+  const last = await prisma.order.findFirst({
+    where: { offerId: { startsWith: OFFER_PREFIX } },
+    orderBy: { offerId: 'desc' },
+    select: { offerId: true }
+  });
+  if (!last) return `${OFFER_PREFIX}${START}`;
+  const num = parseInt(last.offerId.slice(OFFER_PREFIX.length), 10);
+  return `${OFFER_PREFIX}${isNaN(num) ? START : num + 1}`;
+};
+
+// Assign a real, sequential Order Ref ID to an order that doesn't have one yet
+// (e.g. a grower offer being linked to a shipment for the first time)
+export const assignRefId = async (req, res) => {
+  try {
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'Order not found' });
+    if (existing.referenceId) return res.json(existing); // already has one — no-op
+    const referenceId = await generateRefId();
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { referenceId },
+      include: { contact: true }
+    });
+    await logOrderActivity(order.id, req.user?.username, 'Ref ID assigned', `#${referenceId}${existing.offerId ? ` (was ${existing.offerId})` : ''}`);
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const createOrder = async (req, res) => {
   try {
     const { userId, username } = req.user || {};
@@ -73,11 +106,16 @@ export const createOrder = async (req, res) => {
       oceanFreight, paymentTerms, producer, quality, sizes, fclCount, fclBoxes, incoterm
     } = req.body;
 
-    const referenceId = await generateRefId();
+    // Grower offers get their own Offer ID sequence — a real Ref ID is only
+    // assigned later, when the offer is linked to a shipment.
+    const isOffer = status === 'offer';
+    const referenceId = isOffer ? null : await generateRefId();
+    const offerId = isOffer ? await generateOfferId() : null;
 
     const order = await prisma.order.create({
       data: {
         referenceId,
+        offerId,
         grower: grower || null,
         shipper: shipper || null,
         product,
