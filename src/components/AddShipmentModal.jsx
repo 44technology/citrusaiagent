@@ -111,7 +111,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   // Auto-fill from a matched/selected order
   const applyOrder = (order) => {
     setMatchedOrder(order);
-    setRefIdInput(String(order.referenceId || ''));
+    setRefIdInput(String(order.referenceId || order.offerId || ''));
     // Derive box breakdown rows from the order's own box rows (e.g. 400 @ 15 KG, 1006 @ 16 KG)
     try {
       const rows = JSON.parse(order.boxType || '[]');
@@ -135,24 +135,11 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     setForm(prev => ({ ...prev, orderId: '' }));
   };
 
-  // Link an order/offer to this shipment — if it's still an unlinked offer
-  // (no Ref ID yet), assign it the next real Order Ref ID first.
-  const [assigningRef, setAssigningRef] = useState(false);
-  const linkOrder = async (order) => {
-    if (order.referenceId) { applyOrder(order); return; }
-    setAssigningRef(true);
-    try {
-      const updated = await ordersApi.assignRefId(order.id);
-      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
-      applyOrder(updated);
-    } catch (err) {
-      alert('Failed to assign Ref ID: ' + err.message);
-    } finally {
-      setAssigningRef(false);
-    }
-  };
-
-  // REF ID / Offer ID search — auto-match by either
+  // REF ID / Offer ID search — auto-match by either.
+  // NOTE: selecting an unlinked offer here only PREVIEWS it — a real Ref ID
+  // is only assigned at actual shipment save time (see handleSubmit), so
+  // opening/typing in this modal and closing it without saving never
+  // consumes a Ref ID.
   const handleRefIdSearch = (val) => {
     setRefIdInput(val);
     setMatchedOrder(null);
@@ -163,7 +150,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       (o.referenceId && String(o.referenceId).toLowerCase() === v) ||
       (o.offerId && o.offerId.toLowerCase() === v)
     );
-    if (found) linkOrder(found);
+    if (found) applyOrder(found);
   };
 
   const handleChange = (field, value) => {
@@ -173,7 +160,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     if (field === 'orderId') {
       if (!value) { clearOrder(); return; }
       const order = orders.find(o => o.id === value);
-      if (order) { linkOrder(order); return; }
+      if (order) { applyOrder(order); return; }
     }
 
     if (field === 'product') {
@@ -252,11 +239,26 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
         return;
       }
 
+      // 2b. Only NOW — actually saving the shipment — assign a real Ref ID to
+      // an unlinked offer, so merely previewing/selecting one in this modal
+      // and closing without saving never consumes a Ref ID.
+      let finalOrderId = form.orderId;
+      if (matchedOrder && !matchedOrder.referenceId) {
+        try {
+          const updated = await ordersApi.assignRefId(matchedOrder.id);
+          finalOrderId = updated.id;
+        } catch (err) {
+          alert('Failed to assign Ref ID: ' + err.message);
+          setLoading(false);
+          return;
+        }
+      }
+
       // 3. Create shipment
       const totalBoxes = validPackRows.reduce((s, r) => s + parseInt(r.boxQty), 0);
       const packTypeSummary = [...new Set(validPackRows.map(r => r.packType))].join(' + ');
       await onAdd({
-        ...form, contactId: finalContactId,
+        ...form, contactId: finalContactId, orderId: finalOrderId,
         numberOfBoxes: totalBoxes,
         packType: packTypeSummary,
         packBreakdown: JSON.stringify(validPackRows),
@@ -325,9 +327,12 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
 
               {/* Match result */}
               {refIdInput && matchedOrder && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, fontSize: '0.78rem', color: '#22c55e', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, fontSize: '0.78rem', color: '#22c55e', marginBottom: 6, flexWrap: 'wrap' }}>
                   <CheckCircle2 size={13} />
-                  <strong>#{matchedOrder.referenceId}</strong>
+                  <strong>{matchedOrder.referenceId ? `#${matchedOrder.referenceId}` : matchedOrder.offerId}</strong>
+                  {!matchedOrder.referenceId && (
+                    <span style={{ color: '#f59e0b', fontSize: '0.72rem' }}>(Ref ID assigned on save)</span>
+                  )}
                   <span style={{ color: 'var(--text-muted)' }}>—</span>
                   <span style={{ color: 'var(--text-primary)' }}>{[matchedOrder.product, matchedOrder.variety].filter(Boolean).join(' ')} · {matchedOrder.boxQuantity} boxes</span>
                   <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>Auto-filled ✓</span>

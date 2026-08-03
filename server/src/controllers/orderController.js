@@ -49,16 +49,29 @@ export const getContactOrders = async (req, res) => {
   }
 };
 
+// Ref IDs must be unique across BOTH Order.referenceId and any manually-typed
+// Shipment ref (referenceId / shipmentRefId) used when a shipment has no linked
+// order — those two pools were previously generated independently and could
+// collide (e.g. staff typing "260062" on a shipment while an Order later
+// auto-generated the same number). We take the true numeric max across all
+// three fields and continue from there.
 const generateRefId = async () => {
-  const START = 2026001;
-  const last = await prisma.order.findFirst({
-    where: { referenceId: { gte: String(START) } },
-    orderBy: { referenceId: 'desc' },
-    select: { referenceId: true }
-  });
-  if (!last) return String(START);
-  const num = parseInt(last.referenceId, 10);
-  return String(isNaN(num) ? START : num + 1);
+  const START = 260001;
+  const [orders, shipments] = await Promise.all([
+    prisma.order.findMany({ select: { referenceId: true } }),
+    prisma.shipment.findMany({ select: { referenceId: true, shipmentRefId: true } }),
+  ]);
+  let max = START - 1;
+  const consider = (v) => {
+    if (v === null || v === undefined) return;
+    const trimmed = String(v).trim();
+    if (!/^\d+$/.test(trimmed)) return; // ignore non-purely-numeric manual refs
+    const n = parseInt(trimmed, 10);
+    if (n > max) max = n;
+  };
+  orders.forEach(o => consider(o.referenceId));
+  shipments.forEach(s => { consider(s.referenceId); consider(s.shipmentRefId); });
+  return String(max + 1);
 };
 
 const OFFER_PREFIX = 'OFR-';
