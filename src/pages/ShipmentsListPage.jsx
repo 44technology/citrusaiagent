@@ -179,6 +179,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'bolNumber',      label: 'BOL N',           width: 18, get: s => s.bolNumber || '' },
     { key: 'customer',       label: 'CLIENT',          width: 18, get: s => s.contact?.name || '' },
     { key: 'shippingLine',   label: 'SHIPPING CO.',    width: 14, get: s => s.shippingLine || '' },
+    { key: 'truckingCarrier',label: 'TRUCKING',        width: 16, get: s => s.truckingCarrier || '' },
     { key: 'vesselName',     label: 'VESSEL NAME',     width: 20, get: s => s.vesselName || '' },
     { key: 'wDep',           label: 'W(DEP)',          width: 8,  get: s => getWeek(s.vesselDeparture) },
     { key: 'etd',            label: 'ATD (DD/MM/YY)',  width: 14, get: s => s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '' },
@@ -623,6 +624,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <SortTh label="BOXES"        field="numberOfBoxes"    sort={sort} setSort={setSort} />
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>TRUCKING</th>
                 <SortTh label="ATD"          field="vesselDeparture"  sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (DEP)</th>
                 <SortTh label="POL"          field="portOfLoading"    sort={sort} setSort={setSort} />
@@ -636,7 +638,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 21 : 20;
+                const colCount = isAdmin ? 22 : 21;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -697,6 +699,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.numberOfBoxes ? s.numberOfBoxes.toLocaleString() : '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{s.truckingCarrier || '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: 'var(--text-muted)' }}>{getWeek(s.vesselDeparture)}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfLoading ? s.portOfLoading.replace('Port of ', '') : '—'}</td>

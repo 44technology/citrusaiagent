@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Ship, MapPin, Calendar, UserPlus, UserCheck, Plus, Edit3, Search, CheckCircle2, AlertCircle } from 'lucide-react';
-import { contactsApi, ordersApi, shipmentsApi } from '../services/api';
+import { contactsApi, ordersApi, shipmentsApi, carriersApi } from '../services/api';
 import { formatFullDateUTC } from '../utils/dateUtils';
 
 const EMPTY_FORM = {
   contactId: '', orderId: '', label: '', origin: 'Morocco', destination: '',
   vesselName: '', containerNumber: '', bolNumber: '',
   vesselEta: '', vesselDeparture: '', vesselArrival: '',
-  shippingLine: '', status: 'Pending', notes: '',
+  shippingLine: '', truckingCarrier: '', status: 'Pending', notes: '',
   portOfLoading: 'Port of Agadir', portOfDischarge: '', transshipmentPort: '',
   containerType: '40RF', sealNumber: '', cargoDescription: '', grossWeight: '', numberOfBoxes: '', packType: '',
   reeferTempSet: '', reeferTempActual: '', humidity: '', ventilation: '', co2Level: '',
@@ -28,6 +28,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const [isLabelManual, setIsLabelManual] = useState(false);
   const [orders, setOrders] = useState([]);
   const [growers, setGrowers] = useState([]);
+  const [carriers, setCarriers] = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
   const [showManualSelect, setShowManualSelect] = useState(false);
@@ -43,6 +44,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     if (isOpen) {
       ordersApi.getAll().then(setOrders).catch(() => {});
       contactsApi.getAll('Grower').then(setGrowers).catch(() => {});
+      carriersApi.getAll().then(setCarriers).catch(() => {});
       if (initialData) {
         // Pre-fill from cloned shipment — clear unique fields
         setForm({
@@ -53,6 +55,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
           destination:      initialData.destination   || '',
           vesselName:       initialData.vesselName    || '',
           shippingLine:     initialData.shippingLine  || '',
+          truckingCarrier:  initialData.truckingCarrier || '',
           portOfLoading:    initialData.portOfLoading || 'Port of Agadir',
           portOfDischarge:  initialData.portOfDischarge || '',
           transshipmentPort:initialData.transshipmentPort || '',
@@ -467,7 +470,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
             </div>
 
             {/* Vessel Info Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
               <div>
                 <label className="shipment-label">Vessel Name</label>
                 <input type="text" className="ui-input" placeholder="e.g. MSC Carolina"
@@ -475,8 +478,27 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
               </div>
               <div>
                 <label className="shipment-label">Shipping Line</label>
-                <input type="text" className="ui-input" placeholder="e.g. MSC, Maersk..."
-                  value={form.shippingLine} onChange={(e) => handleChange('shippingLine', e.target.value)} />
+                <select className="ui-input" value={form.shippingLine} onChange={(e) => handleChange('shippingLine', e.target.value)}>
+                  <option value="">— Select Shipping Line —</option>
+                  {(form.shippingLine && !carriers.some(c => c.type === 'Shipping Line' && c.name === form.shippingLine)) && (
+                    <option value={form.shippingLine}>{form.shippingLine}</option>
+                  )}
+                  {carriers.filter(c => c.type === 'Shipping Line').map(c => (
+                    <option key={c.id} value={c.name}>{c.name}{c.scacCode ? ` (${c.scacCode})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="shipment-label">Trucking Carrier</label>
+                <select className="ui-input" value={form.truckingCarrier} onChange={(e) => handleChange('truckingCarrier', e.target.value)}>
+                  <option value="">— Select Trucking —</option>
+                  {(form.truckingCarrier && !carriers.some(c => c.type === 'Trucking' && c.name === form.truckingCarrier)) && (
+                    <option value={form.truckingCarrier}>{form.truckingCarrier}</option>
+                  )}
+                  {carriers.filter(c => c.type === 'Trucking').map(c => (
+                    <option key={c.id} value={c.name}>{c.name}{c.scacCode ? ` (${c.scacCode})` : ''}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

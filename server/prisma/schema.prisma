@@ -143,6 +143,7 @@ model Shipment {
   vesselDeparture DateTime?
   vesselArrival   DateTime?
   shippingLine    String?
+  truckingCarrier String?   // Assigned trucking company (from Carriers directory)
   status          String    @default("Pending")
   notes           String?
   contactId       String

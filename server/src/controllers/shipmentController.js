@@ -83,7 +83,7 @@ export const createShipment = async (req, res) => {
   try {
     const {
       label, referenceId, origin, destination, vesselName, containerNumber, bolNumber,
-      vesselEta, vesselDeparture, vesselArrival, shippingLine, status, notes, contactId,
+      vesselEta, vesselDeparture, vesselArrival, shippingLine, truckingCarrier, status, notes, contactId,
       // Port details
       portOfLoading, portOfDischarge, transshipmentPort,
       // Container & cargo
@@ -120,6 +120,7 @@ export const createShipment = async (req, res) => {
         vesselDeparture: parseDateUTC(vesselDeparture),
         vesselArrival: parseDateUTC(vesselArrival),
         shippingLine: shippingLine || null,
+        truckingCarrier: truckingCarrier || null,
         status: status || 'Pending',
         notes: notes || null,
         contactId,
@@ -246,7 +247,7 @@ export const updateShipment = async (req, res) => {
     // Only keep known Shipment fields
     const ALLOWED = new Set([
       'label','shipmentRefId','origin','destination','vesselName','containerNumber',
-      'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine',
+      'bolNumber','vesselEta','vesselDeparture','vesselArrival','shippingLine','truckingCarrier',
       'status','notes',
       'portOfLoading','portOfDischarge','transshipmentPort',
       'containerType','sealNumber','cargoDescription','grossWeight','numberOfBoxes',

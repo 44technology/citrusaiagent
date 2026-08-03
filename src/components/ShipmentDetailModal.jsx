@@ -17,7 +17,7 @@ import {
   ShieldCheck, FileSearch, Building2, Snowflake, DollarSign, TrendingUp, TrendingDown,
   Search, Paperclip, Upload, Download, Eye, Activity
 } from 'lucide-react';
-import { shipmentsApi, ordersApi, documentsApi, contactsApi } from '../services/api';
+import { shipmentsApi, ordersApi, documentsApi, contactsApi, carriersApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
 
 // ─── Shipment Documents ───────────────────────────────────────────────────────
@@ -1044,6 +1044,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   const [showAdd, setShowAdd]     = useState(false);
   const [orders, setOrders]       = useState([]);
   const [growers, setGrowers]     = useState([]);
+  const [carriers, setCarriers]   = useState([]);
   const [customers, setCustomers] = useState([]);
   const [refIdInput, setRefIdInput] = useState('');
   const [matchedOrder, setMatchedOrder] = useState(null);
@@ -1063,6 +1064,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
   useEffect(() => {
     ordersApi.getAll().then(setOrders).catch(() => {});
     contactsApi.getAll('Grower').then(setGrowers).catch(() => {});
+    carriersApi.getAll().then(setCarriers).catch(() => {});
     contactsApi.getAll().then(all => setCustomers(all.filter(c => c.type?.toLowerCase() === 'customer'))).catch(() => {});
   }, []);
 
@@ -1079,7 +1081,8 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
       departureWeek: shipment.departureWeek ?? getWeekNumber(shipment.vesselDeparture?.split('T')[0]),
       arrivalWeek: shipment.arrivalWeek ?? getWeekNumber(shipment.vesselEta?.split('T')[0]),
       vesselArrival: shipment.vesselArrival?.split('T')[0] || '',
-      shippingLine: shipment.shippingLine || '', status: shipment.status || 'Pending',
+      shippingLine: shipment.shippingLine || '', truckingCarrier: shipment.truckingCarrier || '',
+      status: shipment.status || 'Pending',
       notes: shipment.notes || '',
       portOfLoading: shipment.portOfLoading || '',
       portOfDischarge: shipment.portOfDischarge || '',
@@ -1601,7 +1604,28 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                   <Inp placeholder="Vessel name" value={ed.vesselName} onChange={e => set('vesselName', e.target.value)} />
                 </Field>
                 <Field label="Shipping Line" value={shipment.shippingLine} editing={editingSection === 'ports'}>
-                  <Inp placeholder="e.g. CMA CGM" value={ed.shippingLine} onChange={e => set('shippingLine', e.target.value)} />
+                  <select className="ui-input" style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                    value={ed.shippingLine} onChange={e => set('shippingLine', e.target.value)}>
+                    <option value="">— Select Shipping Line —</option>
+                    {(ed.shippingLine && !carriers.some(c => c.type === 'Shipping Line' && c.name === ed.shippingLine)) && (
+                      <option value={ed.shippingLine}>{ed.shippingLine}</option>
+                    )}
+                    {carriers.filter(c => c.type === 'Shipping Line').map(c => (
+                      <option key={c.id} value={c.name}>{c.name}{c.scacCode ? ` (${c.scacCode})` : ''}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Trucking Carrier" value={shipment.truckingCarrier} editing={editingSection === 'ports'}>
+                  <select className="ui-input" style={{ padding: '6px 10px', fontSize: '0.84rem' }}
+                    value={ed.truckingCarrier} onChange={e => set('truckingCarrier', e.target.value)}>
+                    <option value="">— Select Trucking —</option>
+                    {(ed.truckingCarrier && !carriers.some(c => c.type === 'Trucking' && c.name === ed.truckingCarrier)) && (
+                      <option value={ed.truckingCarrier}>{ed.truckingCarrier}</option>
+                    )}
+                    {carriers.filter(c => c.type === 'Trucking').map(c => (
+                      <option key={c.id} value={c.name}>{c.name}{c.scacCode ? ` (${c.scacCode})` : ''}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="BOL Number" value={shipment.bolNumber} editing={editingSection === 'ports'}>
                   <Inp placeholder="BOL #" value={ed.bolNumber} onChange={e => set('bolNumber', e.target.value)} />
