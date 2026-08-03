@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Truck, Ship, Plus, Search, X, Loader2, Edit3, Trash2,
-  FolderOpen, Eye, Download, UploadCloud, FileText
+  FolderOpen, Eye, Download, UploadCloud, FileText, Package
 } from 'lucide-react';
-import { carriersApi, documentsApi } from '../services/api';
+import { carriersApi, documentsApi, shipmentsApi } from '../services/api';
 
 const TYPE_META = {
   Trucking:       { icon: Truck, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
@@ -200,6 +200,7 @@ const CarrierModal = ({ carrier, onClose, onSaved }) => {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 const CarriersPage = () => {
   const [carriers, setCarriers] = useState([]);
+  const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -212,9 +213,22 @@ const CarriersPage = () => {
 
   const load = () => {
     setLoading(true);
-    carriersApi.getAll().then(setCarriers).catch(() => setCarriers([])).finally(() => setLoading(false));
+    Promise.all([
+      carriersApi.getAll(),
+      shipmentsApi.getAll().catch(() => []),
+    ]).then(([c, s]) => {
+      setCarriers(c);
+      setShipments(Array.isArray(s) ? s : []);
+    }).catch(() => setCarriers([])).finally(() => setLoading(false));
   };
   useEffect(load, []);
+
+  // A carrier's shipment count is matched by name against the field
+  // relevant to its type (shippingLine for Shipping Line, truckingCarrier for Trucking)
+  const shipmentCount = (carrier) => {
+    const field = carrier.type === 'Trucking' ? 'truckingCarrier' : 'shippingLine';
+    return shipments.filter(s => s[field] === carrier.name).length;
+  };
 
   const handleDelete = async (c) => {
     if (!window.confirm(`Delete carrier "${c.name}"?`)) return;
@@ -295,6 +309,7 @@ const CarriersPage = () => {
                 <th>PHONE</th>
                 <th>EMAIL</th>
                 <th>STATUS</th>
+                <th>SHIPMENTS</th>
                 <th>DOCS</th>
                 <th>ACTIONS</th>
               </tr>
@@ -321,6 +336,11 @@ const CarriersPage = () => {
                         background: c.status === 'Active' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
                         color: c.status === 'Active' ? '#22c55e' : 'var(--text-muted)',
                       }}>{c.status}</span>
+                    </td>
+                    <td>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, color: shipmentCount(c) > 0 ? 'var(--orange-primary)' : 'var(--text-muted)' }}>
+                        <Package size={13} /> {shipmentCount(c)}
+                      </span>
                     </td>
                     <td>
                       <button className="btn btn-glass" style={{ fontSize: '0.74rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 5 }}
