@@ -29,32 +29,63 @@ const fmtSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+// Grouped for the upload menu — Accounting paperwork separated from
+// shipping/customs and product/quality docs, so the two sides of every
+// PO/Invoice pair (Grower vs Customer) are easy to tell apart at a glance.
+const DOC_GROUPS = [
+  {
+    section: 'Accounting',
+    types: [
+      { key: 'POGrower',      label: 'PO — Grower' },
+      { key: 'POCustomer',    label: 'PO — Customer' },
+      { key: 'GrowerInv',     label: 'Invoice — Grower' },
+      { key: 'CustomerInv',   label: 'Invoice — Customer' },
+      { key: 'PaymentVoucher', label: 'Payment Voucher', important: true },
+    ],
+  },
+  {
+    section: 'Shipping & Customs',
+    types: [
+      { key: 'SWB',      label: 'Sea Waybill' },
+      { key: 'SWCInv',   label: 'SWC Invoice' },
+      { key: 'BOL',      label: 'Bill of Lading' },
+      { key: 'ArrivalNotice', label: 'Arrival Notice', important: true },
+      { key: 'FreightInv', label: 'Freight Invoice', important: true },
+      { key: 'ShippingDocs', label: 'Shipping Documents' },
+      { key: 'ISF',      label: 'ISF Filing' },
+      { key: 'Manifest', label: 'Cargo Manifest' },
+      { key: 'FA',       label: 'Freight Agreement' },
+      { key: 'REL/SWB',  label: 'Release / SWB' },
+    ],
+  },
+  {
+    section: 'Product & Quality',
+    types: [
+      { key: 'PL-Grower',   label: 'Packing List (Grower)' },
+      { key: 'PL-Customer', label: 'Packing List (Customer)' },
+      { key: 'Phyto',    label: 'Phytosanitary' },
+      { key: 'QCInspection', label: 'QC Inspection' },
+      { key: 'POD',      label: 'POD (Proof of Delivery)', important: true },
+    ],
+  },
+  {
+    section: 'Other',
+    types: [
+      { key: 'Photo',    label: 'Container Photo' },
+      { key: 'Other',    label: 'Other Document' },
+    ],
+  },
+];
+// Flat list for lookups (category → label) — includes legacy keys ('PO', 'INV')
+// so documents uploaded before this grouping still display correctly.
 const DOC_TYPES = [
-  { key: 'SWB',      label: 'Sea Waybill' },
-  { key: 'SWCInv',   label: 'SWC Invoice' },
-  { key: 'BOL',      label: 'Bill of Lading' },
-  { key: 'ArrivalNotice', label: 'Arrival Notice', important: true },
-  { key: 'FreightInv', label: 'Freight Invoice', important: true },
-  { key: 'ShippingDocs', label: 'Shipping Documents' },
-  { key: 'PL-Grower',   label: 'Packing List (Grower)' },
-  { key: 'PL-Customer', label: 'Packing List (Customer)' },
-  { key: 'INV',      label: 'Invoice' },
-  { key: 'CustomerInv', label: 'Customer Invoice' },
-  { key: 'GrowerInv',   label: 'Grower Invoice' },
-  { key: 'PO',       label: 'Purchase Order' },
-  { key: 'ISF',      label: 'ISF Filing' },
-  { key: 'Manifest', label: 'Cargo Manifest' },
-  { key: 'Phyto',    label: 'Phytosanitary' },
-  { key: 'QCInspection', label: 'QC Inspection' },
-  { key: 'FA',       label: 'Freight Agreement' },
-  { key: 'REL/SWB',  label: 'Release / SWB' },
-  { key: 'POD',      label: 'POD (Proof of Delivery)', important: true },
-  { key: 'Photo',    label: 'Container Photo' },
-  { key: 'Other',    label: 'Other Document' },
+  ...DOC_GROUPS.flatMap(g => g.types),
+  { key: 'PO',  label: 'Purchase Order (legacy)' },
+  { key: 'INV', label: 'Invoice (legacy)' },
 ];
 
-const CUSTOMER_DOC_KEYS = new Set(['PL-Customer', 'CustomerInv']);
-const GROWER_DOC_KEYS = new Set(['PL-Grower', 'GrowerInv']);
+const CUSTOMER_DOC_KEYS = new Set(['PL-Customer', 'CustomerInv', 'POCustomer', 'PaymentVoucher']);
+const GROWER_DOC_KEYS = new Set(['PL-Grower', 'GrowerInv', 'POGrower']);
 const docTypeColor = (key) => {
   if (CUSTOMER_DOC_KEYS.has(key)) return { text: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)' };
   if (GROWER_DOC_KEYS.has(key))   return { text: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.3)' };
@@ -238,36 +269,44 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
               <div style={{
                 position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 200,
                 background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
-                borderRadius: 10, padding: '4px 0', minWidth: 210,
+                borderRadius: 10, padding: '4px 0', minWidth: 230, maxHeight: 420, overflowY: 'auto',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
               }}>
-                {DOC_TYPES.map(t => {
-                  const done = uploadedTypes.has(t.key);
-                  return (
-                    <button
-                      key={t.key}
-                      onClick={() => handleTypeSelect(t.key)}
-                      style={{
-                        width: '100%', textAlign: 'left', background: 'none', border: 'none',
-                        padding: '7px 14px', cursor: 'pointer', fontSize: '0.82rem',
-                        color: done ? 'var(--text-muted)' : 'var(--text-primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.08)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >
-                      <span>
-                        <span style={{
-                          fontWeight: 700, fontFamily: 'monospace', fontSize: '0.76rem',
-                          marginRight: 8, color: docTypeColor(t.key).text
-                        }}>{t.key}</span>
-                        {t.label}
-                      </span>
-                      {done && <CheckCircle2 size={12} style={{ color: '#22c55e', flexShrink: 0 }} />}
-                    </button>
-                  );
-                })}
+                {DOC_GROUPS.map((group, gi) => (
+                  <div key={group.section}>
+                    <div style={{
+                      padding: '7px 14px 4px', fontSize: '0.66rem', fontWeight: 700,
+                      color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em',
+                      borderTop: gi > 0 ? '1px solid var(--border-glass)' : 'none',
+                      marginTop: gi > 0 ? 4 : 0,
+                    }}>
+                      {group.section}
+                    </div>
+                    {group.types.map(t => {
+                      const done = uploadedTypes.has(t.key);
+                      return (
+                        <button
+                          key={t.key}
+                          onClick={() => handleTypeSelect(t.key)}
+                          style={{
+                            width: '100%', textAlign: 'left', background: 'none', border: 'none',
+                            padding: '7px 14px', cursor: 'pointer', fontSize: '0.82rem',
+                            color: done ? 'var(--text-muted)' : 'var(--text-primary)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,107,0,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        >
+                          <span style={{ color: docTypeColor(t.key).text, fontWeight: done ? 400 : 600 }}>
+                            {t.label}
+                          </span>
+                          {done && <CheckCircle2 size={12} style={{ color: '#22c55e', flexShrink: 0 }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -304,9 +343,13 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                       className="ui-input"
                       value={editingCategory}
                       onChange={e => setEditingCategory(e.target.value)}
-                      style={{ padding: '2px 6px', fontSize: '0.72rem', fontFamily: 'monospace', width: 110 }}
+                      style={{ padding: '2px 6px', fontSize: '0.72rem', width: 160 }}
                     >
-                      {DOC_TYPES.map(t => <option key={t.key} value={t.key}>{t.key}</option>)}
+                      {DOC_GROUPS.map(group => (
+                        <optgroup key={group.section} label={group.section}>
+                          {group.types.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                        </optgroup>
+                      ))}
                     </select>
                     <button className="btn btn-primary" style={{ padding: '2px 7px', fontSize: '0.7rem' }}
                       onClick={() => handleUpdateCategory(doc.id, editingCategory)}>✓</button>
@@ -318,7 +361,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                     onClick={isSuperAdmin ? () => { setEditingDocId(doc.id); setEditingCategory(doc.category); } : undefined}
                     title={isSuperAdmin ? 'Click to change type' : undefined}
                     style={{
-                      fontWeight: 700, fontFamily: 'monospace', fontSize: '0.72rem', flexShrink: 0,
+                      fontWeight: 700, fontSize: '0.72rem', flexShrink: 0, whiteSpace: 'nowrap',
                       background: docTypeColor(typeInfo.key).bg,
                       color: docTypeColor(typeInfo.key).text,
                       padding: '2px 8px', borderRadius: 6,
@@ -326,7 +369,7 @@ const ShipmentDocuments = ({ shipment, canEdit, isSuperAdmin }) => {
                       border: isSuperAdmin
                         ? `1px solid ${docTypeColor(typeInfo.key).border}`
                         : '1px solid transparent',
-                    }}>{typeInfo.key}</span>
+                    }}>{typeInfo.label}</span>
                 )}
 
                 {/* File info */}
