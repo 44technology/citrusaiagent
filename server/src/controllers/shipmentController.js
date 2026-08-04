@@ -165,9 +165,74 @@ export const createShipment = async (req, res) => {
   }
 };
 
+// Human-readable labels for the shipment activity log — { date: true } fields
+// are formatted as DD/MM/YY, everything else is shown as plain text.
+const FIELD_META = {
+  label: { label: 'Label' },
+  origin: { label: 'Origin' },
+  destination: { label: 'Destination' },
+  vesselName: { label: 'Vessel Name' },
+  containerNumber: { label: 'Container Number' },
+  bolNumber: { label: 'BOL Number' },
+  vesselEta: { label: 'ETA', date: true },
+  vesselDeparture: { label: 'ATD', date: true },
+  vesselArrival: { label: 'Arrival Date', date: true },
+  shippingLine: { label: 'Shipping Line' },
+  truckingCarrier: { label: 'Trucking Carrier' },
+  notes: { label: 'Notes' },
+  portOfLoading: { label: 'POL' },
+  portOfDischarge: { label: 'POD' },
+  transshipmentPort: { label: 'Transshipment Port' },
+  containerType: { label: 'Container Type' },
+  sealNumber: { label: 'Seal Number' },
+  cargoDescription: { label: 'Cargo Description' },
+  grossWeight: { label: 'Gross Weight' },
+  numberOfBoxes: { label: 'Number of Boxes' },
+  pallets: { label: 'Pallets' },
+  packType: { label: 'Pack Type' },
+  product: { label: 'Product' },
+  variety: { label: 'Variety' },
+  grower: { label: 'Grower' },
+  category: { label: 'Category' },
+  reeferTempSet: { label: 'Reefer Set Temp' },
+  reeferTempActual: { label: 'Reefer Actual Temp' },
+  humidity: { label: 'Humidity' },
+  ventilation: { label: 'Ventilation' },
+  co2Level: { label: 'CO2 Level' },
+  advancePaymentStatus: { label: 'Advance Payment Status' },
+  transport: { label: 'Transport Mode' },
+  countryOfOrigin: { label: 'Country of Origin' },
+  oceanFreight: { label: 'Ocean Freight' },
+  advToGrower: { label: 'Advance to Grower' },
+  qcArrival: { label: 'QC Score' },
+  soNumber: { label: 'SO Number' },
+  poNumber: { label: 'PO Number' },
+  shipmentRefId: { label: 'Manual Ref ID' },
+  gateInEmptyDate: { label: 'ATA (Gate-in Empty)', date: true },
+  isfSentDate: { label: 'ISF Sent Date', date: true },
+  containerLastFreeDay: { label: 'LFD', date: true },
+  demurrageLastFreeDay: { label: 'DEM LFD', date: true },
+  detentionLastFreeDay: { label: 'DET LFD', date: true },
+  emptyReturnDate: { label: 'Empty Return Date', date: true },
+};
+
+const fmtActivityDate = (d) => {
+  if (!d) return null;
+  const dt = new Date(d);
+  if (isNaN(dt)) return null;
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
+const fmtActivityVal = (meta, v) => {
+  if (v === null || v === undefined || v === '') return null;
+  if (meta.date) return fmtActivityDate(v);
+  return String(v);
+};
+
 export const updateShipment = async (req, res) => {
   try {
-    const existing = await prisma.shipment.findUnique({ where: { id: req.params.id }, select: { status: true, containerReleased: true } });
+    // Fetch the full row (not just a couple of fields) so every field the
+    // user can edit has a "before" value to diff against for the activity log.
+    const existing = await prisma.shipment.findUnique({ where: { id: req.params.id } });
     const userName = req.user?.username || 'Unknown';
     const data = { ...req.body };
 
@@ -269,30 +334,64 @@ export const updateShipment = async (req, res) => {
       include: SHIPMENT_INCLUDE
     });
 
-    // Activity logging
+    // Activity logging — one precise entry per field that actually changed,
+    // so history always shows exactly what was edited, not just that
+    // "something" was saved. Special-cased fields (status, released, customer,
+    // order link, pack breakdown) get their own readable phrasing; everything
+    // else in FIELD_META is diffed generically.
     const sid = req.params.id;
-    const rawData = req.body;
-    if (rawData.status && existing && rawData.status !== existing.status) {
-      await logActivity(sid, userName, 'Status changed', `${existing.status} → ${rawData.status}`);
-    } else if (rawData.containerReleased !== undefined && existing && rawData.containerReleased !== existing.containerReleased) {
-      await logActivity(sid, userName, rawData.containerReleased ? 'Container released' : 'Container release unmarked');
-    } else if (rawData.status) {
-      await logActivity(sid, userName, 'Status updated', rawData.status);
-    } else {
-      const cargoFields = ['grower','variety','product','cargoDescription','grossWeight','numberOfBoxes','pallets','packType','advancePaymentStatus','soNumber'];
-      const portsFields = ['portOfLoading','portOfDischarge','transshipmentPort','vesselName','shippingLine','bolNumber','vesselDeparture','vesselEta','vesselArrival','demurrageLastFreeDay','detentionLastFreeDay','emptyReturnDate'];
-      const reeferFields = ['reeferTempSet','reeferTempActual','humidity','ventilation','co2Level'];
-      const keys = Object.keys(rawData);
-      if (keys.some(k => reeferFields.includes(k))) await logActivity(sid, userName, 'Updated reefer settings');
-      else if (keys.some(k => portsFields.includes(k))) await logActivity(sid, userName, 'Updated ports & schedule');
-      else if (keys.some(k => cargoFields.includes(k))) await logActivity(sid, userName, 'Updated cargo details');
-      else if (rawData.notes !== undefined) await logActivity(sid, userName, 'Updated notes');
-      else if (rawData.contactId !== undefined) await logActivity(sid, userName, 'Changed customer');
-      else await logActivity(sid, userName, 'Updated shipment');
+    let loggedSomething = false;
+
+    if (data.status !== undefined && existing && data.status !== existing.status) {
+      await logActivity(sid, userName, 'Status changed', `${existing.status} → ${data.status}`);
+      loggedSomething = true;
+    }
+    if (data.containerReleased !== undefined && existing && data.containerReleased !== existing.containerReleased) {
+      await logActivity(sid, userName, data.containerReleased ? 'Container released' : 'Container release unmarked');
+      loggedSomething = true;
+    }
+    if (data.packBreakdown !== undefined && existing && data.packBreakdown !== existing.packBreakdown) {
+      await logActivity(sid, userName, 'Box breakdown updated', data.packType || undefined);
+      loggedSomething = true;
+    }
+    if (contactRelation !== undefined && existing && req.body.contactId && req.body.contactId !== existing.contactId) {
+      try {
+        const [oldC, newC] = await Promise.all([
+          prisma.contact.findUnique({ where: { id: existing.contactId }, select: { name: true } }).catch(() => null),
+          prisma.contact.findUnique({ where: { id: req.body.contactId }, select: { name: true } }).catch(() => null),
+        ]);
+        await logActivity(sid, userName, 'Customer changed', `${oldC?.name || 'Unknown'} → ${newC?.name || 'Unknown'}`);
+      } catch {
+        await logActivity(sid, userName, 'Customer changed');
+      }
+      loggedSomething = true;
+    }
+    if (orderRelation !== undefined && existing && (shipment.orderId || null) !== (existing.orderId || null)) {
+      await logActivity(sid, userName, shipment.orderId ? 'Linked to order' : 'Unlinked from order',
+        shipment.order?.referenceId ? `#${shipment.order.referenceId}` : undefined);
+      loggedSomething = true;
+    }
+
+    for (const key of Object.keys(data)) {
+      const meta = FIELD_META[key];
+      if (!meta || !existing) continue;
+      const oldRaw = existing[key];
+      const newRaw = data[key];
+      const oldCmp = meta.date ? (oldRaw ? new Date(oldRaw).getTime() : null) : (oldRaw ?? null);
+      const newCmp = meta.date ? (newRaw ? new Date(newRaw).getTime() : null) : (newRaw ?? null);
+      if (oldCmp === newCmp) continue;
+      const oldFmt = fmtActivityVal(meta, oldRaw);
+      const newFmt = fmtActivityVal(meta, newRaw);
+      await logActivity(sid, userName, `${meta.label} changed`, oldFmt ? `${oldFmt} → ${newFmt || '—'}` : (newFmt || undefined));
+      loggedSomething = true;
+    }
+
+    if (!loggedSomething) {
+      await logActivity(sid, userName, 'Updated shipment');
     }
 
     // Sync linked order status when shipment status changes
-    if (rawData.status && shipment.orderId && existing && rawData.status !== existing.status) {
+    if (data.status && shipment.orderId && existing && data.status !== existing.status) {
       const ORDER_STATUS_MAP = {
         'Departed':             'in-transit',
         'In Transit':           'in-transit',
@@ -300,7 +399,7 @@ export const updateShipment = async (req, res) => {
         'Empty Return Pending': 'completed',
         'Empty Returned':       'completed',
       };
-      const newOrderStatus = ORDER_STATUS_MAP[rawData.status];
+      const newOrderStatus = ORDER_STATUS_MAP[data.status];
       if (newOrderStatus) {
         try {
           await prisma.order.update({ where: { id: shipment.orderId }, data: { status: newOrderStatus } });
