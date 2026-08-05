@@ -1366,6 +1366,31 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
             <div className="glass-panel" style={{ padding: 14 }}>
               <SectionHeader label="Container & Cargo" section="cargo" />
 
+              {/* ISF filing warning — must be filed 24h before loading */}
+              {!shipment.isfSentDate && shipment.vesselDeparture && (() => {
+                const days = Math.ceil((new Date(shipment.vesselDeparture) - new Date()) / 86400000);
+                if (days > 3) return null;
+                const overdue = days < 0;
+                return (
+                  <div
+                    title="File at least 24 hours before cargo loading, not before arrival or local departure from an intermediate port. Submit updates up to 24 hours before the ship arrives at the U.S. port. Fines up to $5,000 per violation for late, missing, or wrong data."
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 8, padding: '8px 12px', marginBottom: 12, cursor: 'help',
+                    }}>
+                    <AlertTriangle size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 600 }}>
+                      {overdue
+                        ? `ISF not filed — ${Math.abs(days)}d past ATD, up to $5,000 fine risk`
+                        : days === 0
+                        ? 'ISF not filed — vessel departs today'
+                        : `ISF not filed — ${days}d to ATD, must file 24h before loading`}
+                    </span>
+                  </div>
+                );
+              })()}
+
               {/* Linked Order — REF ID */}
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Linked Order (Ref ID)</div>

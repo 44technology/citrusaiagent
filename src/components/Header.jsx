@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, AlertTriangle, Ship, X, Lock } from 'lucide-react';
+import { Bell, Search, AlertTriangle, Ship, X, Lock, FileWarning } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
 import '../index.css';
 
@@ -45,21 +45,32 @@ const Header = ({ company }) => {
               urgent.push({ ...s, lfdDays: days, lfdType, type: 'lfd' });
             }
           };
+          checkLfd(s.containerLastFreeDay, 'LFD');
           checkLfd(s.demurrageLastFreeDay, 'DEM');
           checkLfd(s.detentionLastFreeDay, 'DET');
         }
+        // ISF filing warning — must be filed 24h before loading; we warn once
+        // ATD is within 3 days and nothing has been filed yet.
+        if (!s.isfSentDate && s.vesselDeparture) {
+          const isfDays = Math.ceil((new Date(s.vesselDeparture) - now) / 86400000);
+          if (isfDays <= 3) {
+            urgent.push({ ...s, isfDays, type: 'isf' });
+          }
+        }
       });
+      const rank = t => t === 'lfd' ? 0 : t === 'isf' ? 1 : 2;
       urgent.sort((a, b) => {
-        if (a.type === 'lfd' && b.type !== 'lfd') return -1;
-        if (a.type !== 'lfd' && b.type === 'lfd') return 1;
+        const r = rank(a.type) - rank(b.type);
+        if (r !== 0) return r;
         if (a.type === 'lfd') return a.lfdDays - b.lfdDays;
+        if (a.type === 'isf') return a.isfDays - b.isfDays;
         return a.daysLeft - b.daysLeft;
       });
       setAlerts(urgent);
     } catch {}
   };
 
-  const urgentCount = alerts.filter(a => a.type === 'lfd' || a.daysLeft <= 7).length;
+  const urgentCount = alerts.filter(a => a.type === 'lfd' || a.type === 'isf' || a.daysLeft <= 7).length;
   const totalCount  = alerts.length;
 
   return (
@@ -134,6 +145,33 @@ const Header = ({ company }) => {
                         }}>
                           <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                             <Lock size={15} style={{ color }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                              {s.containerNumber || s.bolNumber || '—'}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color, fontWeight: 700, marginTop: 3 }}>{msg}</div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (s.type === 'isf') {
+                      const overdue = s.isfDays < 0;
+                      const color = overdue || s.isfDays === 0 ? '#ef4444' : '#f59e0b';
+                      const msg = overdue
+                        ? `🔴 ISF not filed — ${Math.abs(s.isfDays)}d past ATD, up to $5,000 fine risk`
+                        : s.isfDays === 0
+                        ? '🔴 ISF not filed — vessel departs today!'
+                        : `⚠️ ISF not filed — ${s.isfDays}d to ATD, file 24h before loading`;
+                      return (
+                        <div key={`${s.id}-isf`} title="File at least 24 hours before cargo loading. Fines up to $5,000 per violation for late, missing, or wrong data." style={{
+                          padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                          display: 'flex', gap: 12, alignItems: 'flex-start',
+                          background: 'rgba(239,68,68,0.07)',
+                        }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                            <FileWarning size={15} style={{ color }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</div>

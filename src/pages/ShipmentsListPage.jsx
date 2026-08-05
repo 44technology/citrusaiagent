@@ -48,6 +48,21 @@ const getLfdWarning = (s) => {
   return check(s.containerLastFreeDay, 'LFD') || check(s.demurrageLastFreeDay, 'DEM') || check(s.detentionLastFreeDay, 'DET');
 };
 
+// ISF must be filed at least 24h before cargo loading — warn once ATD is
+// within 3 days and no ISF has been sent yet, escalating once it's overdue.
+const ISF_RULE_TEXT =
+  'File at least 24 hours before cargo loading, not before arrival or local departure from an intermediate port. ' +
+  'Submit updates or amendments as data changes, up to 24 hours before the ship arrives at the U.S. port. ' +
+  'Fines up to $5,000 per violation for late, missing, or wrong data.';
+const getIsfWarning = (s) => {
+  if (s.isfSentDate || !s.vesselDeparture) return null;
+  const days = Math.ceil((new Date(s.vesselDeparture) - new Date()) / 86400000);
+  if (days > 3) return null;
+  return days < 0
+    ? { label: `ISF NOT FILED — ${Math.abs(days)}d PAST ATD`, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' }
+    : { label: `ISF DUE — ${days}d to ATD`, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' };
+};
+
 const StatusBadge = ({ status }) => {
   const s = STATUS_COLORS[status] || STATUS_COLORS['Pending'];
   return (
@@ -669,6 +684,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                       {(() => { const w = getLfdWarning(s); return w ? (
                         <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: w.bg, color: w.color, whiteSpace: 'nowrap' }}>{w.label}</span>
                       ) : null; })()}
+                      {(() => { const w = getIsfWarning(s); return w ? (
+                        <span title={ISF_RULE_TEXT} style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: w.bg, color: w.color, whiteSpace: 'nowrap', cursor: 'help' }}>{w.label}</span>
+                      ) : null; })()}
                     </div>
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
@@ -707,10 +725,17 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#22c55e', fontWeight: 600 }}>{s.vesselEta ? formatDateUTC(s.vesselEta) : '—'}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#22c55e' }}>{getWeek(s.vesselEta)}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfDischarge ? s.portOfDischarge.replace('Port of ', '') : '—'}</td>
-                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                    {s.isfSentDate
-                      ? <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.78rem' }}>{formatDateUTC(s.isfSentDate)}</span>
-                      : <span style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 600 }}>Not Sent</span>}
+                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }} title={!s.isfSentDate ? ISF_RULE_TEXT : undefined}>
+                    {s.isfSentDate ? (
+                      <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.78rem' }}>{formatDateUTC(s.isfSentDate)}</span>
+                    ) : (() => {
+                      const w = getIsfWarning(s);
+                      return (
+                        <span style={{ color: w ? w.color : '#ef4444', fontSize: '0.72rem', fontWeight: 700, cursor: 'help' }}>
+                          {w ? w.label : 'Not Sent'}
+                        </span>
+                      );
+                    })()}
                   </td>
                   {isAdmin && (
                     <td style={{ padding: '10px 8px' }} onClick={e => e.stopPropagation()}>
