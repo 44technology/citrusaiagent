@@ -369,9 +369,6 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                   ))}
                 </select>
               )}
-              {assigningRef && (
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>Assigning Ref ID…</div>
-              )}
             </div>
 
             {/* Shipment Label (Manual/Auto) */}

@@ -263,7 +263,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
         (s.containerNumber || '').toLowerCase().includes(q) ||
         (s.vesselName || '').toLowerCase().includes(q) ||
         (s.contact?.name || '').toLowerCase().includes(q) ||
-        (s.order?.variety || '').toLowerCase().includes(q) ||
+        (s.variety || s.order?.variety || '').toLowerCase().includes(q) ||
+        (s.product || s.order?.product || '').toLowerCase().includes(q) ||
+        (s.grower || s.order?.grower || '').toLowerCase().includes(q) ||
         (s.portOfLoading || '').toLowerCase().includes(q) ||
         (s.portOfDischarge || '').toLowerCase().includes(q) ||
         (s.order?.referenceId ? String(s.order.referenceId) : '').includes(q) ||
