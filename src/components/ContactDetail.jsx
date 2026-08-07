@@ -114,7 +114,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
   };
 
   const handleAddPerson = async () => {
-    if (!personForm.name.trim()) return;
+    if (!personForm.firstName.trim()) return;
     setSavingPerson(true);
     try {
       const p = await contactsApi.createPerson(contact.id, personForm);
