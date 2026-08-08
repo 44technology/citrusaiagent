@@ -113,7 +113,7 @@ const ImportLeadsModal = ({ isOpen, onClose, onImported, importType = 'Lead' }) 
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 720 }}>
 
         {/* Header */}

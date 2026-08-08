@@ -219,7 +219,7 @@ export default function ImportShipmentsModal({ onClose, onImported }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 900, width: '95vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}

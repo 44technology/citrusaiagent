@@ -344,7 +344,7 @@ const OrderModal = ({ isOpen, onClose, onAdd, onEdit, initialData, customers, us
   const varieties = PRODUCTS[form.product] || [];
 
   return (
-    <div className="modal-overlay animate-fade-in" onClick={onClose}>
+    <div className="modal-overlay animate-fade-in">
       <div
         className="modal-content glass-panel"
         style={{ width: 740, maxWidth: '96vw', maxHeight: '92vh', overflowY: 'auto', padding: 0 }}

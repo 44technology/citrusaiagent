@@ -667,7 +667,7 @@ const AddEventModal = ({ shipmentId, destination, onClose, onSaved }) => {
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -906,7 +906,7 @@ const AddExpenseModal = ({ shipmentId, expenses, onClose, onSaved }) => {
   const sel = EXPENSE_TYPES.find(t => t.value === type);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1303,7 +1303,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
 
   return (
     <>
-      <div className={embedded ? '' : 'modal-overlay'} onClick={embedded ? undefined : onClose}>
+      <div className={embedded ? '' : 'modal-overlay'}>
         <div onClick={e => e.stopPropagation()}
           style={embedded ? { padding: 0 } : { maxWidth: 800, width: '96%', maxHeight: '92vh', overflowY: 'auto', padding: 0, background: 'var(--bg-card)', borderRadius: 16 }}>
 

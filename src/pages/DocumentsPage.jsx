@@ -86,7 +86,7 @@ const UploadModal = ({ onClose, onUploaded, contacts, orders, shipments, invoice
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ fontSize: '1.2rem' }}>Upload Document</h2>

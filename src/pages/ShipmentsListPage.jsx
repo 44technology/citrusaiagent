@@ -799,7 +799,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
 
       {/* Export Column Picker Modal */}
       {showExportModal && (
-        <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
+        <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: 480, width: '95vw' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

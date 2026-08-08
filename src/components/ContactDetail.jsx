@@ -635,7 +635,7 @@ const ContactDetail = ({ contact, onBack, onPromote, onRefresh }) => {
 
             {/* Add / Edit Program modal */}
             {showAddProgram && (
-              <div className="modal-overlay" onClick={() => setShowAddProgram(false)}>
+              <div className="modal-overlay">
                 <div className="modal-content glass-panel" style={{ maxWidth: 480, padding: 0 }} onClick={e => e.stopPropagation()}>
                   <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ margin: 0 }}>{editingProgramId ? 'Edit Program' : 'Add Program'}</h3>
