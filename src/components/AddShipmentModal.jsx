@@ -96,15 +96,27 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   // Auto-generate label logic
   useEffect(() => {
     if (!isLabelManual && isOpen) {
+      // Linked to a grower offer — Grower + ETD week + Destination + Pack type,
+      // e.g. "ESTCO W32 Philadelphia 16 kg"
+      if (matchedOrder) {
+        const parts = [
+          matchedOrder.grower || form.grower,
+          matchedOrder.departureWeek ? `W${matchedOrder.departureWeek}` : '',
+          form.destination,
+          (packRows[0]?.packType || '').toLowerCase(),
+        ].filter(Boolean);
+        setForm(prev => ({ ...prev, label: parts.join(' ') }));
+        return;
+      }
       const dateStr = form.vesselEta
         ? formatFullDateUTC(form.vesselEta)
         : formatFullDateUTC(new Date().toISOString());
-      
+
       let route = form.destination || 'New Shipment';
       if (form.origin) route = `${form.origin} - ${form.destination}`;
       setForm(prev => ({ ...prev, label: `${dateStr} ${route}` }));
     }
-  }, [form.vesselEta, form.origin, form.destination, isLabelManual, isOpen]);
+  }, [form.vesselEta, form.origin, form.destination, form.grower, matchedOrder, packRows, isLabelManual, isOpen]);
 
   if (!isOpen) return null;
 
@@ -155,6 +167,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       category: matchedCategory || prev.category,
       portOfLoading: order.departurePort || prev.portOfLoading,
       portOfDischarge: order.arrivalPort || prev.portOfDischarge,
+      destination: order.arrivalPort || prev.destination,
       grossWeight: estGrossWeight || prev.grossWeight,
     }));
   };
