@@ -112,14 +112,23 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   const applyOrder = (order) => {
     setMatchedOrder(order);
     setRefIdInput(String(order.referenceId || order.offerId || ''));
-    // Derive box breakdown rows from the order's own box rows (e.g. 400 @ 15 KG, 1006 @ 16 KG)
-    try {
-      const rows = JSON.parse(order.boxType || '[]');
-      const mapped = (Array.isArray(rows) ? rows : [])
-        .filter(r => r.boxType && r.boxQty)
-        .map(r => ({ packType: /kg/i.test(r.boxType) ? r.boxType : `${r.boxType} KG`, boxQty: String(r.boxQty) }));
-      if (mapped.length > 0) setPackRows(mapped);
-    } catch {}
+    // Derive box breakdown from the order's own fields — Order.boxType is a
+    // plain net-weight string (e.g. "17-18KG"), and the quantity lives in
+    // boxQuantity (falls back to fclBoxes for single-container offers).
+    const orderBoxQty = order.boxQuantity || order.fclBoxes;
+    let estGrossWeight = '';
+    if (order.boxType && orderBoxQty) {
+      const rawType = order.boxType.trim();
+      const packType = /kg/i.test(rawType) ? rawType.toUpperCase() : `${rawType} KG`;
+      setPackRows([{ packType, boxQty: String(orderBoxQty) }]);
+      // Estimate total gross weight = box qty × avg net weight per box,
+      // parsed from the box type string (e.g. "17-18KG" → avg 17.5 × qty)
+      const nums = rawType.match(/\d+(\.\d+)?/g);
+      if (nums && nums.length) {
+        const avg = nums.reduce((s, n) => s + parseFloat(n), 0) / nums.length;
+        estGrossWeight = String(Math.round(avg * parseInt(orderBoxQty)));
+      }
+    }
     // Category (Order.quality, e.g. "CAT 1") may not exactly match our fixed
     // dropdown casing ("Cat 1") — normalize case-insensitively, or fall back
     // to the raw value shown as an extra option (same pattern as Shipping
@@ -139,6 +148,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
       category: matchedCategory || prev.category,
       portOfLoading: order.departurePort || prev.portOfLoading,
       portOfDischarge: order.arrivalPort || prev.portOfDischarge,
+      grossWeight: estGrossWeight || prev.grossWeight,
     }));
   };
 
