@@ -312,7 +312,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content shipment-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div className="flex-center gap-2">
