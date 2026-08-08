@@ -609,6 +609,8 @@ const SettingsPage = () => {
         <a href="mailto:info@44technology.com" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>info@44technology.com</a>
         <span style={{ opacity: 0.5 }}>·</span>
         <a href="tel:+19542499084" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>+1 954 249 9084</a>
+        <span style={{ opacity: 0.5 }}>·</span>
+        <span>Miami, FL, USA</span>
       </div>
 
     </div>
