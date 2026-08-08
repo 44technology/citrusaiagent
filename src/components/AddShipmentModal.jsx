@@ -120,12 +120,25 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
         .map(r => ({ packType: /kg/i.test(r.boxType) ? r.boxType : `${r.boxType} KG`, boxQty: String(r.boxQty) }));
       if (mapped.length > 0) setPackRows(mapped);
     } catch {}
+    // Category (Order.quality, e.g. "CAT 1") may not exactly match our fixed
+    // dropdown casing ("Cat 1") — normalize case-insensitively, or fall back
+    // to the raw value shown as an extra option (same pattern as Shipping
+    // Line / Trucking / Pack Type below).
+    const matchedCategory = order.quality
+      ? (CATEGORY_OPTIONS.find(c => c.toLowerCase() === order.quality.trim().toLowerCase()) || order.quality.trim())
+      : '';
+
     setForm(prev => ({
       ...prev,
       orderId: order.id,
       contactId: order.contactId || prev.contactId,
       cargoDescription: [order.product, order.variety].filter(Boolean).join(' - '),
       grower: order.grower || prev.grower,
+      product: order.product || prev.product,
+      variety: order.variety || prev.variety,
+      category: matchedCategory || prev.category,
+      portOfLoading: order.departurePort || prev.portOfLoading,
+      portOfDischarge: order.arrivalPort || prev.portOfDischarge,
     }));
   };
 
@@ -630,6 +643,9 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                 <label className="shipment-label">Category</label>
                 <select className="ui-input" value={form.category} onChange={e => handleChange('category', e.target.value)}>
                   <option value="">— Select Category —</option>
+                  {(form.category && !CATEGORY_OPTIONS.includes(form.category)) && (
+                    <option value={form.category}>{form.category}</option>
+                  )}
                   {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
