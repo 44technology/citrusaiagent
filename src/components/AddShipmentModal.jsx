@@ -96,16 +96,17 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
   // Auto-generate label logic
   useEffect(() => {
     if (!isLabelManual && isOpen) {
-      // Linked to a grower offer — Grower + ETD week + Destination + Pack type,
-      // e.g. "ESTCO W32 Philadelphia 16 kg"
+      // Linked to a grower offer — Grower + ETD week + Destination + Offer #,
+      // e.g. "ESTCO W32 PHILADELPHIA 1003"
       if (matchedOrder) {
+        const offerNum = (matchedOrder.offerId || '').replace(/^OFR-/i, '') || matchedOrder.referenceId || '';
         const parts = [
           matchedOrder.grower || form.grower,
           matchedOrder.departureWeek ? `W${matchedOrder.departureWeek}` : '',
           form.destination,
-          (packRows[0]?.packType || '').toLowerCase(),
+          offerNum ? String(offerNum) : '',
         ].filter(Boolean);
-        setForm(prev => ({ ...prev, label: parts.join(' ') }));
+        setForm(prev => ({ ...prev, label: parts.join(' ').toUpperCase() }));
         return;
       }
       const dateStr = form.vesselEta
