@@ -598,6 +598,19 @@ const SettingsPage = () => {
         </div>
       )}
 
+      {/* Footer — quiet software vendor credit */}
+      <div style={{
+        marginTop: 40, paddingTop: 16, borderTop: '1px solid var(--border-glass)',
+        display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8,
+        flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--text-muted)', opacity: 0.7,
+      }}>
+        <span>Platform built &amp; maintained by <strong style={{ color: 'var(--text-muted)' }}>44 Technology</strong>, a 44 Network company</span>
+        <span style={{ opacity: 0.5 }}>·</span>
+        <a href="mailto:info@44technology.com" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>info@44technology.com</a>
+        <span style={{ opacity: 0.5 }}>·</span>
+        <a href="tel:+19542499084" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>+1 954 249 9084</a>
+      </div>
+
     </div>
   );
 };
