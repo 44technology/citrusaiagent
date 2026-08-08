@@ -119,14 +119,21 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
     let estGrossWeight = '';
     if (order.boxType && orderBoxQty) {
       const rawType = order.boxType.trim();
-      const packType = /kg/i.test(rawType) ? rawType.toUpperCase() : `${rawType} KG`;
-      setPackRows([{ packType, boxQty: String(orderBoxQty) }]);
-      // Estimate total gross weight = box qty × avg net weight per box,
-      // parsed from the box type string (e.g. "17-18KG" → avg 17.5 × qty)
-      const nums = rawType.match(/\d+(\.\d+)?/g);
-      if (nums && nums.length) {
-        const avg = nums.reduce((s, n) => s + parseFloat(n), 0) / nums.length;
+      // Sanity-check: a real per-box net weight is a small number (a few
+      // KG up to ~30). Some older offers have stray/garbage values (e.g. a
+      // total weight typed into this field by mistake) — if the parsed
+      // number(s) fall outside a plausible box-weight range, don't guess a
+      // pack type or gross weight from it; leave the row blank for staff
+      // to fill in correctly instead of showing something nonsensical.
+      const nums = (rawType.match(/\d+(\.\d+)?/g) || []).map(parseFloat);
+      const plausible = nums.length > 0 && nums.every(n => n >= 3 && n <= 40);
+      if (plausible) {
+        const packType = /kg/i.test(rawType) ? rawType.toUpperCase() : `${rawType} KG`;
+        setPackRows([{ packType, boxQty: String(orderBoxQty) }]);
+        const avg = nums.reduce((s, n) => s + n, 0) / nums.length;
         estGrossWeight = String(Math.round(avg * parseInt(orderBoxQty)));
+      } else {
+        setPackRows([{ packType: '', boxQty: String(orderBoxQty) }]);
       }
     }
     // Category (Order.quality, e.g. "CAT 1") may not exactly match our fixed
@@ -599,6 +606,7 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                   return (
                     <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
                       <select className="ui-input" value={row.packType} onChange={e => updatePackRow(idx, 'packType', e.target.value)}>
+                        {!row.packType && <option value="">— Select pack type —</option>}
                         {opts.map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
                       <input type="number" className="ui-input" placeholder="Box qty" required

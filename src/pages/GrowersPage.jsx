@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen, Edit3, Save } from 'lucide-react';
 import { contactsApi, ordersApi } from '../services/api';
 
-import { PRODUCTS } from '../constants/products';
+import { PRODUCTS, PACK_OPTIONS } from '../constants/products';
+
+// Same fixed category list used on the shipment side (AddShipmentModal /
+// ShipmentDetailModal) — keeping the values identical here means an
+// offer's Quality auto-matches the Category dropdown with no normalization
+// needed when it's later linked to a shipment.
+const CATEGORY_OPTIONS = ['Cat 1', 'Cat 1.5', 'Cat 2'];
 
 // ── Add Grower Modal ──────────────────────────────────────────
 const AddGrowerModal = ({ onClose, onSaved }) => {
@@ -117,6 +123,12 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
   });
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  // Quality / Pack Type are constrained dropdowns, but existing offers may
+  // hold a value outside the fixed list (legacy free-text data) — in that
+  // case start in "Other" mode so the raw value isn't silently discarded.
+  const [otherQuality, setOtherQuality] = useState(() => !!form.quality && !CATEGORY_OPTIONS.includes(form.quality));
+  const [otherBoxType, setOtherBoxType] = useState(() => !!form.boxType && !PACK_OPTIONS.includes(form.boxType));
 
   // Total boxes auto-derives from FCL × FCL BOXES unless typed manually
   const autoTotal = (parseInt(form.fclCount) || 0) * (parseInt(form.fclBoxes) || 0);
@@ -269,7 +281,20 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
               <input className="ui-input" placeholder="e.g. PHILLY" value={form.arrivalPort} onChange={e => set('arrivalPort', e.target.value)} />
             </F>
             <F label="QUALITY">
-              <input className="ui-input" placeholder="e.g. CAT 1" value={form.quality} onChange={e => set('quality', e.target.value)} />
+              {otherQuality ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input className="ui-input" placeholder="e.g. Cat 1 Extra" value={form.quality} onChange={e => set('quality', e.target.value)} autoFocus />
+                  <button type="button" className="btn btn-glass" style={{ padding: '0 10px', fontSize: '0.75rem' }}
+                    onClick={() => { setOtherQuality(false); set('quality', CATEGORY_OPTIONS[0]); }}>List</button>
+                </div>
+              ) : (
+                <select className="ui-select" value={form.quality}
+                  onChange={e => { if (e.target.value === '__other__') { setOtherQuality(true); set('quality', ''); } else { set('quality', e.target.value); } }}>
+                  <option value="">— Select —</option>
+                  {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__other__">Other…</option>
+                </select>
+              )}
             </F>
             <F label="SIZE">
               <input className="ui-input" placeholder="e.g. 100s 50% AND 113s 50%" value={form.sizes} onChange={e => set('sizes', e.target.value)} />
@@ -280,8 +305,21 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
             <F label="FCL BOXES (PER CONTAINER)">
               <input type="number" className="ui-input" placeholder="e.g. 1480" value={form.fclBoxes} onChange={e => set('fclBoxes', e.target.value)} />
             </F>
-            <F label="NET WEIGHT (BOX)">
-              <input className="ui-input" placeholder="e.g. 17-18KG" value={form.boxType} onChange={e => set('boxType', e.target.value)} />
+            <F label="NET WEIGHT (BOX) / PACK TYPE">
+              {otherBoxType ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input className="ui-input" placeholder="e.g. 17-18 KG" value={form.boxType} onChange={e => set('boxType', e.target.value)} autoFocus />
+                  <button type="button" className="btn btn-glass" style={{ padding: '0 10px', fontSize: '0.75rem' }}
+                    onClick={() => { setOtherBoxType(false); set('boxType', PACK_OPTIONS[0]); }}>List</button>
+                </div>
+              ) : (
+                <select className="ui-select" value={form.boxType}
+                  onChange={e => { if (e.target.value === '__other__') { setOtherBoxType(true); set('boxType', ''); } else { set('boxType', e.target.value); } }}>
+                  <option value="">— Select —</option>
+                  {PACK_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                  <option value="__other__">Other…</option>
+                </select>
+              )}
             </F>
             <F label={`TOTAL BOXES ${autoTotal > 0 ? '(auto: FCL × FCL BOXES)' : '*'}`}>
               <input type="number" className="ui-input" placeholder={autoTotal > 0 ? String(autoTotal) : '0'} value={form.boxQuantity} onChange={e => set('boxQuantity', e.target.value)}
