@@ -44,7 +44,7 @@ const AddGrowerModal = ({ onClose, onSaved }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: 480, padding: 0 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="flex-center gap-2">
@@ -195,7 +195,7 @@ const AddOfferModal = ({ grower, onClose, onSaved, initialData = null }) => {
   const varieties = PRODUCTS[form.product] || [];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: 620, padding: 0, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 5 }}>
           <div>
@@ -797,7 +797,7 @@ const AddVendorPackageModal = ({ grower, onClose, onSaved }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: 520, padding: 0 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
