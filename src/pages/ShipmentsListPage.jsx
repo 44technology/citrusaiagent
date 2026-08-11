@@ -55,7 +55,7 @@ const ISF_RULE_TEXT =
   'Submit updates or amendments as data changes, up to 24 hours before the ship arrives at the U.S. port. ' +
   'Fines up to $5,000 per violation for late, missing, or wrong data.';
 const getIsfWarning = (s) => {
-  if (s.isfSentDate || !s.vesselDeparture) return null;
+  if (s.isfSentDate || !s.vesselDeparture || s.status === 'Empty Returned') return null;
   const days = Math.ceil((new Date(s.vesselDeparture) - new Date()) / 86400000);
   if (days > 3) return null;
   return days < 0

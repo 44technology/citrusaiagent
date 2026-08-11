@@ -50,8 +50,10 @@ const Header = ({ company }) => {
           checkLfd(s.detentionLastFreeDay, 'DET');
         }
         // ISF filing warning — must be filed 24h before loading; we warn once
-        // ATD is within 3 days and nothing has been filed yet.
-        if (!s.isfSentDate && s.vesselDeparture) {
+        // ATD is within 3 days and nothing has been filed yet. Skip completed
+        // shipments (container already empty-returned) — there's nothing left
+        // to file for.
+        if (!s.isfSentDate && s.vesselDeparture && s.status !== 'Empty Returned') {
           const isfDays = Math.ceil((new Date(s.vesselDeparture) - now) / 86400000);
           if (isfDays <= 3) {
             urgent.push({ ...s, isfDays, type: 'isf' });
