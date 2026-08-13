@@ -215,6 +215,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
 
   const DEFAULT_COLS = EXPORT_COLS.map(c => c.key);
   const [selectedExportCols, setSelectedExportCols] = useState(new Set(DEFAULT_COLS));
+  const [exportScope, setExportScope] = useState('current'); // 'current' (this tab only) | 'all' (Active + Completed)
 
   const loadData = async () => {
     setLoading(true);
@@ -254,9 +255,10 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const completedCount = shipments.filter(s => isCompleted(s)).length;
 
   // Filter + search + sort
-  const filtered = useMemo(() => {
-    let list = shipments.filter(s => {
-      if (lifecycleTab === 'Active' ? isCompleted(s) : !isCompleted(s)) return false;
+  // Shared predicate for search + all the sidebar filters — everything
+  // except the Active/Completed lifecycle tab, so it can be reused both for
+  // the on-screen list (tab-scoped) and for an "export all" that spans both.
+  const matchesFilters = (s) => {
       const q = search.toLowerCase();
       const matchSearch = !q ||
         (s.bolNumber || '').toLowerCase().includes(q) ||
@@ -289,23 +291,36 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       if (filters.etaFrom   && s.vesselEta && s.vesselEta < filters.etaFrom) return false;
       if (filters.etaTo     && s.vesselEta && s.vesselEta > filters.etaTo) return false;
       return true;
-    });
+  };
 
-    // Sort — computed fields need getters
-    const SORT_GET = {
-      refId: s => s.order?.referenceId || s.shipmentRefId || '',
-      'contact.name': s => s.contact?.name || '',
-    };
+  // Sort — computed fields need getters
+  const SORT_GET = {
+    refId: s => s.order?.referenceId || s.shipmentRefId || '',
+    'contact.name': s => s.contact?.name || '',
+  };
+  const sortList = (list) => {
     const getV = (s) => (SORT_GET[sort.field] ? SORT_GET[sort.field](s) : s[sort.field]);
-    list = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       let av = getV(a) ?? '', bv = getV(b) ?? '';
       if (typeof av === 'string') av = av.toLowerCase();
       if (typeof bv === 'string') bv = bv.toLowerCase();
       return sort.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
     });
+  };
 
-    return list;
+  const filtered = useMemo(() => {
+    const list = shipments.filter(s => {
+      if (lifecycleTab === 'Active' ? isCompleted(s) : !isCompleted(s)) return false;
+      return matchesFilters(s);
+    });
+    return sortList(list);
   }, [shipments, search, filters, sort, lifecycleTab]);
+
+  // Same filters/search/sort, but spans both Active and Completed — used
+  // only when exporting with "Active + Completed" scope selected.
+  const filteredAll = useMemo(() => {
+    return sortList(shipments.filter(matchesFilters));
+  }, [shipments, search, filters, sort]);
 
   // Export to Excel — dynamic columns
   // 1-based column index → Excel letter (A, B, ... Z, AA, AB, ...) — supports >26 columns
@@ -321,17 +336,20 @@ const ShipmentsListPage = ({ selectedCompany }) => {
 
   const handleExport = async () => {
     const cols = EXPORT_COLS.filter(c => selectedExportCols.has(c.key));
+    // 'all' spans both Active and Completed tabs; 'current' stays scoped to
+    // whichever lifecycle tab is open right now (previous/default behavior).
+    const exportRows = exportScope === 'all' ? filteredAll : filtered;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Shipments');
 
     const DARK = '1A1A2E', ORANGE = 'FF6B00', HEADER = '16213E';
     const WHITE = 'FFFFFF', MUTED = 'A0A0B0', GREEN = '22C55E';
     const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
-    const totalBoxes   = filtered.reduce((s, sh) => s + (sh.numberOfBoxes || 0), 0);
-    const totalPallets = filtered.reduce((s, sh) => s + (sh.pallets || 0), 0);
-    const onBoard    = filtered.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
-    const discharged = filtered.filter(s => ['Arrived','Delivered'].includes(s.status)).length;
-    const gateIn     = filtered.filter(s => s.status === 'Loading').length;
+    const totalBoxes   = exportRows.reduce((s, sh) => s + (sh.numberOfBoxes || 0), 0);
+    const totalPallets = exportRows.reduce((s, sh) => s + (sh.pallets || 0), 0);
+    const onBoard    = exportRows.filter(s => ['In Transit','Departed','Transshipment'].includes(s.status)).length;
+    const discharged = exportRows.filter(s => ['Arrived','Delivered'].includes(s.status)).length;
+    const gateIn     = exportRows.filter(s => s.status === 'Loading').length;
     const lastDataCol = colLetter(cols.length + 1); // col A = spacer, data cols start at B
 
     const style = (cell, { bg, color = WHITE, bold = false, sz = 10, align = 'left', wrap = false } = {}) => {
@@ -364,7 +382,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     // Row 3: Subtitle
     const subRow = ws.addRow([]); subRow.height = 20;
     const subCell = ws.getCell('B3');
-    subCell.value = `Generated: ${dateStr}  |  ${filtered.length} Shipments`;
+    subCell.value = `Generated: ${dateStr}  |  ${exportRows.length} Shipments${exportScope === 'all' ? ' (Active + Completed)' : ''}`;
     style(subCell, { bg: DARK, color: MUTED, sz: 9 });
     ws.mergeCells(`B3:${lastDataCol}3`);
     ws.getCell('A3').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + DARK } };
@@ -372,7 +390,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     // Row 4-5: Stats
     ws.addRow([]); ws.getRow(4).height = 20;
     const statDefs = [
-      ['TOTAL', filtered.length], ['ON BOARD', onBoard],
+      ['TOTAL', exportRows.length], ['ON BOARD', onBoard],
       ['DISCHARGED', discharged], ['GATE IN', gateIn],
       ['BOXES', totalBoxes], ['PALLETS', totalPallets],
     ];
@@ -405,7 +423,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     });
 
     // Data rows
-    filtered.forEach((s, i) => {
+    exportRows.forEach((s, i) => {
       const bg = i % 2 === 0 ? '12122A' : DARK;
       const row = ws.addRow(['', ...cols.map(c => {
         const v = c.get(s);
@@ -808,6 +826,32 @@ const ShipmentsListPage = ({ selectedCompany }) => {
               <button className="modal-close" onClick={() => setShowExportModal(false)}><X size={20} /></button>
             </div>
             <div style={{ padding: '16px 24px' }}>
+              {/* Export scope — current tab only, or Active + Completed combined */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>SCOPE</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { key: 'current', label: `${lifecycleTab} only (${filtered.length})` },
+                    { key: 'all',     label: `Active + Completed (${filteredAll.length})` },
+                  ].map(opt => (
+                    <label key={opt.key} style={{
+                      flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', fontSize: '0.8rem',
+                      background: exportScope === opt.key ? 'rgba(255,107,0,0.1)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${exportScope === opt.key ? 'var(--orange-primary)' : 'var(--border-glass)'}`,
+                    }}>
+                      <input
+                        type="radio"
+                        name="exportScope"
+                        checked={exportScope === opt.key}
+                        onChange={() => setExportScope(opt.key)}
+                        style={{ accentColor: 'var(--orange-primary)', cursor: 'pointer' }}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Select All */}
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 10, borderRadius: 8, background: 'rgba(255,107,0,0.08)', border: '1px solid rgba(255,107,0,0.2)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
                 <input
