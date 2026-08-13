@@ -382,6 +382,12 @@ const AddShipmentModal = ({ isOpen, onClose, onAdd, customers, initialData }) =>
                   <span style={{ marginLeft: 'auto', color: '#22c55e', fontWeight: 700 }}>Auto-filled ✓</span>
                 </div>
               )}
+              {refIdInput && matchedOrder && matchedOrder.status !== 'confirmed' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, fontSize: '0.78rem', color: '#f59e0b', marginBottom: 6 }}>
+                  <AlertCircle size={13} />
+                  This order is not yet <strong>confirmed</strong> (status: {matchedOrder.status}) — please contact the grower to confirm before shipping.
+                </div>
+              )}
               {refIdInput && !matchedOrder && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: '0.78rem', color: '#f87171', marginBottom: 6 }}>
                   <AlertCircle size={13} />
