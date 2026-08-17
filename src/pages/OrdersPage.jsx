@@ -1,8 +1,107 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package, Calculator } from 'lucide-react';
-import { ordersApi, contactsApi, accountingApi } from '../services/api';
+import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package, Calculator, X, UploadCloud, FileText, Loader2 } from 'lucide-react';
+import { ordersApi, contactsApi, accountingApi, documentsApi } from '../services/api';
 import OrderModal from '../components/OrderModal';
 import ProfitCalculator from '../components/ProfitCalculator';
+
+// ─── Create PO Modal — amount on the left, PO document upload on the right ──
+const CreatePOModal = ({ order, supplier, onClose, onCreated }) => {
+  const suggested = ((order.purchasePrice || 0) * (order.boxQuantity || 0)) || order.purchasePrice || 0;
+  const [amount, setAmount] = useState(suggested ? suggested.toFixed(2) : '');
+  const [files, setFiles] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  const addFiles = (list) => setFiles(prev => [...prev, ...Array.from(list || [])]);
+  const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
+
+  const handleSave = async () => {
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) { alert('Please enter a valid PO amount'); return; }
+    setSaving(true);
+    try {
+      const po = await accountingApi.createPO({
+        orderId: order.id,
+        supplierId: supplier.id,
+        totalAmount: amt,
+        poNumber: `PO-${order.referenceId}`,
+      });
+      for (const file of files) {
+        await documentsApi.upload(file, { poId: po.id, category: 'PO' });
+      }
+      alert(`Purchase Order ${po.poNumber} created (Draft).\nYou can manage it in the Accounting tab.`);
+      onCreated();
+      onClose();
+    } catch (err) {
+      alert('Create PO failed: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content glass-panel" style={{ maxWidth: 620, padding: 0 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FileText size={18} className="text-orange" /> Create PO — Order #{order.referenceId || order.offerId}
+            </h3>
+            <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Supplier: {supplier.name}</p>
+          </div>
+          <button className="icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div style={{ padding: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          {/* Left — order summary + amount */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              <div>{[order.product, order.variety].filter(Boolean).join(' - ')}</div>
+              <div style={{ color: 'var(--text-muted)' }}>{order.boxQuantity} boxes{order.boxType ? ` · ${order.boxType}` : ''}</div>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>PO TOTAL AMOUNT ($) *</label>
+              <input type="number" step="0.01" className="ui-input" placeholder="e.g. 22400.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus />
+            </div>
+          </div>
+
+          {/* Right — PO Upload */}
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>PO UPLOAD</label>
+            <label
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                border: '1.5px dashed var(--border-glass)', borderRadius: 10, padding: '18px 12px',
+                cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center',
+              }}
+            >
+              <UploadCloud size={22} style={{ color: 'var(--orange-primary)' }} />
+              Click to upload PO document(s)
+              <input type="file" multiple hidden onChange={e => { addFiles(e.target.files); e.target.value = ''; }} />
+            </label>
+            {files.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+                {files.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: 6, fontSize: '0.76rem' }}>
+                    <FileText size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                    <button type="button" onClick={() => removeFile(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}><X size={12} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-glass-light)', display: 'flex', gap: 10 }}>
+          <button type="button" className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          <button type="button" className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
+            {saving ? <><Loader2 size={15} className="animate-spin" /> Creating…</> : 'Create PO'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OrdersPage = ({ selectedCompany }) => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +111,7 @@ const OrdersPage = ({ selectedCompany }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCalc, setShowCalc] = useState(false);
+  const [poModal, setPoModal] = useState(null); // { order, supplier } | null
 
   const currentUser = (() => {
     try {
@@ -102,25 +202,7 @@ const OrdersPage = ({ selectedCompany }) => {
         alert(`No grower contact found for "${order.grower || '—'}".\nAdd the grower on the Growers page first, then create the PO.`);
         return;
       }
-
-      // Default amount: unit price × boxes (editable before confirm)
-      const suggested = ((order.purchasePrice || 0) * (order.boxQuantity || 0)) || order.purchasePrice || 0;
-      const amountStr = window.prompt(
-        `Create PO for order #${order.referenceId}\nSupplier: ${supplier.name}\n\nPO total amount ($):`,
-        suggested.toFixed(2)
-      );
-      if (amountStr === null) return;
-      const amount = parseFloat(amountStr);
-      if (isNaN(amount) || amount <= 0) { alert('Invalid amount'); return; }
-
-      const po = await accountingApi.createPO({
-        orderId: order.id,
-        supplierId: supplier.id,
-        totalAmount: amount,
-        poNumber: `PO-${order.referenceId}`,
-      });
-      alert(`Purchase Order ${po.poNumber} created (Draft).\nYou can manage it in the Accounting tab.`);
-      loadData();
+      setPoModal({ order, supplier });
     } catch (err) {
       alert('Create PO failed: ' + err.message);
     }
@@ -255,9 +337,6 @@ const OrdersPage = ({ selectedCompany }) => {
                         >
                           <option value="pending">Pending</option>
                           <option value="confirmed">Confirmed</option>
-                          <option value="pending shipment">Pending Shipment</option>
-                          <option value="in-transit">In-Transit</option>
-                          <option value="completed">Completed</option>
                         </select>
                         <div className="flex-center gap-2 mt-2">
                           <button 
@@ -334,8 +413,17 @@ const OrdersPage = ({ selectedCompany }) => {
         initialData={selectedOrder}
         customers={customers}
         userRole={userRole}
-        userContactId={userContactId} 
+        userContactId={userContactId}
       />
+
+      {poModal && (
+        <CreatePOModal
+          order={poModal.order}
+          supplier={poModal.supplier}
+          onClose={() => setPoModal(null)}
+          onCreated={loadData}
+        />
+      )}
     </div>
   );
 };
