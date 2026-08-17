@@ -1,102 +1,106 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package, Calculator, X, UploadCloud, FileText, Loader2 } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Calendar, Hash, Truck, Package, Calculator, X, UploadCloud, FileText, Loader2, Eye, Download, Trash2 } from 'lucide-react';
 import { ordersApi, contactsApi, accountingApi, documentsApi } from '../services/api';
 import OrderModal from '../components/OrderModal';
 import ProfitCalculator from '../components/ProfitCalculator';
 
-// ─── Create PO Modal — amount on the left, PO document upload on the right ──
-const CreatePOModal = ({ order, supplier, onClose, onCreated }) => {
-  const suggested = ((order.purchasePrice || 0) * (order.boxQuantity || 0)) || order.purchasePrice || 0;
-  const [amount, setAmount] = useState(suggested ? suggested.toFixed(2) : '');
-  const [files, setFiles] = useState([]);
-  const [saving, setSaving] = useState(false);
+// ─── PO Docs Modal — the offer/order itself IS the PO (created under
+// Growers when the offer is made); this just lets staff attach the PO
+// document to that order — no separate PO record to create anymore.
+const OrderPODocsModal = ({ order, onClose, onChanged }) => {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
-  const addFiles = (list) => setFiles(prev => [...prev, ...Array.from(list || [])]);
-  const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
+  const load = () => {
+    documentsApi.getAll({ orderId: order.id })
+      .then(d => setDocs((Array.isArray(d) ? d : []).filter(doc => doc.category === 'PO')))
+      .catch(() => setDocs([]))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [order.id]);
 
-  const handleSave = async () => {
-    const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) { alert('Please enter a valid PO amount'); return; }
-    setSaving(true);
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploading(true);
     try {
-      const po = await accountingApi.createPO({
-        orderId: order.id,
-        supplierId: supplier.id,
-        totalAmount: amt,
-        poNumber: `PO-${order.referenceId}`,
-      });
       for (const file of files) {
-        await documentsApi.upload(file, { poId: po.id, category: 'PO' });
+        await documentsApi.upload(file, { orderId: order.id, category: 'PO' });
       }
-      alert(`Purchase Order ${po.poNumber} created (Draft).\nYou can manage it in the Accounting tab.`);
-      onCreated();
-      onClose();
-    } catch (err) {
-      alert('Create PO failed: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
+      load();
+      onChanged?.();
+    } catch (err) { alert('Upload failed: ' + err.message); }
+    finally { setUploading(false); e.target.value = ''; }
+  };
+
+  const fetchBlob = (doc, mode) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token = localStorage.getItem('citrus_token');
+    return fetch(`${apiBase}/documents/${doc.id}/${mode}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error('Request failed'); return r.blob(); });
+  };
+  const handleView = (doc) => fetchBlob(doc, 'view')
+    .then(blob => window.open(URL.createObjectURL(blob), '_blank'))
+    .catch(err => alert('View failed: ' + err.message));
+  const handleDownload = (doc) => fetchBlob(doc, 'download')
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = doc.originalName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    })
+    .catch(err => alert('Download failed: ' + err.message));
+  const handleDelete = async (doc) => {
+    if (!window.confirm(`Delete "${doc.originalName}"?`)) return;
+    try { await documentsApi.delete(doc.id); setDocs(p => p.filter(d => d.id !== doc.id)); onChanged?.(); }
+    catch (err) { alert('Delete failed: ' + err.message); }
   };
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content glass-panel" style={{ maxWidth: 620, padding: 0 }} onClick={e => e.stopPropagation()}>
+      <div className="modal-content glass-panel" style={{ maxWidth: 480, padding: 0 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-glass-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FileText size={18} className="text-orange" /> Create PO — Order #{order.referenceId || order.offerId}
+              <FileText size={18} className="text-orange" /> PO Documents
             </h3>
-            <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Supplier: {supplier.name}</p>
+            <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Order #{order.referenceId || order.offerId}</p>
           </div>
           <button className="icon-btn" onClick={onClose}><X size={18} /></button>
         </div>
 
-        <div style={{ padding: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          {/* Left — order summary + amount */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              <div>{[order.product, order.variety].filter(Boolean).join(' - ')}</div>
-              <div style={{ color: 'var(--text-muted)' }}>{order.boxQuantity} boxes{order.boxType ? ` · ${order.boxType}` : ''}</div>
-            </div>
-            <div>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>PO TOTAL AMOUNT ($) *</label>
-              <input type="number" step="0.01" className="ui-input" placeholder="e.g. 22400.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus />
-            </div>
-          </div>
+        <div style={{ padding: 24 }}>
+          <label
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+              border: '1.5px dashed var(--border-glass)', borderRadius: 10, padding: '18px 12px',
+              cursor: uploading ? 'default' : 'pointer', color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', marginBottom: 16,
+            }}
+          >
+            {uploading ? <Loader2 size={22} className="animate-spin" style={{ color: 'var(--orange-primary)' }} /> : <UploadCloud size={22} style={{ color: 'var(--orange-primary)' }} />}
+            {uploading ? 'Uploading…' : 'Click to upload PO document(s)'}
+            <input type="file" multiple hidden disabled={uploading} onChange={handleUpload} />
+          </label>
 
-          {/* Right — PO Upload */}
-          <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>PO UPLOAD</label>
-            <label
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                border: '1.5px dashed var(--border-glass)', borderRadius: 10, padding: '18px 12px',
-                cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center',
-              }}
-            >
-              <UploadCloud size={22} style={{ color: 'var(--orange-primary)' }} />
-              Click to upload PO document(s)
-              <input type="file" multiple hidden onChange={e => { addFiles(e.target.files); e.target.value = ''; }} />
-            </label>
-            {files.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-                {files.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: 6, fontSize: '0.76rem' }}>
-                    <FileText size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-                    <button type="button" onClick={() => removeFile(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}><X size={12} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-glass-light)', display: 'flex', gap: 10 }}>
-          <button type="button" className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-          <button type="button" className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
-            {saving ? <><Loader2 size={15} className="animate-spin" /> Creating…</> : 'Create PO'}
-          </button>
+          {loading ? (
+            <div className="flex-center" style={{ padding: 20 }}><Loader2 size={20} className="animate-spin" style={{ color: 'var(--orange-primary)' }} /></div>
+          ) : docs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '10px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No PO documents uploaded yet</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {docs.map(doc => (
+                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: 6, fontSize: '0.8rem' }}>
+                  <FileText size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.originalName}</span>
+                  <button title="View" onClick={() => handleView(doc)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}><Eye size={14} /></button>
+                  <button title="Download" onClick={() => handleDownload(doc)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}><Download size={14} /></button>
+                  <button title="Delete" onClick={() => handleDelete(doc)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', padding: 4 }}><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -111,7 +115,7 @@ const OrdersPage = ({ selectedCompany }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCalc, setShowCalc] = useState(false);
-  const [poModal, setPoModal] = useState(null); // { order, supplier } | null
+  const [poDocsOrder, setPoDocsOrder] = useState(null); // order | null — shows the PO Docs modal
 
   const currentUser = (() => {
     try {
@@ -182,29 +186,6 @@ const OrdersPage = ({ selectedCompany }) => {
       loadData();
     } catch (err) {
       alert('Conversion failed: ' + err.message);
-    }
-  };
-
-  const handleCreatePO = async (order) => {
-    if (!order.referenceId) {
-      alert(`This offer (${order.offerId}) isn't linked to a shipment yet — assign it a Ref ID from the Create Shipment screen first.`);
-      return;
-    }
-    try {
-      // Find the grower's contact record to use as PO supplier
-      const growerContacts = await contactsApi.getAll('Grower');
-      let supplier = null;
-      if (order.grower) {
-        supplier = growerContacts.find(g => g.name?.trim().toLowerCase() === order.grower.trim().toLowerCase());
-      }
-      if (!supplier && order.contact?.type === 'Grower') supplier = order.contact;
-      if (!supplier) {
-        alert(`No grower contact found for "${order.grower || '—'}".\nAdd the grower on the Growers page first, then create the PO.`);
-        return;
-      }
-      setPoModal({ order, supplier });
-    } catch (err) {
-      alert('Create PO failed: ' + err.message);
     }
   };
 
@@ -346,22 +327,13 @@ const OrdersPage = ({ selectedCompany }) => {
                           >
                             Conv. to Invoice
                           </button>
-                          {o.purchaseOrders?.length > 0 ? (
-                            <span
-                              title={o.purchaseOrders.map(p => `${p.poNumber} (${p.status})`).join(', ')}
-                              style={{ fontSize: '0.7rem', padding: '4px 8px', borderRadius: 8, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontWeight: 700, whiteSpace: 'nowrap' }}
-                            >
-                              PO ✓
-                            </span>
-                          ) : (
-                            <button
-                              className="btn btn-glass"
-                              style={{ fontSize: '0.7rem', padding: '4px 8px' }}
-                              onClick={() => handleCreatePO(o)}
-                            >
-                              Create PO
-                            </button>
-                          )}
+                          <button
+                            className="btn btn-glass"
+                            style={{ fontSize: '0.7rem', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setPoDocsOrder(o)}
+                          >
+                            <FileText size={11} /> PO Docs
+                          </button>
                         </div>
                       </>
                     ) : (
@@ -416,12 +388,11 @@ const OrdersPage = ({ selectedCompany }) => {
         userContactId={userContactId}
       />
 
-      {poModal && (
-        <CreatePOModal
-          order={poModal.order}
-          supplier={poModal.supplier}
-          onClose={() => setPoModal(null)}
-          onCreated={loadData}
+      {poDocsOrder && (
+        <OrderPODocsModal
+          order={poDocsOrder}
+          onClose={() => setPoDocsOrder(null)}
+          onChanged={loadData}
         />
       )}
     </div>
