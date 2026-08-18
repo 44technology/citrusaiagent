@@ -164,6 +164,14 @@ export const carriersApi = {
   delete: (id) => request(`/carriers/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Account of Sale ─────────────────────────────────
+export const aosApi = {
+  getAll: () => request('/aos'),
+  getByShipment: (shipmentId) => request(`/aos/by-shipment/${shipmentId}`),
+  save: (shipmentId, data) => request(`/aos/by-shipment/${shipmentId}`, { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id) => request(`/aos/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Ports / Locations ───────────────────────────────
 export const portsApi = {
   getAll: () => request('/ports'),

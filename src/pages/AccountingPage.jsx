@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
-  ChevronDown, ChevronRight, Trash2, ArrowLeft
+  ChevronDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi, documentsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
+import AccountOfSaleModal from '../components/AccountOfSaleModal';
 
 // ─── PO Documents Modal ─────────────────────────────────────────────────────
 const PODocsModal = ({ po, onClose }) => {
@@ -444,6 +445,7 @@ const AccountingPage = ({ selectedCompany }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [aosShipment, setAosShipment] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -548,13 +550,16 @@ const AccountingPage = ({ selectedCompany }) => {
         <button className={`btn ${activeTab === 'advance' ? 'btn-primary' : 'btn-glass'}`} onClick={() => setActiveTab('advance')}>
           <CreditCard size={16} /> Advance Payments <span style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '1px 8px', fontSize: '0.75rem', marginLeft: 4 }}>{shipments.length}</span>
         </button>
+        <button className={`btn ${activeTab === 'aos' ? 'btn-primary' : 'btn-glass'}`} onClick={() => setActiveTab('aos')}>
+          <FileSpreadsheet size={16} /> Account of Sale <span style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '1px 8px', fontSize: '0.75rem', marginLeft: 4 }}>{shipments.filter(s => (s.expenses || []).length > 0).length}</span>
+        </button>
       </div>
 
       {/* Search & Filter */}
       <div style={{ display: 'flex', gap: 12 }}>
         <div className="glass-panel" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <Search size={16} className="text-muted" />
-          <input className="ui-input" style={{ border: 'none', background: 'transparent', flex: 1 }} placeholder={activeTab === 'invoices' ? 'Search invoices...' : 'Search purchase orders...'} value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="ui-input" style={{ border: 'none', background: 'transparent', flex: 1 }} placeholder={activeTab === 'invoices' ? 'Search invoices...' : activeTab === 'aos' ? 'Search by container, grower...' : 'Search purchase orders...'} value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>}
         </div>
         {activeTab === 'invoices' && (
@@ -773,8 +778,59 @@ const AccountingPage = ({ selectedCompany }) => {
         );
       })()}
 
+      {activeTab === 'aos' && (() => {
+        const withActivity = shipments.filter(s => (s.expenses || []).length > 0 && (
+          !search ||
+          (s.label || '').toLowerCase().includes(search.toLowerCase()) ||
+          (s.containerNumber || '').toLowerCase().includes(search.toLowerCase()) ||
+          (s.grower || '').toLowerCase().includes(search.toLowerCase()) ||
+          (s.contact?.name || '').toLowerCase().includes(search.toLowerCase())
+        ));
+        return (
+          <div style={{ borderRadius: 12, border: '1px solid var(--border-glass)', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr>
+                  {['REF ID', 'CONTAINER #', 'GROWER', 'TOTAL REVENUE', 'TOTAL EXPENSES', 'NET PROFIT', ''].map(h => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {withActivity.length === 0 ? (
+                  <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No shipments with expense/revenue entries yet. Add them from Shipment Detail → Expenses & Revenue.
+                  </td></tr>
+                ) : withActivity.map((s, i) => {
+                  const refId = s.order?.referenceId || s.shipmentRefId;
+                  const rev = (s.expenses || []).filter(e => e.isRevenue).reduce((a, e) => a + (e.amount || 0), 0);
+                  const exp = (s.expenses || []).filter(e => !e.isRevenue).reduce((a, e) => a + (e.amount || 0), 0);
+                  const net = rev - exp;
+                  return (
+                    <tr key={s.id} style={{ borderTop: '1px solid var(--border-glass-light)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: 'var(--orange-primary)', fontWeight: 700 }}>{refId ? `#${refId}` : '—'}</td>
+                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
+                      <td style={{ padding: '10px 14px' }}>{s.grower || '—'}</td>
+                      <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 700 }}>${rev.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td style={{ padding: '10px 14px', color: '#f59e0b', fontWeight: 700 }}>${exp.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td style={{ padding: '10px 14px', color: net >= 0 ? '#22c55e' : '#ef4444', fontWeight: 800 }}>{net >= 0 ? '+' : '-'}${Math.abs(net).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                        <button className="btn btn-glass" style={{ padding: '5px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setAosShipment(s)}>
+                          <FileSpreadsheet size={13} /> View AOS
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
       {showCreateModal && <CreateInvoiceModal onClose={() => setShowCreateModal(false)} onSaved={() => { setShowCreateModal(false); loadData(); }} />}
       {docsPo && <PODocsModal po={docsPo} onClose={() => setDocsPo(null)} />}
+      {aosShipment && <AccountOfSaleModal shipment={aosShipment} onClose={() => setAosShipment(null)} onSaved={loadData} />}
     </div>
   );
 };

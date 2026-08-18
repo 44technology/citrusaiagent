@@ -210,6 +210,7 @@ model Shipment {
   events           ShipmentEvent[]
   expenses         ShipmentExpense[]
   activities       ShipmentActivity[]
+  accountOfSale    AccountOfSale?
 }
 
 model Setting {
@@ -231,6 +232,36 @@ model ShipmentExpense {
   isRevenue     Boolean  @default(false)
   createdAt     DateTime @default(now())
   shipment      Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+}
+
+// ── Account of Sale — formal statement for one shipment, presented in the
+// standard grower-facing layout. The financial line items themselves are NOT
+// duplicated here — they're read live from the shipment's own ShipmentExpense
+// records (the existing "Expenses & Revenue" panel on Shipment Detail).
+// This model is just the extra header/metadata + a couple of overridable
+// numbers (admin fee %, advance) needed to render and export that document.
+model AccountOfSale {
+  id         String    @id @default(uuid())
+  shipmentId String    @unique
+  shipment   Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  aosNumber     String?   // defaults to the shipment's Ref ID, editable
+  date          DateTime  @default(now())
+  invoiceNumber String?
+
+  growerContactId String?
+  growerName       String?
+  growerAddress    String?
+
+  adminFeePct Float?  @default(0) // Operational Costs + Admin Fees, % of total revenue (optional deduction)
+  advance     Float?  @default(0) // Advance already paid to the grower — shown as "LESS ADVANCE" when > 0
+
+  remarks   String?
+  status    String?  @default("Draft") // Draft | Final
+  companyId String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ShipmentEvent {
