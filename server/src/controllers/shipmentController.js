@@ -25,7 +25,7 @@ const parseDateUTC = (dateStr) => {
 
 const SHIPMENT_INCLUDE = {
   contact: { select: { id: true, name: true, company: true } },
-  order: { select: { id: true, referenceId: true, product: true, variety: true } },
+  order: { select: { id: true, referenceId: true, product: true, variety: true, purchasePrice: true } },
   events: { orderBy: { eventDate: 'asc' } },
   expenses: { orderBy: { createdAt: 'asc' } },
   activities: { orderBy: { createdAt: 'desc' }, take: 50 },

@@ -861,7 +861,7 @@ const EXPENSE_TYPES = [
   { value: 'Other',           label: 'Other',              desc: '' },
 ];
 
-const AddExpenseModal = ({ shipmentId, expenses, onClose, onSaved }) => {
+const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) => {
   const [type, setType]         = useState('PurchaseOfGoods');
   const [description, setDesc]  = useState('');
   const [amount, setAmount]     = useState('');
@@ -871,6 +871,17 @@ const AddExpenseModal = ({ shipmentId, expenses, onClose, onSaved }) => {
   const [invoiceNum, setInvoiceNum] = useState('');
   const [isRevenue, setIsRevenue] = useState(false);
   const [saving, setSaving]     = useState(false);
+
+  // Purchase of Goods — pre-fill box qty/price from the shipment's own data
+  // (box count + the grower's purchase price from the linked offer) when
+  // known, so staff aren't re-typing numbers the portal already has.
+  useEffect(() => {
+    if (type === 'PurchaseOfGoods' && shipment) {
+      if (!boxQty && shipment.numberOfBoxes) setBoxQty(String(shipment.numberOfBoxes));
+      if (!boxPrice && shipment.order?.purchasePrice) setBoxPrice(String(shipment.order.purchasePrice));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, shipment]);
 
   // Auto-calculate Tariff based on existing PurchaseOfGoods
   useEffect(() => {
@@ -1067,6 +1078,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
       {showAdd && (
         <AddExpenseModal
           shipmentId={shipment.id}
+          shipment={shipment}
           expenses={expenses}
           onClose={() => setShowAdd(false)}
           onSaved={() => { setShowAdd(false); reload(); }}
