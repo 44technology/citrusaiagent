@@ -857,19 +857,22 @@ const EXPENSE_TYPES = [
   { value: 'Customs',         label: 'Customs',            desc: 'Manual entry' },
   { value: 'TerminalExamFee', label: 'Terminal Exam Fee',  desc: '' },
   { value: 'USDAExamFee',     label: 'USDA Exam Fee',      desc: 'Invoice number required' },
+  { value: 'OceanFreight',    label: 'Ocean Freight',      desc: 'Manual entry' },
+  { value: 'Trucking',        label: 'Trucking',           desc: 'Manual entry' },
   { value: 'Revenue',         label: 'Revenue',            desc: 'Income entry' },
   { value: 'Other',           label: 'Other',              desc: '' },
 ];
 
-const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) => {
-  const [type, setType]         = useState('PurchaseOfGoods');
-  const [description, setDesc]  = useState('');
-  const [amount, setAmount]     = useState('');
-  const [boxQty, setBoxQty]     = useState('');
-  const [boxPrice, setBoxPrice] = useState('');
-  const [tariffPct, setTariffPct] = useState('10');
-  const [invoiceNum, setInvoiceNum] = useState('');
-  const [isRevenue, setIsRevenue] = useState(false);
+const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClose, onSaved }) => {
+  const isEdit = !!editingExpense;
+  const [type, setType]         = useState(editingExpense?.type || 'PurchaseOfGoods');
+  const [description, setDesc]  = useState(editingExpense?.description || '');
+  const [amount, setAmount]     = useState(editingExpense ? String(editingExpense.amount ?? '') : '');
+  const [boxQty, setBoxQty]     = useState(editingExpense?.boxQuantity ? String(editingExpense.boxQuantity) : '');
+  const [boxPrice, setBoxPrice] = useState(editingExpense?.boxPrice ? String(editingExpense.boxPrice) : '');
+  const [tariffPct, setTariffPct] = useState(editingExpense?.tariffPercent ? String(editingExpense.tariffPercent) : '10');
+  const [invoiceNum, setInvoiceNum] = useState(editingExpense?.invoiceNumber || '');
+  const [isRevenue, setIsRevenue] = useState(editingExpense?.isRevenue || false);
   const [saving, setSaving]     = useState(false);
 
   // Purchase of Goods — pre-fill box qty/price from the shipment's own data
@@ -879,6 +882,10 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) =
     if (type === 'PurchaseOfGoods' && shipment) {
       if (!boxQty && shipment.numberOfBoxes) setBoxQty(String(shipment.numberOfBoxes));
       if (!boxPrice && shipment.order?.purchasePrice) setBoxPrice(String(shipment.order.purchasePrice));
+    }
+    // Ocean Freight — pre-fill from the shipment's own Ocean Freight field, if set
+    if (type === 'OceanFreight' && shipment?.oceanFreight && !amount) {
+      setAmount(String(shipment.oceanFreight));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, shipment]);
@@ -905,10 +912,15 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) =
   const handleSave = async () => {
     setSaving(true);
     try {
-      await shipmentsApi.createExpense(shipmentId, {
+      const payload = {
         type, description, amount, boxQuantity: boxQty, boxPrice,
         tariffPercent: tariffPct, invoiceNumber: invoiceNum, isRevenue
-      });
+      };
+      if (isEdit) {
+        await shipmentsApi.updateExpense(shipmentId, editingExpense.id, payload);
+      } else {
+        await shipmentsApi.createExpense(shipmentId, payload);
+      }
       onSaved();
     } catch (err) { alert(err.message); }
     finally { setSaving(false); }
@@ -921,7 +933,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) =
       <div className="modal-content" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <DollarSign size={16} className="text-orange" /> Add Expense / Revenue
+            <DollarSign size={16} className="text-orange" /> {isEdit ? 'Edit Entry' : 'Add Expense / Revenue'}
           </h4>
           <button className="icon-btn-small" onClick={onClose}><X size={16} /></button>
         </div>
@@ -985,7 +997,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) =
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
             <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving…' : 'Add Entry'}
+              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Entry'}
             </button>
           </div>
         </div>
@@ -997,6 +1009,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, onClose, onSaved }) =
 const ExpensesPanel = ({ shipment, canEdit }) => {
   const [expenses, setExpenses] = useState(shipment.expenses || []);
   const [showAdd, setShowAdd]   = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   const reload = async () => {
     try {
@@ -1066,22 +1079,28 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
                 {exp.isRevenue ? '+' : ''} ${(exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               {canEdit && (
-                <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4, opacity: 0.6 }}>
-                  <Trash2 size={13} />
-                </button>
+                <div style={{ display: 'flex', gap: 2 }}>
+                  <button onClick={() => setEditingExpense(exp)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, opacity: 0.7 }} title="Edit">
+                    <Edit3 size={13} />
+                  </button>
+                  <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4, opacity: 0.6 }} title="Delete">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {showAdd && (
+      {(showAdd || editingExpense) && (
         <AddExpenseModal
           shipmentId={shipment.id}
           shipment={shipment}
           expenses={expenses}
-          onClose={() => setShowAdd(false)}
-          onSaved={() => { setShowAdd(false); reload(); }}
+          editingExpense={editingExpense}
+          onClose={() => { setShowAdd(false); setEditingExpense(null); }}
+          onSaved={() => { setShowAdd(false); setEditingExpense(null); reload(); }}
         />
       )}
     </div>
