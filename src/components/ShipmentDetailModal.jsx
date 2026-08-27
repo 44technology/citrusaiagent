@@ -859,6 +859,8 @@ const EXPENSE_TYPES = [
   { value: 'USDAExamFee',     label: 'USDA Exam Fee',      desc: 'Invoice number required' },
   { value: 'OceanFreight',    label: 'Ocean Freight',      desc: 'Manual entry' },
   { value: 'Trucking',        label: 'Trucking',           desc: 'Manual entry' },
+  { value: 'Demurrage',       label: 'Demurrage',          desc: 'Manual entry' },
+  { value: 'PerDiem',         label: 'Per-Diem',           desc: 'Manual entry' },
   { value: 'Revenue',         label: 'Revenue',            desc: 'Income entry' },
   { value: 'Other',           label: 'Other',              desc: '' },
 ];
