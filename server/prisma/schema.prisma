@@ -230,6 +230,8 @@ model ShipmentExpense {
   tariffPercent Float?   @default(10)
   invoiceNumber String?
   isRevenue     Boolean  @default(false)
+  flagged       Boolean  @default(false) // needs attention — e.g. a discount may be requested
+  flagReason    String?  // why it's flagged
   createdAt     DateTime @default(now())
   shipment      Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 }

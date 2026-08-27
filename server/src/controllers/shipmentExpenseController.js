@@ -17,7 +17,7 @@ export const createExpense = async (req, res) => {
   const { id: shipmentId } = req.params;
   const {
     type, description, amount, boxQuantity, boxPrice,
-    tariffPercent, invoiceNumber, isRevenue
+    tariffPercent, invoiceNumber, isRevenue, flagged, flagReason
   } = req.body;
 
   if (!type) return res.status(400).json({ error: 'Type is required' });
@@ -41,6 +41,8 @@ export const createExpense = async (req, res) => {
         tariffPercent: tariffPercent ? parseFloat(tariffPercent) : 10,
         invoiceNumber: invoiceNumber || null,
         isRevenue: isRevenue === true || isRevenue === 'true',
+        flagged: flagged === true || flagged === 'true',
+        flagReason: flagReason || null,
       }
     });
     res.status(201).json(expense);

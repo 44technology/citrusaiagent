@@ -875,6 +875,8 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
   const [tariffPct, setTariffPct] = useState(editingExpense?.tariffPercent ? String(editingExpense.tariffPercent) : '10');
   const [invoiceNum, setInvoiceNum] = useState(editingExpense?.invoiceNumber || '');
   const [isRevenue, setIsRevenue] = useState(editingExpense?.isRevenue || false);
+  const [flagged, setFlagged]   = useState(editingExpense?.flagged || false);
+  const [flagReason, setFlagReason] = useState(editingExpense?.flagReason || '');
   const [saving, setSaving]     = useState(false);
 
   // Purchase of Goods — pre-fill box qty/price from the shipment's own data
@@ -916,7 +918,8 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
     try {
       const payload = {
         type, description, amount, boxQuantity: boxQty, boxPrice,
-        tariffPercent: tariffPct, invoiceNumber: invoiceNum, isRevenue
+        tariffPercent: tariffPct, invoiceNumber: invoiceNum, isRevenue,
+        flagged, flagReason: flagged ? flagReason : ''
       };
       if (isEdit) {
         await shipmentsApi.updateExpense(shipmentId, editingExpense.id, payload);
@@ -996,6 +999,23 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
             </label>
           )}
 
+          <div style={{ padding: '10px 12px', borderRadius: 8, background: flagged ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${flagged ? 'rgba(239,68,68,0.3)' : 'var(--border-glass)'}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.84rem', cursor: 'pointer', fontWeight: 600, color: flagged ? '#ef4444' : 'var(--text-primary)' }}>
+              <input type="checkbox" checked={flagged} onChange={e => setFlagged(e.target.checked)} />
+              <AlertTriangle size={14} /> Flag this entry
+            </label>
+            {flagged && (
+              <textarea
+                className="ui-input"
+                placeholder="Why is this flagged? e.g. customer is requesting a discount..."
+                value={flagReason}
+                onChange={e => setFlagReason(e.target.value)}
+                rows={2}
+                style={{ width: '100%', marginTop: 8, resize: 'vertical' }}
+              />
+            )}
+          </div>
+
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button className="btn btn-glass" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
             <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
@@ -1068,7 +1088,15 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
             <div key={exp.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: exp.isRevenue ? '#22c55e' : '#f59e0b', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{typeLabel(exp.type)}</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {typeLabel(exp.type)}
+                  {exp.flagged && (
+                    <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} title={exp.flagReason || 'Flagged'} />
+                  )}
+                </div>
+                {exp.flagged && exp.flagReason && (
+                  <div style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>⚠ {exp.flagReason}</div>
+                )}
                 {exp.type === 'PurchaseOfGoods' && exp.boxQuantity && (
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{exp.boxQuantity} boxes × ${exp.boxPrice}</div>
                 )}
