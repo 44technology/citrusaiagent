@@ -719,11 +719,13 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                     {s.poNumber || '—'}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
-                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {s.containerNumber || '—'}
-                    {hasFlaggedExpense(s) && (
-                      <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} title={flaggedReasons(s) || 'Flagged expense/revenue entry'} />
-                    )}
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, verticalAlign: 'middle' }}>
+                      {s.containerNumber || '—'}
+                      {hasFlaggedExpense(s) && (
+                        <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} title={flaggedReasons(s) || 'Flagged expense/revenue entry'} />
+                      )}
+                    </span>
                   </td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
