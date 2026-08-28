@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+// Types priced as Box Qty × Box Price (amount auto-calculated)
+const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
+
 export const getExpenses = async (req, res) => {
   try {
     const expenses = await prisma.shipmentExpense.findMany({
@@ -25,8 +28,8 @@ export const createExpense = async (req, res) => {
   try {
     let finalAmount = parseFloat(amount) || 0;
 
-    // Auto-calculate Purchase of Goods
-    if (type === 'PurchaseOfGoods' && boxQuantity && boxPrice) {
+    // Auto-calculate Purchase of Goods / Firm Price / Open Price
+    if (BOX_CALC_TYPES.includes(type) && boxQuantity && boxPrice) {
       finalAmount = parseFloat(boxQuantity) * parseFloat(boxPrice);
     }
 
@@ -60,8 +63,8 @@ export const updateExpense = async (req, res) => {
     if (data.boxPrice !== undefined) data.boxPrice = data.boxPrice ? parseFloat(data.boxPrice) : null;
     if (data.tariffPercent !== undefined) data.tariffPercent = data.tariffPercent ? parseFloat(data.tariffPercent) : 10;
 
-    // Recalculate Purchase of Goods
-    if (data.type === 'PurchaseOfGoods' && data.boxQuantity && data.boxPrice) {
+    // Recalculate Purchase of Goods / Firm Price / Open Price
+    if (BOX_CALC_TYPES.includes(data.type) && data.boxQuantity && data.boxPrice) {
       data.amount = data.boxQuantity * data.boxPrice;
     }
 

@@ -853,6 +853,8 @@ const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
 
 const EXPENSE_TYPES = [
   { value: 'PurchaseOfGoods', label: 'Purchase of Goods', desc: 'Box Qty × Box Price' },
+  { value: 'FirmPrice',       label: 'Firm Price',        desc: 'Box Qty × Box Price' },
+  { value: 'OpenPrice',       label: 'Open Price',        desc: 'Box Qty × Box Price' },
   { value: 'Tariff',          label: 'Tariff (10%)',       desc: '% of Purchase of Goods' },
   { value: 'Customs',         label: 'Customs',            desc: 'Manual entry' },
   { value: 'TerminalExamFee', label: 'Terminal Exam Fee',  desc: '' },
@@ -864,6 +866,9 @@ const EXPENSE_TYPES = [
   { value: 'Revenue',         label: 'Revenue',            desc: 'Income entry' },
   { value: 'Other',           label: 'Other',              desc: '' },
 ];
+
+// Types priced as Box Qty × Box Price (amount auto-calculated)
+const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
 
 const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClose, onSaved }) => {
   const isEdit = !!editingExpense;
@@ -908,7 +913,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
   }, [type, tariffPct]);
 
   useEffect(() => {
-    if (type === 'PurchaseOfGoods' && boxQty && boxPrice) {
+    if (BOX_CALC_TYPES.includes(type) && boxQty && boxPrice) {
       setAmount((parseFloat(boxQty) * parseFloat(boxPrice)).toFixed(2));
     }
   }, [boxQty, boxPrice, type]);
@@ -950,7 +955,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
             </select>
           </div>
 
-          {type === 'PurchaseOfGoods' && (
+          {BOX_CALC_TYPES.includes(type) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>BOX QTY</label>
@@ -979,11 +984,11 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
 
           <div>
             <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>
-              AMOUNT ($){type === 'PurchaseOfGoods' ? ' (auto-calculated)' : type === 'Tariff' ? ' (auto-calculated)' : ''}
+              AMOUNT ($){BOX_CALC_TYPES.includes(type) ? ' (auto-calculated)' : type === 'Tariff' ? ' (auto-calculated)' : ''}
             </label>
             <input type="number" className="ui-input" placeholder="0.00" step="0.01"
               value={amount} onChange={e => setAmount(e.target.value)}
-              style={{ width: '100%', background: (type === 'PurchaseOfGoods' || type === 'Tariff') ? 'rgba(255,107,0,0.06)' : undefined }}
+              style={{ width: '100%', background: (BOX_CALC_TYPES.includes(type) || type === 'Tariff') ? 'rgba(255,107,0,0.06)' : undefined }}
             />
           </div>
 
@@ -1097,7 +1102,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
                 {exp.flagged && exp.flagReason && (
                   <div style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>⚠ {exp.flagReason}</div>
                 )}
-                {exp.type === 'PurchaseOfGoods' && exp.boxQuantity && (
+                {BOX_CALC_TYPES.includes(exp.type) && exp.boxQuantity && (
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{exp.boxQuantity} boxes × ${exp.boxPrice}</div>
                 )}
                 {exp.type === 'USDAExamFee' && exp.invoiceNumber && (

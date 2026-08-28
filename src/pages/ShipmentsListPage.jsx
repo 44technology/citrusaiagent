@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   List, Plus, Search, Filter, Download, FileSpreadsheet,
-  ChevronUp, ChevronDown, ChevronsUpDown, X, Trash2
+  ChevronUp, ChevronDown, ChevronsUpDown, X, Trash2, AlertTriangle
 } from 'lucide-react';
 import { shipmentsApi, contactsApi } from '../services/api';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -62,6 +62,9 @@ const getIsfWarning = (s) => {
     ? { label: `ISF NOT FILED — ${Math.abs(days)}d PAST ATD`, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' }
     : { label: `ISF DUE — ${days}d to ATD`, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' };
 };
+
+const hasFlaggedExpense = (s) => (s.expenses || []).some(e => e.flagged);
+const flaggedReasons = (s) => (s.expenses || []).filter(e => e.flagged).map(e => e.flagReason).filter(Boolean).join(' · ');
 
 const StatusBadge = ({ status }) => {
   const s = STATUS_COLORS[status] || STATUS_COLORS['Pending'];
@@ -170,7 +173,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const [filters, setFilters] = useState({
     status: [], advPayment: [], customer: [], grower: [], bol: '', container: '',
     vessel: '', pol: [], pod: [], variety: [], product: [], pack: [],
-    etdFrom: '', etdTo: '', etaFrom: '', etaTo: '',
+    etdFrom: '', etdTo: '', etaFrom: '', etaTo: '', flagged: false,
   });
 
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
@@ -188,6 +191,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'label',          label: 'LABEL',           width: 20, get: s => s.label || '' },
     { key: 'category',       label: 'CAT',             width: 9,  get: s => s.category || '' },
     { key: 'numberOfBoxes',  label: 'BOXES',           width: 9,  get: s => s.numberOfBoxes || '' },
+    { key: 'firmPrice',      label: 'FIRM PRICE',      width: 12, get: s => (s.expenses || []).find(e => e.type === 'FirmPrice')?.amount ?? '' },
+    { key: 'openPrice',      label: 'OPEN PRICE',      width: 12, get: s => (s.expenses || []).find(e => e.type === 'OpenPrice')?.amount ?? '' },
     { key: 'pallets',        label: 'PALLETS',         width: 9,  get: s => s.pallets || '' },
     { key: 'packType',       label: 'PACK',            width: 10, get: s => s.packType || '' },
     { key: 'containerNumber',label: 'CONTAINER NO.',   width: 16, get: s => s.containerNumber || '' },
@@ -246,7 +251,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
   const packs     = [...new Set(shipments.map(s => s.packType || null).filter(Boolean))].sort();
 
   const setF = (k, v) => setFilters(p => ({ ...p, [k]: v }));
-  const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], product: [], pack: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '' });
+  const resetFilters = () => setFilters({ status: [], advPayment: [], customer: [], grower: [], bol: '', container: '', vessel: '', pol: [], pod: [], variety: [], product: [], pack: [], etdFrom: '', etdTo: '', etaFrom: '', etaTo: '', flagged: false });
   const hasFilters = Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : Boolean(v));
 
   // Lifecycle bucket: Completed = container empty-returned, everything else is Active
@@ -290,6 +295,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
       if (filters.etdTo     && s.vesselDeparture && s.vesselDeparture > filters.etdTo) return false;
       if (filters.etaFrom   && s.vesselEta && s.vesselEta < filters.etaFrom) return false;
       if (filters.etaTo     && s.vesselEta && s.vesselEta > filters.etaTo) return false;
+      if (filters.flagged   && !hasFlaggedExpense(s)) return false;
       return true;
   };
 
@@ -595,6 +601,20 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <MultiSelect label="PRODUCT" value={filters.product} onChange={v => setF('product', v)} options={products}  placeholder="All Product" />
             <MultiSelect label="VARIETY" value={filters.variety} onChange={v => setF('variety', v)} options={varieties} placeholder="All Variety" />
             <MultiSelect label="PACK"    value={filters.pack}    onChange={v => setF('pack', v)}    options={packs}     placeholder="All Pack" />
+            <div>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>FLAGGED</label>
+              <button
+                onClick={() => setF('flagged', !filters.flagged)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '8px 10px', borderRadius: 8, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+                  background: filters.flagged ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${filters.flagged ? '#ef4444' : 'var(--border-glass)'}`,
+                  color: filters.flagged ? '#ef4444' : 'var(--text-muted)',
+                }}>
+                <AlertTriangle size={13} /> Flagged only
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, gridColumn: 'span 2' }}>
               <FilterInput label="ETD FROM" type="date" value={filters.etdFrom} onChange={v => setF('etdFrom', v)} placeholder="" />
               <FilterInput label="ETD TO"   type="date" value={filters.etdTo}   onChange={v => setF('etdTo', v)}   placeholder="" />
@@ -658,6 +678,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>VARIETY</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PACK</th>
                 <SortTh label="BOXES"        field="numberOfBoxes"    sort={sort} setSort={setSort} />
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>FIRM PRICE</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>OPEN PRICE</th>
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>TRUCKING</th>
@@ -674,7 +696,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 22 : 21;
+                const colCount = isAdmin ? 24 : 23;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -697,7 +719,12 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                     {s.poNumber || '—'}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>{s.bolNumber || '—'}</td>
-                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>{s.containerNumber || '—'}</td>
+                  <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {s.containerNumber || '—'}
+                    {hasFlaggedExpense(s) && (
+                      <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} title={flaggedReasons(s) || 'Flagged expense/revenue entry'} />
+                    )}
+                  </td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <StatusBadge status={s.status} />
@@ -736,6 +763,8 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                     })()}
                   >{s.packType || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.numberOfBoxes ? s.numberOfBoxes.toLocaleString() : '—'}</td>
+                  <td style={{ padding: '10px 12px', color: '#f59e0b', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'FirmPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
+                  <td style={{ padding: '10px 12px', color: '#38bdf8', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'OpenPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{s.truckingCarrier || '—'}</td>
