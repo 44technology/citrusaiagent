@@ -682,21 +682,20 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>OPEN PRICE</th>
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>TRUCKING</th>
+                <SortTh label="ISF SENT"     field="isfSentDate"      sort={sort} setSort={setSort} />
                 <SortTh label="ATD"          field="vesselDeparture"  sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (DEP)</th>
                 <SortTh label="POL"          field="portOfLoading"    sort={sort} setSort={setSort} />
                 <SortTh label="ETA"          field="vesselEta"        sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>W (ARR)</th>
                 <SortTh label="POD"          field="portOfDischarge"  sort={sort} setSort={setSort} />
-                <SortTh label="ISF SENT"     field="isfSentDate"      sort={sort} setSort={setSort} />
                 {isAdmin && <th style={{ padding: '10px 8px', width: 40 }} />}
               </tr>
             </thead>
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 24 : 23;
+                const colCount = isAdmin ? 23 : 22;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -769,13 +768,6 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', color: '#38bdf8', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'OpenPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{s.truckingCarrier || '—'}</td>
-                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: 'var(--text-muted)' }}>{getWeek(s.vesselDeparture)}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfLoading ? s.portOfLoading.replace('Port of ', '') : '—'}</td>
-                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#22c55e', fontWeight: 600 }}>{s.vesselEta ? formatDateUTC(s.vesselEta) : '—'}</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#22c55e' }}>{getWeek(s.vesselEta)}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfDischarge ? s.portOfDischarge.replace('Port of ', '') : '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }} title={!s.isfSentDate ? ISF_RULE_TEXT : undefined}>
                     {s.isfSentDate ? (
                       <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.78rem' }}>{formatDateUTC(s.isfSentDate)}</span>
@@ -788,6 +780,12 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                       );
                     })()}
                   </td>
+                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{s.vesselDeparture ? formatDateUTC(s.vesselDeparture) : '—'}</td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: 'var(--text-muted)' }}>{getWeek(s.vesselDeparture)}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfLoading ? s.portOfLoading.replace('Port of ', '') : '—'}</td>
+                  <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#22c55e', fontWeight: 600 }}>{s.vesselEta ? formatDateUTC(s.vesselEta) : '—'}</td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#22c55e' }}>{getWeek(s.vesselEta)}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{s.portOfDischarge ? s.portOfDischarge.replace('Port of ', '') : '—'}</td>
                   {isAdmin && (
                     <td style={{ padding: '10px 8px' }} onClick={e => e.stopPropagation()}>
                       <button
