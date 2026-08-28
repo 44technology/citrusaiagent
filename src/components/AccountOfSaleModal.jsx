@@ -9,18 +9,28 @@ const fmt = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, 
 // kept in sync manually since it's a small fixed list.
 const TYPE_LABEL = {
   PurchaseOfGoods: 'Purchase of Goods',
+  CustomerPrice: 'Customer Price',
+  ExpectedReturn: 'Expected Return',
   Tariff: 'Tariff',
   Customs: 'Customs',
   TerminalExamFee: 'Terminal Exam Fee',
   USDAExamFee: 'USDA Exam Fee',
+  OceanFreight: 'Ocean Freight',
+  Trucking: 'Trucking',
+  Demurrage: 'Demurrage',
+  PerDiem: 'Per-Diem',
   Revenue: 'Revenue',
   Other: 'Other',
 };
+// Excluded from Revenue/Expense totals — a projection only, shown purely to
+// compare against Customer Price.
+const INFORMATIONAL_TYPES = ['ExpectedReturn'];
 
 const AccountOfSaleModal = ({ shipment, onClose, onSaved }) => {
   const expenses = shipment.expenses || [];
-  const revenueLines = expenses.filter(e => e.isRevenue);
-  const expenseLines = expenses.filter(e => !e.isRevenue);
+  const countable = expenses.filter(e => !INFORMATIONAL_TYPES.includes(e.type));
+  const revenueLines = countable.filter(e => e.isRevenue);
+  const expenseLines = countable.filter(e => !e.isRevenue);
 
   const totalRevenue = revenueLines.reduce((s, e) => s + (e.amount || 0), 0);
   const totalExpenses = expenseLines.reduce((s, e) => s + (e.amount || 0), 0);

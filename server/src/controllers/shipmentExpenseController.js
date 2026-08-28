@@ -2,11 +2,14 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Types priced as Box Qty × Box Price (amount auto-calculated)
-const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
-// Revenue types — Firm Price / Open Price are how a shipment is sold to the
-// customer (income), unlike Purchase of Goods which is the grower's cost.
-// Enforced server-side too, regardless of what isRevenue the client sends.
-const REVENUE_TYPES = ['Revenue', 'FirmPrice', 'OpenPrice'];
+const BOX_CALC_TYPES = ['PurchaseOfGoods', 'CustomerPrice', 'ExpectedReturn'];
+// Revenue types — Customer Price is the actual sales invoice to the
+// customer (real income), unlike Purchase of Goods (the grower's cost).
+// Expected Return is a projection only — never counted as real revenue or
+// expense; it exists purely to compare against Customer Price.
+const REVENUE_TYPES = ['Revenue', 'CustomerPrice'];
+// Types excluded from both revenue and expense totals — informational only.
+const INFORMATIONAL_TYPES = ['ExpectedReturn'];
 
 export const getExpenses = async (req, res) => {
   try {
@@ -24,7 +27,7 @@ export const createExpense = async (req, res) => {
   const { id: shipmentId } = req.params;
   const {
     type, description, amount, boxQuantity, boxPrice,
-    tariffPercent, invoiceNumber, isRevenue, flagged, flagReason
+    tariffPercent, invoiceNumber, isRevenue, flagged, flagReason, salesType
   } = req.body;
 
   if (!type) return res.status(400).json({ error: 'Type is required' });
@@ -32,7 +35,7 @@ export const createExpense = async (req, res) => {
   try {
     let finalAmount = parseFloat(amount) || 0;
 
-    // Auto-calculate Purchase of Goods / Firm Price / Open Price
+    // Auto-calculate Purchase of Goods / Customer Price / Expected Return
     if (BOX_CALC_TYPES.includes(type) && boxQuantity && boxPrice) {
       finalAmount = parseFloat(boxQuantity) * parseFloat(boxPrice);
     }
@@ -47,9 +50,12 @@ export const createExpense = async (req, res) => {
         boxPrice: boxPrice ? parseFloat(boxPrice) : null,
         tariffPercent: tariffPercent ? parseFloat(tariffPercent) : 10,
         invoiceNumber: invoiceNumber || null,
-        isRevenue: REVENUE_TYPES.includes(type) || isRevenue === true || isRevenue === 'true',
+        isRevenue: INFORMATIONAL_TYPES.includes(type)
+          ? false
+          : (REVENUE_TYPES.includes(type) || isRevenue === true || isRevenue === 'true'),
         flagged: flagged === true || flagged === 'true',
         flagReason: flagReason || null,
+        salesType: type === 'CustomerPrice' ? (salesType || null) : null,
       }
     });
     res.status(201).json(expense);
@@ -67,11 +73,16 @@ export const updateExpense = async (req, res) => {
     if (data.boxPrice !== undefined) data.boxPrice = data.boxPrice ? parseFloat(data.boxPrice) : null;
     if (data.tariffPercent !== undefined) data.tariffPercent = data.tariffPercent ? parseFloat(data.tariffPercent) : 10;
 
-    // Recalculate Purchase of Goods / Firm Price / Open Price
+    // Recalculate Purchase of Goods / Customer Price / Expected Return
     if (BOX_CALC_TYPES.includes(data.type) && data.boxQuantity && data.boxPrice) {
       data.amount = data.boxQuantity * data.boxPrice;
     }
-    if (data.type && REVENUE_TYPES.includes(data.type)) data.isRevenue = true;
+    if (data.type) {
+      if (INFORMATIONAL_TYPES.includes(data.type)) data.isRevenue = false;
+      else if (REVENUE_TYPES.includes(data.type)) data.isRevenue = true;
+      // otherwise (Customs, Other, etc.) leave isRevenue as whatever the client sent
+      if (data.type !== 'CustomerPrice') data.salesType = null;
+    }
 
     const expense = await prisma.shipmentExpense.update({
       where: { id: expenseId },

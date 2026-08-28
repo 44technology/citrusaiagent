@@ -82,7 +82,9 @@ const PLPage = ({ selectedCompany }) => {
     return true;
   };
 
-  const filteredExpenses = expenses.filter(e => filterDate(e.createdAt));
+  // ExpectedReturn is a projection only — never counted as real revenue or
+  // expense, it exists purely to compare against Customer Price.
+  const filteredExpenses = expenses.filter(e => filterDate(e.createdAt) && e.type !== 'ExpectedReturn');
   const filteredOrders   = orders.filter(o => filterDate(o.createdAt));
 
   // ── Revenue = isRevenue expenses + sale price of orders ──────

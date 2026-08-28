@@ -232,6 +232,7 @@ model ShipmentExpense {
   isRevenue     Boolean  @default(false)
   flagged       Boolean  @default(false) // needs attention — e.g. a discount may be requested
   flagReason    String?  // why it's flagged
+  salesType     String?  // for CustomerPrice entries — "Firm Price" | "Open Price"
   createdAt     DateTime @default(now())
   shipment      Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 }

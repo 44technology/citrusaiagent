@@ -853,8 +853,8 @@ const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
 
 const EXPENSE_TYPES = [
   { value: 'PurchaseOfGoods', label: 'Purchase of Goods', desc: 'Box Qty × Box Price' },
-  { value: 'FirmPrice',       label: 'Firm Price',        desc: 'Box Qty × Box Price — Income' },
-  { value: 'OpenPrice',       label: 'Open Price',        desc: 'Box Qty × Box Price — Income' },
+  { value: 'CustomerPrice',   label: 'Customer Price',    desc: 'Sales invoice — Box Qty × Box Price — Income' },
+  { value: 'ExpectedReturn',  label: 'Expected Return',   desc: 'Box Qty × Box Price — for comparison only' },
   { value: 'Tariff',          label: 'Tariff (10%)',       desc: '% of Purchase of Goods' },
   { value: 'Customs',         label: 'Customs',            desc: 'Manual entry' },
   { value: 'TerminalExamFee', label: 'Terminal Exam Fee',  desc: '' },
@@ -867,11 +867,16 @@ const EXPENSE_TYPES = [
   { value: 'Other',           label: 'Other',              desc: '' },
 ];
 
+const SALES_TYPES = ['Firm Price', 'Open Price'];
+
 // Types priced as Box Qty × Box Price (amount auto-calculated)
-const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
-// Revenue types — Firm Price / Open Price are how a shipment is sold to the
-// customer (income), unlike Purchase of Goods which is the grower's cost.
-const REVENUE_TYPES = ['Revenue', 'FirmPrice', 'OpenPrice'];
+const BOX_CALC_TYPES = ['PurchaseOfGoods', 'CustomerPrice', 'ExpectedReturn'];
+// Revenue types — Customer Price is the sales invoice to the customer (real
+// income), unlike Purchase of Goods (the grower's cost).
+const REVENUE_TYPES = ['Revenue', 'CustomerPrice'];
+// Excluded from both revenue and expense totals — a projection only, shown
+// purely to compare against Customer Price.
+const INFORMATIONAL_TYPES = ['ExpectedReturn'];
 
 const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClose, onSaved }) => {
   const isEdit = !!editingExpense;
@@ -885,6 +890,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
   const [isRevenue, setIsRevenue] = useState(editingExpense?.isRevenue || false);
   const [flagged, setFlagged]   = useState(editingExpense?.flagged || false);
   const [flagReason, setFlagReason] = useState(editingExpense?.flagReason || '');
+  const [salesType, setSalesType] = useState(editingExpense?.salesType || SALES_TYPES[0]);
   const [saving, setSaving]     = useState(false);
 
   // Purchase of Goods — pre-fill box qty/price from the shipment's own data
@@ -927,7 +933,8 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
       const payload = {
         type, description, amount, boxQuantity: boxQty, boxPrice,
         tariffPercent: tariffPct, invoiceNumber: invoiceNum, isRevenue,
-        flagged, flagReason: flagged ? flagReason : ''
+        flagged, flagReason: flagged ? flagReason : '',
+        salesType: type === 'CustomerPrice' ? salesType : ''
       };
       if (isEdit) {
         await shipmentsApi.updateExpense(shipmentId, editingExpense.id, payload);
@@ -957,6 +964,15 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
               {EXPENSE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}{t.desc ? ` — ${t.desc}` : ''}</option>)}
             </select>
           </div>
+
+          {type === 'CustomerPrice' && (
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: 6 }}>SALES TYPE</label>
+              <select className="ui-select" value={salesType} onChange={e => setSalesType(e.target.value)} style={{ width: '100%' }}>
+                {SALES_TYPES.map(st => <option key={st} value={st}>{st}</option>)}
+              </select>
+            </div>
+          )}
 
           {BOX_CALC_TYPES.includes(type) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -1054,11 +1070,18 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
     catch (err) { alert(err.message); }
   };
 
-  const totalExpenses = expenses.filter(e => !e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
-  const totalRevenue  = expenses.filter(e => e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
+  const countable = expenses.filter(e => !INFORMATIONAL_TYPES.includes(e.type));
+  const totalExpenses = countable.filter(e => !e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
+  const totalRevenue  = countable.filter(e => e.isRevenue).reduce((s, e) => s + (e.amount || 0), 0);
   const netProfit     = totalRevenue - totalExpenses;
 
   const typeLabel = (t) => EXPENSE_TYPES.find(x => x.value === t)?.label || t;
+
+  // Customer Price vs Expected Return — comparison only, not counted in totals
+  const customerPriceTotal = expenses.filter(e => e.type === 'CustomerPrice').reduce((s, e) => s + (e.amount || 0), 0);
+  const expectedReturnTotal = expenses.filter(e => e.type === 'ExpectedReturn').reduce((s, e) => s + (e.amount || 0), 0);
+  const hasComparison = customerPriceTotal > 0 && expectedReturnTotal > 0;
+  const returnDelta = customerPriceTotal - expectedReturnTotal;
 
   return (
     <div className="glass-panel" style={{ padding: 14 }}>
@@ -1088,16 +1111,35 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
         ))}
       </div>
 
+      {hasComparison && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 14, borderRadius: 8,
+          background: returnDelta >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+          border: `1px solid ${returnDelta >= 0 ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+        }}>
+          {returnDelta < 0 && <AlertTriangle size={14} style={{ color: '#ef4444', flexShrink: 0 }} />}
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            Customer Price <strong>${customerPriceTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> vs Expected Return <strong>${expectedReturnTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+          </span>
+          <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.82rem', color: returnDelta >= 0 ? '#22c55e' : '#ef4444' }}>
+            {returnDelta >= 0 ? '+' : ''}${returnDelta.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      )}
+
       {expenses.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No entries yet.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {expenses.map(exp => (
             <div key={exp.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: exp.isRevenue ? '#22c55e' : '#f59e0b', flexShrink: 0 }} />
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: exp.type === 'ExpectedReturn' ? '#38bdf8' : exp.isRevenue ? '#22c55e' : '#f59e0b', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                   {typeLabel(exp.type)}
+                  {exp.type === 'CustomerPrice' && exp.salesType && (
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--orange-primary)', background: 'rgba(255,107,0,0.1)', border: '1px solid rgba(255,107,0,0.25)', borderRadius: 10, padding: '1px 7px' }}>{exp.salesType}</span>
+                  )}
                   {exp.flagged && (
                     <AlertTriangle size={13} style={{ color: '#ef4444', flexShrink: 0 }} title={exp.flagReason || 'Flagged'} />
                   )}
@@ -1113,7 +1155,7 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
                 )}
                 {exp.description && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{exp.description}</div>}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: exp.isRevenue ? '#22c55e' : 'var(--text-primary)', flexShrink: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: exp.type === 'ExpectedReturn' ? '#38bdf8' : exp.isRevenue ? '#22c55e' : 'var(--text-primary)', flexShrink: 0 }}>
                 {exp.isRevenue ? '+' : ''} ${(exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               {canEdit && (

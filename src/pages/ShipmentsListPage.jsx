@@ -191,8 +191,9 @@ const ShipmentsListPage = ({ selectedCompany }) => {
     { key: 'label',          label: 'LABEL',           width: 20, get: s => s.label || '' },
     { key: 'category',       label: 'CAT',             width: 9,  get: s => s.category || '' },
     { key: 'numberOfBoxes',  label: 'BOXES',           width: 9,  get: s => s.numberOfBoxes || '' },
-    { key: 'firmPrice',      label: 'FIRM PRICE',      width: 12, get: s => (s.expenses || []).find(e => e.type === 'FirmPrice')?.amount ?? '' },
-    { key: 'openPrice',      label: 'OPEN PRICE',      width: 12, get: s => (s.expenses || []).find(e => e.type === 'OpenPrice')?.amount ?? '' },
+    { key: 'salesType',      label: 'SALES TYPE',      width: 12, get: s => (s.expenses || []).find(e => e.type === 'CustomerPrice')?.salesType || '' },
+    { key: 'customerPrice',  label: 'CUSTOMER PRICE',  width: 12, get: s => (s.expenses || []).find(e => e.type === 'CustomerPrice')?.amount ?? '' },
+    { key: 'expectedReturn', label: 'EXPECTED RETURN', width: 12, get: s => (s.expenses || []).find(e => e.type === 'ExpectedReturn')?.amount ?? '' },
     { key: 'pallets',        label: 'PALLETS',         width: 9,  get: s => s.pallets || '' },
     { key: 'packType',       label: 'PACK',            width: 10, get: s => s.packType || '' },
     { key: 'containerNumber',label: 'CONTAINER NO.',   width: 16, get: s => s.containerNumber || '' },
@@ -676,10 +677,12 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                 <SortTh label="CLIENT"       field="contact.name"     sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>PRODUCT</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>VARIETY</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>QC</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>PACK</th>
                 <SortTh label="BOXES"        field="numberOfBoxes"    sort={sort} setSort={setSort} />
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>FIRM PRICE</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>OPEN PRICE</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>SALES TYPE</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>CUSTOMER PRICE</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>EXPECTED RETURN</th>
                 <SortTh label="VESSEL NAME"  field="vesselName"       sort={sort} setSort={setSort} />
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>SHIPPING CO.</th>
                 <SortTh label="ISF SENT"     field="isfSentDate"      sort={sort} setSort={setSort} />
@@ -695,7 +698,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             <tbody>
               {filtered.map((s, i) => {
                 const isExpanded = expandedId === s.id;
-                const colCount = isAdmin ? 23 : 22;
+                const colCount = isAdmin ? 25 : 24;
                 return (<React.Fragment key={s.id}>
                 <tr
                   onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -754,6 +757,17 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    {s.qcArrival ? (
+                      parseFloat(s.qcArrival) > 3 ? (
+                        <span title="QC score above 3 — check quality" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#ef4444', fontWeight: 700, fontSize: '0.78rem', cursor: 'help' }}>
+                          <AlertTriangle size={13} /> {s.qcArrival}
+                        </span>
+                      ) : (
+                        <span style={{ fontWeight: 600, fontSize: '0.78rem' }}>{s.qcArrival}</span>
+                      )
+                    ) : '—'}
+                  </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
                     title={(() => {
                       try {
@@ -764,8 +778,25 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                     })()}
                   >{s.packType || '—'}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.numberOfBoxes ? s.numberOfBoxes.toLocaleString() : '—'}</td>
-                  <td style={{ padding: '10px 12px', color: '#f59e0b', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'FirmPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
-                  <td style={{ padding: '10px 12px', color: '#38bdf8', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'OpenPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
+                  <td style={{ padding: '10px 12px' }}>{(() => {
+                    const st = (s.expenses || []).find(e => e.type === 'CustomerPrice')?.salesType;
+                    return st ? (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--orange-primary)', background: 'rgba(255,107,0,0.1)', border: '1px solid rgba(255,107,0,0.25)', borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>{st}</span>
+                    ) : '—';
+                  })()}</td>
+                  <td style={{ padding: '10px 12px', color: '#22c55e', fontWeight: 600 }}>{(() => { const v = (s.expenses || []).find(e => e.type === 'CustomerPrice')?.amount; return v ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—'; })()}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>{(() => {
+                    const customerPrice = (s.expenses || []).find(e => e.type === 'CustomerPrice')?.amount;
+                    const expectedReturn = (s.expenses || []).find(e => e.type === 'ExpectedReturn')?.amount;
+                    if (!expectedReturn) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+                    const short = customerPrice != null && expectedReturn < customerPrice;
+                    return (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: short ? '#ef4444' : '#38bdf8' }} title={short ? 'Below Customer Price' : undefined}>
+                        {short && <AlertTriangle size={12} />}
+                        ${expectedReturn.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    );
+                  })()}</td>
                   <td style={{ padding: '10px 12px', fontWeight: 600 }}>{s.vesselName || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{s.shippingLine || '—'}</td>
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }} title={!s.isfSentDate ? ISF_RULE_TEXT : undefined}>
