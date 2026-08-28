@@ -853,8 +853,8 @@ const JourneyTimeline = ({ shipment, events, onAdd, onDelete, canEdit }) => {
 
 const EXPENSE_TYPES = [
   { value: 'PurchaseOfGoods', label: 'Purchase of Goods', desc: 'Box Qty × Box Price' },
-  { value: 'FirmPrice',       label: 'Firm Price',        desc: 'Box Qty × Box Price' },
-  { value: 'OpenPrice',       label: 'Open Price',        desc: 'Box Qty × Box Price' },
+  { value: 'FirmPrice',       label: 'Firm Price',        desc: 'Box Qty × Box Price — Income' },
+  { value: 'OpenPrice',       label: 'Open Price',        desc: 'Box Qty × Box Price — Income' },
   { value: 'Tariff',          label: 'Tariff (10%)',       desc: '% of Purchase of Goods' },
   { value: 'Customs',         label: 'Customs',            desc: 'Manual entry' },
   { value: 'TerminalExamFee', label: 'Terminal Exam Fee',  desc: '' },
@@ -869,6 +869,9 @@ const EXPENSE_TYPES = [
 
 // Types priced as Box Qty × Box Price (amount auto-calculated)
 const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
+// Revenue types — Firm Price / Open Price are how a shipment is sold to the
+// customer (income), unlike Purchase of Goods which is the grower's cost.
+const REVENUE_TYPES = ['Revenue', 'FirmPrice', 'OpenPrice'];
 
 const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClose, onSaved }) => {
   const isEdit = !!editingExpense;
@@ -908,7 +911,7 @@ const AddExpenseModal = ({ shipmentId, shipment, expenses, editingExpense, onClo
         setAmount(calc);
       }
     }
-    if (type === 'Revenue') setIsRevenue(true);
+    if (REVENUE_TYPES.includes(type)) setIsRevenue(true);
     else if (type !== 'Other') setIsRevenue(false);
   }, [type, tariffPct]);
 

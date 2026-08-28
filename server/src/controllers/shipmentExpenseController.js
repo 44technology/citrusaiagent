@@ -3,6 +3,10 @@ const prisma = new PrismaClient();
 
 // Types priced as Box Qty × Box Price (amount auto-calculated)
 const BOX_CALC_TYPES = ['PurchaseOfGoods', 'FirmPrice', 'OpenPrice'];
+// Revenue types — Firm Price / Open Price are how a shipment is sold to the
+// customer (income), unlike Purchase of Goods which is the grower's cost.
+// Enforced server-side too, regardless of what isRevenue the client sends.
+const REVENUE_TYPES = ['Revenue', 'FirmPrice', 'OpenPrice'];
 
 export const getExpenses = async (req, res) => {
   try {
@@ -43,7 +47,7 @@ export const createExpense = async (req, res) => {
         boxPrice: boxPrice ? parseFloat(boxPrice) : null,
         tariffPercent: tariffPercent ? parseFloat(tariffPercent) : 10,
         invoiceNumber: invoiceNumber || null,
-        isRevenue: isRevenue === true || isRevenue === 'true',
+        isRevenue: REVENUE_TYPES.includes(type) || isRevenue === true || isRevenue === 'true',
         flagged: flagged === true || flagged === 'true',
         flagReason: flagReason || null,
       }
@@ -67,6 +71,7 @@ export const updateExpense = async (req, res) => {
     if (BOX_CALC_TYPES.includes(data.type) && data.boxQuantity && data.boxPrice) {
       data.amount = data.boxQuantity * data.boxPrice;
     }
+    if (data.type && REVENUE_TYPES.includes(data.type)) data.isRevenue = true;
 
     const expense = await prisma.shipmentExpense.update({
       where: { id: expenseId },
