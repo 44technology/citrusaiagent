@@ -18,7 +18,7 @@ import {
   Search, Paperclip, Upload, Download, Eye, Activity
 } from 'lucide-react';
 import { shipmentsApi, ordersApi, documentsApi, contactsApi, carriersApi } from '../services/api';
-import { formatDateUTC } from '../utils/dateUtils';
+import { formatDateUTC, formatFullDateUTC } from '../utils/dateUtils';
 
 // ─── Shipment Documents ───────────────────────────────────────────────────────
 
@@ -1111,21 +1111,26 @@ const ExpensesPanel = ({ shipment, canEdit }) => {
         ))}
       </div>
 
-      {hasComparison && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 14, borderRadius: 8,
-          background: returnDelta >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
-          border: `1px solid ${returnDelta >= 0 ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-        }}>
-          {returnDelta < 0 && <AlertTriangle size={14} style={{ color: '#ef4444', flexShrink: 0 }} />}
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-            Customer Price <strong>${customerPriceTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> vs Expected Return <strong>${expectedReturnTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
-          </span>
-          <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.82rem', color: returnDelta >= 0 ? '#22c55e' : '#ef4444' }}>
-            {returnDelta >= 0 ? '+' : ''}${returnDelta.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      )}
+      {hasComparison && (() => {
+        const mismatch = Math.abs(returnDelta) > 0.005;
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 14, borderRadius: 8,
+            background: mismatch ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${mismatch ? 'rgba(239,68,68,0.25)' : 'var(--border-glass)'}`,
+          }}>
+            {mismatch && <AlertTriangle size={14} style={{ color: '#ef4444', flexShrink: 0 }} />}
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              Customer Price <strong>${customerPriceTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> vs Expected Return <strong>${expectedReturnTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+            </span>
+            {mismatch && (
+              <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.82rem', color: '#ef4444' }}>
+                ${Math.abs(returnDelta).toLocaleString('en-US', { minimumFractionDigits: 2 })} off
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {expenses.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No entries yet.</div>
@@ -1657,7 +1662,7 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="QC Score" value={shipment.qcArrival} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. 92" value={ed.qcArrival} onChange={e => set('qcArrival', e.target.value)} />
                 </Field>
-                <Field label="ATA (Gate-in Empty)" value={shipment.gateInEmptyDate ? new Date(shipment.gateInEmptyDate).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                <Field label="ATA (Gate-in Empty)" value={shipment.gateInEmptyDate ? formatFullDateUTC(shipment.gateInEmptyDate) : null} editing={editingSection === 'cargo'}>
                   <Inp type="date" value={ed.gateInEmptyDate} onChange={e => set('gateInEmptyDate', e.target.value)} />
                 </Field>
                 <Field label="Cargo" value={shipment.cargoDescription} editing={editingSection === 'cargo'}>
@@ -1722,10 +1727,10 @@ const ShipmentDetailModal = ({ isOpen, onClose, shipment, onUpdate, onDelete, on
                 <Field label="PO Number" value={shipment.poNumber} editing={editingSection === 'cargo'}>
                   <Inp placeholder="e.g. PO-2026-001" value={ed.poNumber} onChange={e => set('poNumber', e.target.value)} />
                 </Field>
-                <Field label="ISF Sent to Customs" value={shipment.isfSentDate ? new Date(shipment.isfSentDate).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                <Field label="ISF Sent to Customs" value={shipment.isfSentDate ? formatFullDateUTC(shipment.isfSentDate) : null} editing={editingSection === 'cargo'}>
                   <Inp type="date" value={ed.isfSentDate} onChange={e => set('isfSentDate', e.target.value)} />
                 </Field>
-                <Field label="LFD (Last Free Day)" value={shipment.containerLastFreeDay ? new Date(shipment.containerLastFreeDay).toLocaleDateString('en-GB') : null} editing={editingSection === 'cargo'}>
+                <Field label="LFD (Last Free Day)" value={shipment.containerLastFreeDay ? formatFullDateUTC(shipment.containerLastFreeDay) : null} editing={editingSection === 'cargo'}>
                   <Inp type="date" value={ed.containerLastFreeDay} onChange={e => set('containerLastFreeDay', e.target.value)} />
                 </Field>
 

@@ -758,15 +758,20 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                   <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 500 }}>{s.product || s.order?.product || s.cargoDescription?.split(' - ')[0] || '—'}</td>
                   <td style={{ padding: '10px 12px', color: 'var(--orange-primary)', fontWeight: 600 }}>{s.variety || s.order?.variety || '—'}</td>
                   <td style={{ padding: '10px 12px' }}>
-                    {s.qcArrival ? (
-                      parseFloat(s.qcArrival) > 3 ? (
+                    {s.qcArrival ? (() => {
+                      // QC values aren't always plain numbers (e.g. "Q3.5/C3.5",
+                      // "QC CLEARED — NO ISSUES REPORTED") — pull out every
+                      // number in the string and warn if any exceeds 3.
+                      const nums = (String(s.qcArrival).match(/\d+(\.\d+)?/g) || []).map(parseFloat);
+                      const overThree = nums.some(n => n > 3);
+                      return overThree ? (
                         <span title="QC score above 3 — check quality" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#ef4444', fontWeight: 700, fontSize: '0.78rem', cursor: 'help' }}>
                           <AlertTriangle size={13} /> {s.qcArrival}
                         </span>
                       ) : (
                         <span style={{ fontWeight: 600, fontSize: '0.78rem' }}>{s.qcArrival}</span>
-                      )
-                    ) : '—'}
+                      );
+                    })() : '—'}
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
                     title={(() => {
@@ -789,10 +794,10 @@ const ShipmentsListPage = ({ selectedCompany }) => {
                     const customerPrice = (s.expenses || []).find(e => e.type === 'CustomerPrice')?.amount;
                     const expectedReturn = (s.expenses || []).find(e => e.type === 'ExpectedReturn')?.amount;
                     if (!expectedReturn) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
-                    const short = customerPrice != null && expectedReturn < customerPrice;
+                    const mismatch = customerPrice != null && Math.abs(expectedReturn - customerPrice) > 0.005;
                     return (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: short ? '#ef4444' : '#38bdf8' }} title={short ? 'Below Customer Price' : undefined}>
-                        {short && <AlertTriangle size={12} />}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: mismatch ? '#ef4444' : '#38bdf8' }} title={mismatch ? 'Does not match Customer Price' : undefined}>
+                        {mismatch && <AlertTriangle size={12} />}
                         ${expectedReturn.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     );
