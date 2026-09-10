@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, AlertTriangle, Ship, X, Lock, FileWarning } from 'lucide-react';
+import { Bell, Search, AlertTriangle, Ship, X, Lock, FileWarning, Menu } from 'lucide-react';
 import { shipmentsApi } from '../services/api';
 import '../index.css';
 
-const Header = ({ company }) => {
+const Header = ({ company, onMenuClick }) => {
   const [alerts, setAlerts] = useState([]);
   const [showPanel, setShowPanel] = useState(false);
   const panelRef = useRef(null);
@@ -78,6 +78,9 @@ const Header = ({ company }) => {
   return (
     <header className="header glass-panel">
       <div className="header-left">
+        <button className="icon-btn menu-btn" onClick={onMenuClick} title="Menu">
+          <Menu size={20} />
+        </button>
         <h2>Active Campaign</h2>
         <div className="status-badge">
           <span className="pulse-dot"></span>

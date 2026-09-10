@@ -36,6 +36,7 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
   const navigate = useNavigate();
   const { page } = useParams();
   const activeTab = PATH_TO_TAB[`/${page}`] || 'leads';
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const setActiveTab = (tab) => navigate(`/${TAB_TO_PATH[tab].slice(1)}`);
 
@@ -44,15 +45,18 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
       <div className="bg-glow-orange"></div>
       <div className="bg-glow-green"></div>
       <div className="app-container">
+        <div className={`sidebar-backdrop ${mobileNavOpen ? 'mobile-open' : ''}`} onClick={() => setMobileNavOpen(false)} />
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onLogout={handleLogout}
           company={selectedCompany}
           onSwitchCompany={handleSwitchCompany}
+          mobileOpen={mobileNavOpen}
+          onCloseMobile={() => setMobileNavOpen(false)}
         />
         <main className="main-content">
-          <Header company={selectedCompany} />
+          <Header company={selectedCompany} onMenuClick={() => setMobileNavOpen(v => !v)} />
           <div className="scroll-content" key={selectedCompany?.id}>
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
             {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}

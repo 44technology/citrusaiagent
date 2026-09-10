@@ -7,7 +7,7 @@ const COMPANIES = [
   { id: 'cmp-wft-0001',        name: 'WFT',         slug: 'wft',         color: '#59b031' },
 ];
 
-const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }) => {
+const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany, mobileOpen, onCloseMobile }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const menuItems = [
@@ -43,7 +43,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
   };
 
   return (
-    <aside className="sidebar glass-panel">
+    <aside className={`sidebar glass-panel ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
         <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#111', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <img src="/logo.png" alt="Sweet Fresh" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
@@ -143,7 +143,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany }
             <button
               key={item.id}
               className={`nav-item ${isActive ? 'active' : ''}`}
-              onClick={() => { setDropdownOpen(false); setActiveTab(item.id); }}
+              onClick={() => { setDropdownOpen(false); setActiveTab(item.id); if (onCloseMobile) onCloseMobile(); }}
               style={isActive ? {
                 background: `${color}18`,
                 borderColor: `${color}30`,

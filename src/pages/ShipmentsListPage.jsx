@@ -664,7 +664,7 @@ const ShipmentsListPage = ({ selectedCompany }) => {
             )}
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+          <table style={{ width: '100%', minWidth: 1900, borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-secondary)' }}>
               <tr>
                 <SortTh label="REF ID"       field="refId"            sort={sort} setSort={setSort} />

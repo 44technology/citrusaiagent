@@ -1223,3 +1223,84 @@ h3 { font-size: 1.1rem; font-weight: 500; }
   gap: 8px;
 }
 
+/* ─── Mobile nav (hamburger menu button + backdrop) ────────────────────── */
+.menu-btn { display: none; }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 290;
+}
+
+/* ─── Mobile layout (phones / small tablets) ───────────────────────────── */
+@media (max-width: 860px) {
+  .app-container {
+    padding: 8px;
+    gap: 0;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    bottom: 8px;
+    height: auto;
+    width: 260px;
+    max-width: calc(100vw - 32px);
+    z-index: 300;
+    transform: translateX(-120%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop.mobile-open {
+    display: block;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .menu-btn {
+    display: flex;
+  }
+
+  .header {
+    height: auto;
+    min-height: 64px;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-left h2 {
+    font-size: 1rem;
+  }
+
+  .status-badge {
+    display: none;
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  .search-bar {
+    display: none;
+  }
+
+  .modal-content {
+    max-width: 100% !important;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+}
+
