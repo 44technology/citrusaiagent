@@ -276,6 +276,15 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
       .catch(err => alert('Download failed: ' + err.message));
   };
 
+  const handleViewDoc = (doc) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token   = localStorage.getItem('citrus_token');
+    fetch(`${apiBase}/documents/${doc.id}/view`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => window.open(URL.createObjectURL(blob), '_blank'))
+      .catch(err => alert('View failed: ' + err.message));
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -353,6 +362,9 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
               <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
                 <FileText size={15} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{doc.originalName}</div>
+                <button className="btn btn-glass" style={{ padding: '5px 10px', fontSize: '0.78rem', gap: 5 }} onClick={() => handleViewDoc(doc)}>
+                  <Eye size={13} /> View
+                </button>
                 <button className="btn btn-glass" style={{ padding: '5px 10px', fontSize: '0.78rem', gap: 5 }} onClick={() => handleDownloadDoc(doc)}>
                   <Download size={13} /> Download
                 </button>
@@ -448,6 +460,7 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
   } : { invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '', contactId: '', shipmentId: '' });
   const [shipments, setShipments] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
+  const [existingInvoiceDocs, setExistingInvoiceDocs] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -456,11 +469,23 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
     shipmentsApi.getAll().then(list => setShipments(Array.isArray(list) ? list : [])).catch(() => {});
   }, []);
 
+  // Pre-fill the "already has an invoice document" warning when editing.
+  useEffect(() => {
+    if (isEdit && editingInvoice.shipmentId) checkExistingDocs(editingInvoice.shipmentId);
+  }, []);
+
+  const checkExistingDocs = (shipmentId) => {
+    documentsApi.getAll({ shipmentId })
+      .then(docs => setExistingInvoiceDocs((docs || []).filter(d => d.category === 'CustomerInv')))
+      .catch(() => setExistingInvoiceDocs([]));
+  };
+
   const selectedShipment = shipments.find(s => s.id === form.shipmentId) || editingInvoice?.shipment;
 
   const handleShipmentChange = (id) => {
     const s = shipments.find(sh => sh.id === id);
     setForm(f => ({ ...f, shipmentId: id, contactId: s?.contact?.id || '', orderId: s?.order?.id || '' }));
+    if (id) checkExistingDocs(id); else setExistingInvoiceDocs([]);
   };
 
   const handleSubmit = async (e) => {
@@ -548,6 +573,14 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Invoice Document (optional)</label>
             <input className="ui-input" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setInvoiceFile(e.target.files?.[0] || null)} />
             {isEdit && !invoiceFile && <p className="text-muted" style={{ fontSize: '0.72rem', marginTop: 4 }}>Only needed if you want to attach a new file.</p>}
+            {existingInvoiceDocs.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                <AlertCircle size={13} style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }} />
+                <p style={{ fontSize: '0.75rem', color: '#f59e0b', margin: 0 }}>
+                  This shipment already has {existingInvoiceDocs.length} invoice document{existingInvoiceDocs.length > 1 ? 's' : ''} uploaded. Uploading a new one adds another — it won't replace the old one. Delete the outdated one from the shipment's Documents tab if it's no longer needed.
+                </p>
+              </div>
+            )}
           </div>
           {error && <div style={{ color: '#ef4444', fontSize: '0.82rem' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
@@ -587,10 +620,11 @@ const AccountingPage = ({ selectedCompany }) => {
       setInvoices(allInvoices);
       setPurchaseOrders(allPOs);
       setShipments(Array.isArray(allShipments) ? allShipments : []);
-      if (selectedInvoice) {
-        const updated = allInvoices.find(i => i.id === selectedInvoice.id);
-        if (updated) setSelectedInvoice(updated);
-      }
+      // Functional form — reads the *current* selectedInvoice at the time this
+      // resolves, not the stale value closed over when loadData was created.
+      // Without this, clicking "back" (which also calls loadData) would race:
+      // the closure still saw the old invoice and re-opened it right after.
+      setSelectedInvoice(prev => prev ? (allInvoices.find(i => i.id === prev.id) || prev) : null);
     } catch (err) {
       console.error('Failed to load accounting data:', err);
     } finally {
