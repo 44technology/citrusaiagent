@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
-  ChevronDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet
+  ChevronDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi, documentsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
@@ -236,7 +236,9 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
 const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
   const [payments, setPayments] = useState(invoice.payments || []);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const canEdit = invoice.status === 'Unpaid';
 
   const reload = async () => { onRefresh(); };
 
@@ -257,6 +259,22 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
 
   const paid = paidAmount(invoice);
   const remaining = invoice.amount - paid;
+  const invoiceDocs = invoice.shipment?.documents || [];
+
+  const handleDownloadDoc = (doc) => {
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const token   = localStorage.getItem('citrus_token');
+    fetch(`${apiBase}/documents/${doc.id}/download`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = doc.originalName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(err => alert('Download failed: ' + err.message));
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%' }}>
@@ -271,7 +289,18 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
             {invoice.dueDate && ` · Due ${new Date(invoice.dueDate).toLocaleDateString()}`}
           </p>
         </div>
-        <div style={{ marginLeft: 'auto' }}><StatusBadge status={invoice.status} /></div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {canEdit ? (
+            <button className="btn btn-glass" style={{ padding: '7px 14px', fontSize: '0.85rem', gap: 6 }} onClick={() => setShowEditModal(true)}>
+              <Edit3 size={14} /> Edit
+            </button>
+          ) : (
+            <span className="text-muted" title="Only an Unpaid invoice can be edited" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem' }}>
+              <Lock size={12} /> Locked
+            </span>
+          )}
+          <StatusBadge status={invoice.status} />
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -296,9 +325,42 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
               {invoice.purchaseOrder.supplier && <span className="text-muted"> · {invoice.purchaseOrder.supplier.name}</span>}
             </div>
           )}
+          {!invoice.order && invoice.contact && (
+            <div style={{ fontSize: '0.88rem', marginBottom: 6 }}>
+              <span className="text-muted">Customer: </span>
+              <strong>{invoice.contact.name}</strong>
+            </div>
+          )}
+          {!invoice.order && !invoice.purchaseOrder && !invoice.contact && (
+            <p className="text-muted" style={{ fontSize: '0.82rem' }}>Not linked to a customer, order, or PO.</p>
+          )}
+          {invoice.shipment && (
+            <div style={{ fontSize: '0.88rem', marginBottom: 6 }}>
+              <span className="text-muted">Shipment Ref ID: </span>
+              <strong>{shipmentRefLabel(invoice.shipment)}</strong>
+              {invoice.shipment.containerNumber && <span className="text-muted"> · {invoice.shipment.containerNumber}</span>}
+            </div>
+          )}
           {invoice.notes && <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: 8 }}>{invoice.notes}</p>}
         </div>
       </div>
+
+      {invoiceDocs.length > 0 && (
+        <div className="glass-panel" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: 12 }}>Invoice Documents ({invoiceDocs.length})</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {invoiceDocs.map(doc => (
+              <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+                <FileText size={15} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{doc.originalName}</div>
+                <button className="btn btn-glass" style={{ padding: '5px 10px', fontSize: '0.78rem', gap: 5 }} onClick={() => handleDownloadDoc(doc)}>
+                  <Download size={13} /> Download
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="glass-panel" style={{ padding: 20, flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -356,24 +418,70 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
       {showPaymentModal && (
         <PaymentModal invoice={invoice} onClose={() => setShowPaymentModal(false)} onSaved={handlePaymentSaved} />
       )}
+
+      {showEditModal && (
+        <CreateInvoiceModal
+          editingInvoice={invoice}
+          onClose={() => setShowEditModal(false)}
+          onSaved={() => { setShowEditModal(false); reload(); }}
+        />
+      )}
     </div>
   );
 };
 
 // ─── Create Invoice Modal ────────────────────────────────────────────────────
 
-const CreateInvoiceModal = ({ onClose, onSaved }) => {
-  const [form, setForm] = useState({ invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '' });
+const shipmentRefLabel = (s) => s.order?.referenceId ? `#${s.order.referenceId}` : s.shipmentRefId ? `#${s.shipmentRefId}` : '(no ref id)';
+
+const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
+  const isEdit = !!editingInvoice;
+  const [form, setForm] = useState(() => isEdit ? {
+    invoiceNumber: editingInvoice.invoiceNumber,
+    type: editingInvoice.type,
+    amount: String(editingInvoice.amount ?? ''),
+    issueDate: editingInvoice.issueDate ? editingInvoice.issueDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+    dueDate: editingInvoice.dueDate ? editingInvoice.dueDate.slice(0, 10) : '',
+    notes: editingInvoice.notes || '',
+    contactId: editingInvoice.contactId || editingInvoice.order?.contactId || '',
+    shipmentId: editingInvoice.shipmentId || '',
+  } : { invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '', contactId: '', shipmentId: '' });
+  const [shipments, setShipments] = useState([]);
+  const [invoiceFile, setInvoiceFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  useEffect(() => {
+    shipmentsApi.getAll().then(list => setShipments(Array.isArray(list) ? list : [])).catch(() => {});
+  }, []);
+
+  const selectedShipment = shipments.find(s => s.id === form.shipmentId) || editingInvoice?.shipment;
+
+  const handleShipmentChange = (id) => {
+    const s = shipments.find(sh => sh.id === id);
+    setForm(f => ({ ...f, shipmentId: id, contactId: s?.contact?.id || '', orderId: s?.order?.id || '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.amount || parseFloat(form.amount) <= 0) { setError('Amount is required'); return; }
+    if (form.type === 'Sales' && !form.shipmentId) { setError('Ref ID (shipment) is required'); return; }
     setSaving(true);
     try {
-      await accountingApi.createInvoice(form);
+      let invoice;
+      if (isEdit) {
+        invoice = await accountingApi.updateInvoice(editingInvoice.id, form);
+      } else {
+        invoice = await accountingApi.createInvoice(form);
+      }
+      if (invoiceFile) {
+        await documentsApi.upload(invoiceFile, {
+          shipmentId: form.shipmentId || undefined,
+          invoiceId: invoice.id,
+          category: 'CustomerInv',
+        });
+      }
       onSaved();
     } catch (err) {
       setError(err.message);
@@ -385,7 +493,7 @@ const CreateInvoiceModal = ({ onClose, onSaved }) => {
     <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontSize: '1.2rem' }}>New Invoice</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>{isEdit ? 'Edit Invoice' : 'New Invoice'}</h2>
           <button className="btn btn-glass" style={{ padding: '6px 8px' }} onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -402,6 +510,22 @@ const CreateInvoiceModal = ({ onClose, onSaved }) => {
               </select>
             </div>
           </div>
+          {form.type === 'Sales' && (
+            <div>
+              <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Ref ID (Shipment) *</label>
+              <select className="ui-input" value={form.shipmentId} onChange={e => handleShipmentChange(e.target.value)} required>
+                <option value="">Select a shipment...</option>
+                {shipments.map(s => (
+                  <option key={s.id} value={s.id}>{shipmentRefLabel(s)} — {s.contact?.name || 'No customer'}{s.containerNumber ? ` — ${s.containerNumber}` : ''}</option>
+                ))}
+              </select>
+              {selectedShipment && (
+                <div className="text-muted" style={{ fontSize: '0.78rem', marginTop: 6 }}>
+                  Customer: <strong style={{ color: 'var(--text-primary)' }}>{selectedShipment.contact?.name || '—'}</strong>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Amount ($) *</label>
             <input className="ui-input" type="number" step="0.01" min="0" value={form.amount} onChange={e => set('amount', e.target.value)} required />
@@ -420,10 +544,15 @@ const CreateInvoiceModal = ({ onClose, onSaved }) => {
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Notes</label>
             <textarea className="ui-input" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
           </div>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Invoice Document (optional)</label>
+            <input className="ui-input" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setInvoiceFile(e.target.files?.[0] || null)} />
+            {isEdit && !invoiceFile && <p className="text-muted" style={{ fontSize: '0.72rem', marginTop: 4 }}>Only needed if you want to attach a new file.</p>}
+          </div>
           {error && <div style={{ color: '#ef4444', fontSize: '0.82rem' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
             <button type="button" className="btn btn-glass" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Creating...' : 'Create Invoice'}</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Invoice'}</button>
           </div>
         </form>
       </div>
@@ -472,11 +601,17 @@ const AccountingPage = ({ selectedCompany }) => {
   useEffect(() => { loadData(); }, [selectedCompany?.id]);
 
   const filteredInvoices = invoices.filter(inv => {
+    const q = search.toLowerCase();
     const matchSearch = !search ||
-      inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-      inv.order?.referenceId?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.order?.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.purchaseOrder?.supplier?.name?.toLowerCase().includes(search.toLowerCase());
+      inv.invoiceNumber.toLowerCase().includes(q) ||
+      inv.order?.referenceId?.toLowerCase().includes(q) ||
+      inv.order?.contact?.name?.toLowerCase().includes(q) ||
+      inv.purchaseOrder?.supplier?.name?.toLowerCase().includes(q) ||
+      inv.contact?.name?.toLowerCase().includes(q) ||
+      String(inv.shipment?.shipmentRefId || '').toLowerCase().includes(q) ||
+      String(inv.shipment?.order?.referenceId || '').toLowerCase().includes(q) ||
+      String(inv.shipment?.containerNumber || '').toLowerCase().includes(q) ||
+      String(inv.shipment?.bolNumber || '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'All' || inv.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -595,7 +730,7 @@ const AccountingPage = ({ selectedCompany }) => {
                 const paid = paidAmount(inv);
                 const pct = inv.amount > 0 ? Math.min((paid / inv.amount) * 100, 100) : 0;
                 const isOverdue = inv.status !== 'Paid' && inv.dueDate && new Date(inv.dueDate) < new Date();
-                const party = inv.order?.contact?.name || inv.purchaseOrder?.supplier?.name || '—';
+                const party = inv.order?.contact?.name || inv.purchaseOrder?.supplier?.name || inv.contact?.name || '—';
                 return (
                   <tr key={inv.id} className="shipment-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedInvoice(inv)}>
                     <td style={{ fontWeight: 600 }}>{inv.invoiceNumber}</td>
@@ -606,6 +741,14 @@ const AccountingPage = ({ selectedCompany }) => {
                       <div style={{ fontSize: '0.88rem' }}>{party}</div>
                       {inv.order && <div className="text-muted" style={{ fontSize: '0.75rem' }}>SO: {inv.order.referenceId}</div>}
                       {inv.purchaseOrder && <div className="text-muted" style={{ fontSize: '0.75rem' }}>PO: {inv.purchaseOrder.poNumber}</div>}
+                      {inv.shipment && (
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          Ref: {shipmentRefLabel(inv.shipment)}
+                          {inv.shipment.documents?.length > 0 && (
+                            <FileText size={11} style={{ marginLeft: 5, verticalAlign: -1, color: 'var(--orange-primary)' }} />
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td style={{ fontWeight: 700 }}>{fmt(inv.amount)}</td>
                     <td style={{ color: '#22c55e', fontWeight: 600 }}>{fmt(paid)}</td>

@@ -68,6 +68,7 @@ model Contact {
   documents      Document[]
   persons        ContactPerson[]
   vendorPackages VendorPackage[]
+  invoices       Invoice[]
   programs       CustomerProgram[]
 }
 
@@ -211,6 +212,7 @@ model Shipment {
   expenses         ShipmentExpense[]
   activities       ShipmentActivity[]
   accountOfSale    AccountOfSale?
+  invoices         Invoice[]
 }
 
 model Setting {
@@ -417,6 +419,8 @@ model Invoice {
   notes         String?
   orderId       String?
   poId          String?
+  contactId     String?   // customer picked directly when the invoice isn't tied to a Sales Order
+  shipmentId    String?   // which shipment (Ref ID) this invoice is for
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   companyId     String?
@@ -424,6 +428,8 @@ model Invoice {
 
   order         Order?    @relation(fields: [orderId], references: [id])
   purchaseOrder PurchaseOrder? @relation(fields: [poId], references: [id])
+  contact       Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  shipment      Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
   payments      Payment[]
   documents     Document[]
 }

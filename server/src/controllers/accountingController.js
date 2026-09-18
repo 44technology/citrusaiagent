@@ -62,16 +62,33 @@ export const updatePurchaseOrder = async (req, res) => {
 
 // ─── Invoices ────────────────────────────────────────
 
+// Shared nested include for an invoice's linked shipment — pulls in
+// whatever "Customer Invoice" documents were uploaded under that shipment
+// (via Shipment Detail's Documents tab) so they surface under the invoice
+// here too, even if they predate this invoiceId link.
+const SHIPMENT_INCLUDE = {
+  select: {
+    id: true, label: true, shipmentRefId: true, referenceId: true,
+    containerNumber: true, bolNumber: true,
+    contact: { select: { id: true, name: true, company: true } },
+    order: { select: { referenceId: true } },
+    documents: { where: { category: 'CustomerInv' }, orderBy: { createdAt: 'desc' } },
+  }
+};
+
+const INVOICE_INCLUDE = {
+  order: { include: { contact: { select: { id: true, name: true, company: true } } } },
+  purchaseOrder: { include: { supplier: { select: { id: true, name: true, company: true } } } },
+  contact: { select: { id: true, name: true, company: true } },
+  shipment: SHIPMENT_INCLUDE,
+};
+
 export const getAllInvoices = async (req, res) => {
   try {
     const where = req.companyId ? { companyId: req.companyId } : {};
     const invoices = await prisma.invoice.findMany({
       where,
-      include: {
-        order: { include: { contact: { select: { id: true, name: true, company: true } } } },
-        purchaseOrder: { include: { supplier: { select: { id: true, name: true, company: true } } } },
-        payments: true
-      },
+      include: { ...INVOICE_INCLUDE, payments: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(invoices);
@@ -82,20 +99,28 @@ export const getAllInvoices = async (req, res) => {
 
 export const createInvoice = async (req, res) => {
   try {
-    const { invoiceNumber, type, amount, orderId, poId, issueDate, dueDate } = req.body;
-    
+    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes } = req.body;
+
+    if (type === 'Sales' && !shipmentId) {
+      return res.status(400).json({ error: 'A Ref ID (shipment) is required for a Sales invoice' });
+    }
+
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
         type,
         amount: parseFloat(amount),
-        orderId,
-        poId,
+        orderId: orderId || null,
+        poId: poId || null,
+        contactId: contactId || null,
+        shipmentId: shipmentId || null,
         issueDate: issueDate ? new Date(issueDate) : new Date(),
         dueDate: dueDate ? new Date(dueDate) : null,
+        notes: notes || null,
         status: 'Unpaid',
         companyId: req.companyId || null,
-      }
+      },
+      include: INVOICE_INCLUDE
     });
     res.status(201).json(invoice);
   } catch (error) {
@@ -103,12 +128,35 @@ export const createInvoice = async (req, res) => {
   }
 };
 
+// Only an Unpaid invoice's core fields (amount, customer, dates, notes...)
+// may be edited — once a payment has landed (Partial/Paid) the invoice is
+// locked to keep it consistent with what was actually recorded.
 export const updateInvoice = async (req, res) => {
   const { id } = req.params;
   try {
+    const existing = await prisma.invoice.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Invoice not found' });
+    if (existing.status !== 'Unpaid') {
+      return res.status(400).json({ error: `Cannot edit a ${existing.status.toLowerCase()} invoice — it already has payments recorded against it.` });
+    }
+
+    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes } = req.body;
+    const data = {};
+    if (invoiceNumber !== undefined) data.invoiceNumber = invoiceNumber;
+    if (type !== undefined) data.type = type;
+    if (amount !== undefined) data.amount = parseFloat(amount);
+    if (orderId !== undefined) data.orderId = orderId || null;
+    if (poId !== undefined) data.poId = poId || null;
+    if (contactId !== undefined) data.contactId = contactId || null;
+    if (shipmentId !== undefined) data.shipmentId = shipmentId || null;
+    if (issueDate !== undefined) data.issueDate = issueDate ? new Date(issueDate) : new Date();
+    if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
+    if (notes !== undefined) data.notes = notes || null;
+
     const invoice = await prisma.invoice.update({
       where: { id },
-      data: req.body
+      data,
+      include: { ...INVOICE_INCLUDE, payments: true }
     });
     res.json(invoice);
   } catch (error) {
