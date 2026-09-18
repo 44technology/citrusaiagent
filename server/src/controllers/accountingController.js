@@ -63,16 +63,17 @@ export const updatePurchaseOrder = async (req, res) => {
 // ─── Invoices ────────────────────────────────────────
 
 // Shared nested include for an invoice's linked shipment — pulls in
-// whatever "Customer Invoice" documents were uploaded under that shipment
-// (via Shipment Detail's Documents tab) so they surface under the invoice
-// here too, even if they predate this invoiceId link.
+// whatever "Customer Invoice" and "Payment Voucher" documents were
+// uploaded under that shipment (via Shipment Detail's Documents tab, or
+// from here when creating an invoice / recording a payment) so they
+// surface under the invoice here too, even if they predate this link.
 const SHIPMENT_INCLUDE = {
   select: {
     id: true, label: true, shipmentRefId: true, referenceId: true,
     containerNumber: true, bolNumber: true,
     contact: { select: { id: true, name: true, company: true } },
     order: { select: { referenceId: true } },
-    documents: { where: { category: 'CustomerInv' }, orderBy: { createdAt: 'desc' } },
+    documents: { where: { category: { in: ['CustomerInv', 'PaymentVoucher'] } }, orderBy: { createdAt: 'desc' } },
   }
 };
 

@@ -159,6 +159,7 @@ const PaymentProgress = ({ invoice }) => {
 const PaymentModal = ({ invoice, onClose, onSaved }) => {
   const remaining = invoice.amount - paidAmount(invoice);
   const [form, setForm] = useState({ amount: remaining > 0 ? remaining.toFixed(2) : '', method: 'Bank Transfer', reference: '', notes: '', paidAt: new Date().toISOString().slice(0, 10) });
+  const [receiptFile, setReceiptFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -170,6 +171,13 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
     setSaving(true);
     try {
       await paymentsApi.create(invoice.id, form);
+      if (receiptFile) {
+        await documentsApi.upload(receiptFile, {
+          invoiceId: invoice.id,
+          shipmentId: invoice.shipmentId || undefined,
+          category: 'PaymentVoucher',
+        });
+      }
       onSaved();
     } catch (err) {
       setError(err.message);
@@ -219,6 +227,10 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Notes</label>
             <textarea className="ui-input" rows={2} placeholder="Optional notes..." value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
+          </div>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Receipt / Proof of Payment (optional)</label>
+            <input className="ui-input" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setReceiptFile(e.target.files?.[0] || null)} />
           </div>
           {error && <div style={{ color: '#ef4444', fontSize: '0.82rem' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
@@ -356,11 +368,14 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
 
       {invoiceDocs.length > 0 && (
         <div className="glass-panel" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: 12 }}>Invoice Documents ({invoiceDocs.length})</h3>
+          <h3 style={{ fontSize: '1rem', marginBottom: 12 }}>Documents ({invoiceDocs.length})</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {invoiceDocs.map(doc => (
               <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
                 <FileText size={15} style={{ color: 'var(--orange-primary)', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 10, flexShrink: 0, color: doc.category === 'PaymentVoucher' ? '#22c55e' : '#38bdf8', background: doc.category === 'PaymentVoucher' ? 'rgba(34,197,94,0.1)' : 'rgba(56,189,248,0.1)', border: `1px solid ${doc.category === 'PaymentVoucher' ? 'rgba(34,197,94,0.25)' : 'rgba(56,189,248,0.25)'}` }}>
+                  {doc.category === 'PaymentVoucher' ? 'RECEIPT' : 'INVOICE'}
+                </span>
                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{doc.originalName}</div>
                 <button className="btn btn-glass" style={{ padding: '5px 10px', fontSize: '0.78rem', gap: 5 }} onClick={() => handleViewDoc(doc)}>
                   <Eye size={13} /> View
