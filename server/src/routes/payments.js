@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get('/invoice/:invoiceId', paymentController.getPaymentsByInvoice);
 router.post('/invoice/:invoiceId', paymentController.createPayment);
+router.patch('/:id', paymentController.updatePayment);
 router.delete('/:id', paymentController.deletePayment);
 
 export default router;

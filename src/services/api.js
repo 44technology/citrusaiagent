@@ -192,6 +192,7 @@ export const paymentsApi = {
   getByInvoice: (invoiceId) => request(`/payments/invoice/${invoiceId}`),
   create: (invoiceId, data) =>
     request(`/payments/invoice/${invoiceId}`, { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/payments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/payments/${id}`, { method: 'DELETE' }),
 };
 

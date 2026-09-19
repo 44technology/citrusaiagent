@@ -54,6 +54,28 @@ export const createPayment = async (req, res) => {
   }
 };
 
+export const updatePayment = async (req, res) => {
+  const { id } = req.params;
+  const { amount, method, reference, notes, paidAt } = req.body;
+  try {
+    const existing = await prisma.payment.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Payment not found' });
+
+    const data = {};
+    if (amount !== undefined) data.amount = parseFloat(amount);
+    if (method !== undefined) data.method = method || 'Bank Transfer';
+    if (reference !== undefined) data.reference = reference || null;
+    if (notes !== undefined) data.notes = notes || null;
+    if (paidAt !== undefined) data.paidAt = paidAt ? new Date(paidAt) : new Date();
+
+    const payment = await prisma.payment.update({ where: { id }, data });
+    await recalcInvoiceStatus(payment.invoiceId);
+    res.json(payment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const deletePayment = async (req, res) => {
   const { id } = req.params;
   try {

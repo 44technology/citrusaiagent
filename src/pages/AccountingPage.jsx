@@ -156,9 +156,16 @@ const PaymentProgress = ({ invoice }) => {
 
 // ─── Record Payment Modal ────────────────────────────────────────────────────
 
-const PaymentModal = ({ invoice, onClose, onSaved }) => {
-  const remaining = invoice.amount - paidAmount(invoice);
-  const [form, setForm] = useState({ amount: remaining > 0 ? remaining.toFixed(2) : '', method: 'Bank Transfer', reference: '', notes: '', paidAt: new Date().toISOString().slice(0, 10) });
+const PaymentModal = ({ invoice, onClose, onSaved, editingPayment }) => {
+  const isEdit = !!editingPayment;
+  const remaining = invoice.amount - paidAmount(invoice) + (isEdit ? editingPayment.amount : 0);
+  const [form, setForm] = useState(() => isEdit ? {
+    amount: String(editingPayment.amount ?? ''),
+    method: editingPayment.method || 'Bank Transfer',
+    reference: editingPayment.reference || '',
+    notes: editingPayment.notes || '',
+    paidAt: editingPayment.paidAt ? editingPayment.paidAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+  } : { amount: remaining > 0 ? remaining.toFixed(2) : '', method: 'Bank Transfer', reference: '', notes: '', paidAt: new Date().toISOString().slice(0, 10) });
   const [receiptFile, setReceiptFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -170,7 +177,11 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
     if (!form.amount || parseFloat(form.amount) <= 0) { setError('Amount must be greater than 0'); return; }
     setSaving(true);
     try {
-      await paymentsApi.create(invoice.id, form);
+      if (isEdit) {
+        await paymentsApi.update(editingPayment.id, form);
+      } else {
+        await paymentsApi.create(invoice.id, form);
+      }
       if (receiptFile) {
         await documentsApi.upload(receiptFile, {
           invoiceId: invoice.id,
@@ -189,7 +200,7 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
     <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontSize: '1.2rem' }}>Record Payment — {invoice.invoiceNumber}</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>{isEdit ? 'Edit Payment' : 'Record Payment'} — {invoice.invoiceNumber}</h2>
           <button className="btn btn-glass" style={{ padding: '6px 8px' }} onClick={onClose}><X size={16} /></button>
         </div>
 
@@ -235,7 +246,7 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
           {error && <div style={{ color: '#ef4444', fontSize: '0.82rem' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
             <button type="button" className="btn btn-glass" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Record Payment'}</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Record Payment'}</button>
           </div>
         </form>
       </div>
@@ -248,13 +259,14 @@ const PaymentModal = ({ invoice, onClose, onSaved }) => {
 const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
   const [payments, setPayments] = useState(invoice.payments || []);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const canEdit = invoice.status === 'Unpaid';
 
   const reload = async () => { onRefresh(); };
 
-  const handlePaymentSaved = () => { setShowPaymentModal(false); reload(); };
+  const handlePaymentSaved = () => { setShowPaymentModal(false); setEditingPayment(null); reload(); };
 
   const handleDeletePayment = async (paymentId) => {
     if (!window.confirm('Delete this payment record?')) return;
@@ -423,7 +435,10 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
                   <td><span style={{ background: 'rgba(255,107,0,0.1)', color: 'var(--orange-primary)', padding: '2px 10px', borderRadius: 12, fontSize: '0.78rem' }}>{p.method}</span></td>
                   <td className="text-muted" style={{ fontSize: '0.85rem' }}>{p.reference || '—'}</td>
                   <td className="text-muted" style={{ fontSize: '0.82rem' }}>{p.notes || '—'}</td>
-                  <td>
+                  <td style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-glass" style={{ padding: '4px 8px' }} onClick={() => setEditingPayment(p)} title="Edit payment">
+                      <Edit3 size={14} />
+                    </button>
                     <button className="btn btn-glass" style={{ padding: '4px 8px', color: '#ef4444' }} disabled={deleting === p.id} onClick={() => handleDeletePayment(p.id)}>
                       <Trash2 size={14} />
                     </button>
@@ -442,8 +457,13 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
         )}
       </div>
 
-      {showPaymentModal && (
-        <PaymentModal invoice={invoice} onClose={() => setShowPaymentModal(false)} onSaved={handlePaymentSaved} />
+      {(showPaymentModal || editingPayment) && (
+        <PaymentModal
+          invoice={invoice}
+          editingPayment={editingPayment}
+          onClose={() => { setShowPaymentModal(false); setEditingPayment(null); }}
+          onSaved={handlePaymentSaved}
+        />
       )}
 
       {showEditModal && (
