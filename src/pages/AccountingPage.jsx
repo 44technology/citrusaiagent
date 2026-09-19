@@ -782,6 +782,7 @@ const AccountingPage = ({ selectedCompany }) => {
                 <th>INVOICE #</th>
                 <th>TYPE</th>
                 <th>CUSTOMER / SUPPLIER</th>
+                <th>CONTAINER #</th>
                 <th>AMOUNT</th>
                 <th>PAID</th>
                 <th>PROGRESS</th>
@@ -792,9 +793,9 @@ const AccountingPage = ({ selectedCompany }) => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="9" style={{ textAlign: 'center', padding: 40 }}>Loading invoices...</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40 }}>Loading invoices...</td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="9" style={{ textAlign: 'center', padding: 40 }}>No invoices found.</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40 }}>No invoices found.</td></tr>
               ) : filteredInvoices.map(inv => {
                 const paid = paidAmount(inv);
                 const pct = inv.amount > 0 ? Math.min((paid / inv.amount) * 100, 100) : 0;
@@ -819,6 +820,7 @@ const AccountingPage = ({ selectedCompany }) => {
                         </div>
                       )}
                     </td>
+                    <td className="text-muted" style={{ fontSize: '0.85rem' }}>{inv.shipment?.containerNumber || '—'}</td>
                     <td style={{ fontWeight: 700 }}>{fmt(inv.amount)}</td>
                     <td style={{ color: '#22c55e', fontWeight: 600 }}>{fmt(paid)}</td>
                     <td style={{ minWidth: 100 }}>
