@@ -12,6 +12,7 @@ router.patch('/purchase-orders/:id', accountingController.updatePurchaseOrder);
 router.get('/invoices', accountingController.getAllInvoices);
 router.post('/invoices', accountingController.createInvoice);
 router.patch('/invoices/:id', accountingController.updateInvoice);
+router.delete('/invoices/:id', accountingController.deleteInvoice);
 
 // Actions
 router.post('/convert-to-invoice/:orderId', accountingController.convertToInvoice);

@@ -134,6 +134,7 @@ export const accountingApi = {
   getAllInvoices: () => request('/accounting/invoices'),
   createInvoice: (data) => request('/accounting/invoices', { method: 'POST', body: JSON.stringify(data) }),
   updateInvoice: (id, data) => request(`/accounting/invoices/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteInvoice: (id) => request(`/accounting/invoices/${id}`, { method: 'DELETE' }),
   
   // Actions
   convertToInvoice: (orderId) => request(`/accounting/convert-to-invoice/${orderId}`, { method: 'POST' }),

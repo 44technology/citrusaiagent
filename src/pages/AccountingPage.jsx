@@ -262,9 +262,25 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
   const [editingPayment, setEditingPayment] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [deletingDoc, setDeletingDoc] = useState(null);
   const canEdit = invoice.status !== 'Paid';
+  const currentUser = (() => { try { return JSON.parse(localStorage.getItem('citrus_user') || '{}'); } catch { return {}; } })();
+  const canDeleteDocs = ['admin', 'super admin'].includes(currentUser.role);
 
   const reload = async () => { onRefresh(); };
+
+  const handleDeleteDoc = async (doc) => {
+    if (!window.confirm(`Delete "${doc.originalName}"? This cannot be undone.`)) return;
+    setDeletingDoc(doc.id);
+    try {
+      await documentsApi.delete(doc.id);
+      reload();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setDeletingDoc(null);
+    }
+  };
 
   const handlePaymentSaved = () => { setShowPaymentModal(false); setEditingPayment(null); reload(); };
 
@@ -278,6 +294,24 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
       alert(err.message);
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const [deletingInvoice, setDeletingInvoice] = useState(false);
+  const handleDeleteInvoice = async () => {
+    const paymentCount = (invoice.payments || []).length;
+    if (paymentCount > 0) {
+      alert(`This invoice has ${paymentCount} payment${paymentCount > 1 ? 's' : ''} recorded — delete ${paymentCount > 1 ? 'them' : 'it'} first (in Payment History below), then you can delete the invoice.`);
+      return;
+    }
+    if (!window.confirm(`Delete invoice ${invoice.invoiceNumber}? This cannot be undone.`)) return;
+    setDeletingInvoice(true);
+    try {
+      await accountingApi.deleteInvoice(invoice.id);
+      onBack();
+    } catch (err) {
+      alert(err.message);
+      setDeletingInvoice(false);
     }
   };
 
@@ -332,6 +366,9 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
               <Lock size={12} /> Locked
             </span>
           )}
+          <button className="btn btn-glass" style={{ padding: '7px 14px', fontSize: '0.85rem', gap: 6, color: '#ef4444' }} disabled={deletingInvoice} onClick={handleDeleteInvoice}>
+            <Trash2 size={14} /> Delete
+          </button>
           <StatusBadge status={invoice.status} />
         </div>
       </div>
@@ -395,6 +432,11 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
                 <button className="btn btn-glass" style={{ padding: '5px 10px', fontSize: '0.78rem', gap: 5 }} onClick={() => handleDownloadDoc(doc)}>
                   <Download size={13} /> Download
                 </button>
+                {canDeleteDocs && (
+                  <button className="btn btn-glass" style={{ padding: '5px 8px', color: '#ef4444' }} disabled={deletingDoc === doc.id} onClick={() => handleDeleteDoc(doc)} title="Delete document">
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -877,7 +919,7 @@ const AccountingPage = ({ selectedCompany }) => {
                 <th>CUSTOMER / SUPPLIER</th>
                 <th>CONTAINER #</th>
                 <th>AMOUNT</th>
-                <th>PAID</th>
+                <th>REMAINING</th>
                 <th>PROGRESS</th>
                 <th>STATUS</th>
                 <th>DUE DATE</th>
@@ -915,7 +957,7 @@ const AccountingPage = ({ selectedCompany }) => {
                     </td>
                     <td className="text-muted" style={{ fontSize: '0.85rem' }}>{inv.shipment?.containerNumber || '—'}</td>
                     <td style={{ fontWeight: 700 }}>{fmt(inv.amount)}</td>
-                    <td style={{ color: '#22c55e', fontWeight: 600 }}>{fmt(paid)}</td>
+                    <td style={{ color: inv.amount - paid > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>{fmt(Math.max(inv.amount - paid, 0))}</td>
                     <td style={{ minWidth: 100 }}>
                       <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: pct >= 100 ? '#22c55e' : pct > 0 ? '#fbbf24' : '#ef4444' }} />

@@ -180,6 +180,24 @@ export const updateInvoice = async (req, res) => {
   }
 };
 
+// An invoice with payments recorded against it can't be deleted outright —
+// delete the payments first (existing Payment History delete button), then
+// the invoice itself.
+export const deleteInvoice = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const invoice = await prisma.invoice.findUnique({ where: { id }, include: { payments: true } });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (invoice.payments.length > 0) {
+      return res.status(400).json({ error: `This invoice has ${invoice.payments.length} payment(s) recorded — delete them first, then delete the invoice.` });
+    }
+    await prisma.invoice.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Convert Sales Order to Sales Invoice
 export const convertToInvoice = async (req, res) => {
   const { orderId } = req.params;
