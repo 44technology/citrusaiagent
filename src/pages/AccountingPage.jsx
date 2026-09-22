@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
   ChevronDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock
 } from 'lucide-react';
-import { accountingApi, paymentsApi, shipmentsApi, documentsApi } from '../services/api';
+import { accountingApi, paymentsApi, shipmentsApi, documentsApi, contactsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
 import AccountOfSaleModal from '../components/AccountOfSaleModal';
 
@@ -481,6 +481,82 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
 
 const shipmentRefLabel = (s) => s.order?.referenceId ? `#${s.order.referenceId}` : s.shipmentRefId ? `#${s.shipmentRefId}` : '(no ref id)';
 
+// Searchable Ref ID (shipment) picker — a plain <select> becomes unusable
+// once there are hundreds of shipments to scroll through.
+const ShipmentRefSelect = ({ shipments, value, onChange, disabled, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selected = shipments.find(s => s.id === value);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? shipments.filter(s =>
+        shipmentRefLabel(s).toLowerCase().includes(q) ||
+        (s.contact?.name || '').toLowerCase().includes(q) ||
+        (s.containerNumber || '').toLowerCase().includes(q))
+    : shipments;
+
+  const handleSelect = (id) => { onChange(id); setOpen(false); setQuery(''); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <div
+        className="ui-input"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1 }}
+        onClick={() => !disabled && setOpen(o => !o)}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: selected ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+          {selected ? `${shipmentRefLabel(selected)} — ${selected.contact?.name || 'No customer'}${selected.containerNumber ? ` — ${selected.containerNumber}` : ''}` : (placeholder || 'Select...')}
+        </span>
+        <ChevronDown size={14} style={{ flexShrink: 0, color: 'var(--text-muted)' }} />
+      </div>
+
+      {open && !disabled && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+          background: '#1a1f2e', border: '1px solid var(--border-glass)', borderRadius: 10,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)', maxHeight: 280, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          <div style={{ padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <input
+              autoFocus className="ui-input" placeholder="Search ref id, container, customer..."
+              value={query} onChange={e => setQuery(e.target.value)} onClick={e => e.stopPropagation()}
+              style={{ fontSize: '0.82rem', padding: '5px 8px', width: '100%' }}
+            />
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: '12px 14px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>No match</div>
+            ) : filtered.map(s => (
+              <div
+                key={s.id}
+                onClick={() => handleSelect(s.id)}
+                style={{
+                  padding: '8px 14px', cursor: 'pointer', fontSize: '0.84rem', borderBottom: '1px solid rgba(255,255,255,0.03)',
+                  background: value === s.id ? 'rgba(255,107,0,0.12)' : 'transparent',
+                  color: value === s.id ? 'var(--orange-primary)' : 'var(--text-primary)',
+                }}
+                onMouseEnter={e => { if (value !== s.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                onMouseLeave={e => { if (value !== s.id) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div style={{ fontWeight: 600 }}>{shipmentRefLabel(s)}{s.containerNumber ? ` — ${s.containerNumber}` : ''}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.contact?.name || 'No customer'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
   const isEdit = !!editingInvoice;
   const [form, setForm] = useState(() => isEdit ? {
@@ -494,6 +570,7 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
     shipmentId: editingInvoice.shipmentId || '',
   } : { invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '', contactId: '', shipmentId: '' });
   const [shipments, setShipments] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [existingInvoiceDocs, setExistingInvoiceDocs] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -502,6 +579,7 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
 
   useEffect(() => {
     shipmentsApi.getAll().then(list => setShipments(Array.isArray(list) ? list : [])).catch(() => {});
+    contactsApi.getAll('Customer').then(list => setCustomers(Array.isArray(list) ? list : [])).catch(() => {});
   }, []);
 
   // Pre-fill the "already has an invoice document" warning when editing.
@@ -515,11 +593,21 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
       .catch(() => setExistingInvoiceDocs([]));
   };
 
-  const selectedShipment = shipments.find(s => s.id === form.shipmentId) || editingInvoice?.shipment;
+  // Picking the customer first narrows the Ref ID list down to just their
+  // shipments — with hundreds of shipments across all customers, hunting
+  // for the right one in one long list was the whole problem.
+  const shipmentsForCustomer = form.contactId
+    ? shipments.filter(s => s.contact?.id === form.contactId || s.id === form.shipmentId)
+    : shipments;
+
+  const handleCustomerChange = (contactId) => {
+    setForm(f => ({ ...f, contactId, shipmentId: '', orderId: '' }));
+    setExistingInvoiceDocs([]);
+  };
 
   const handleShipmentChange = (id) => {
     const s = shipments.find(sh => sh.id === id);
-    setForm(f => ({ ...f, shipmentId: id, contactId: s?.contact?.id || '', orderId: s?.order?.id || '' }));
+    setForm(f => ({ ...f, shipmentId: id, contactId: s?.contact?.id || f.contactId, orderId: s?.order?.id || '' }));
     if (id) checkExistingDocs(id); else setExistingInvoiceDocs([]);
   };
 
@@ -571,20 +659,25 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
             </div>
           </div>
           {form.type === 'Sales' && (
-            <div>
-              <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Ref ID (Shipment) *</label>
-              <select className="ui-input" value={form.shipmentId} onChange={e => handleShipmentChange(e.target.value)} required>
-                <option value="">Select a shipment...</option>
-                {shipments.map(s => (
-                  <option key={s.id} value={s.id}>{shipmentRefLabel(s)} — {s.contact?.name || 'No customer'}{s.containerNumber ? ` — ${s.containerNumber}` : ''}</option>
-                ))}
-              </select>
-              {selectedShipment && (
-                <div className="text-muted" style={{ fontSize: '0.78rem', marginTop: 6 }}>
-                  Customer: <strong style={{ color: 'var(--text-primary)' }}>{selectedShipment.contact?.name || '—'}</strong>
-                </div>
-              )}
-            </div>
+            <>
+              <div>
+                <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Customer</label>
+                <select className="ui-input" value={form.contactId} onChange={e => handleCustomerChange(e.target.value)}>
+                  <option value="">All customers</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <p className="text-muted" style={{ fontSize: '0.72rem', marginTop: 4 }}>Narrows the Ref ID list below — optional, you can also just search by ref id or container.</p>
+              </div>
+              <div>
+                <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Ref ID (Shipment) *</label>
+                <ShipmentRefSelect
+                  shipments={shipmentsForCustomer}
+                  value={form.shipmentId}
+                  onChange={handleShipmentChange}
+                  placeholder="Search and select a shipment..."
+                />
+              </div>
+            </>
           )}
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Amount ($) *</label>
