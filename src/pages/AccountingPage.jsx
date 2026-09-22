@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
-  ChevronDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock
+  ChevronDown, ChevronUp, ChevronsUpDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi, documentsApi, contactsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
 import AccountOfSaleModal from '../components/AccountOfSaleModal';
+import { formatFullDateUTC } from '../utils/dateUtils';
 
 // ─── PO Documents Modal ─────────────────────────────────────────────────────
 const PODocsModal = ({ po, onClose }) => {
@@ -352,8 +353,8 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
         <div>
           <h2 style={{ fontSize: '1.4rem' }}>{invoice.invoiceNumber}</h2>
           <p className="text-muted" style={{ fontSize: '0.85rem' }}>
-            {invoice.type} Invoice · Issued {new Date(invoice.issueDate).toLocaleDateString()}
-            {invoice.dueDate && ` · Due ${new Date(invoice.dueDate).toLocaleDateString()}`}
+            {invoice.type} Invoice · Issued {formatFullDateUTC(invoice.issueDate)}
+            {invoice.dueDate && ` · Due ${formatFullDateUTC(invoice.dueDate)}`}
           </p>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -472,7 +473,7 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
             <tbody>
               {(invoice.payments || []).map(p => (
                 <tr key={p.id} className="shipment-card">
-                  <td>{new Date(p.paidAt).toLocaleDateString()}</td>
+                  <td>{formatFullDateUTC(p.paidAt)}</td>
                   <td style={{ fontWeight: 700, color: '#22c55e' }}>{fmt(p.amount)}</td>
                   <td><span style={{ background: 'rgba(255,107,0,0.1)', color: 'var(--orange-primary)', padding: '2px 10px', borderRadius: 12, fontSize: '0.78rem' }}>{p.method}</span></td>
                   <td className="text-muted" style={{ fontSize: '0.85rem' }}>{p.reference || '—'}</td>
@@ -775,6 +776,7 @@ const AccountingPage = ({ selectedCompany }) => {
   const [search, setSearch] = useState('');
   const [docsPo, setDocsPo] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [dueDateSort, setDueDateSort] = useState(null); // null | 'asc' | 'desc'
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [aosShipment, setAosShipment] = useState(null);
@@ -818,7 +820,20 @@ const AccountingPage = ({ selectedCompany }) => {
       String(inv.shipment?.bolNumber || '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'All' || inv.status === statusFilter;
     return matchSearch && matchStatus;
+  }).sort((a, b) => {
+    if (!dueDateSort) return 0;
+    // Invoices with no due date always sort to the bottom, in either direction.
+    const da = a.dueDate ? new Date(a.dueDate).getTime() : null;
+    const db = b.dueDate ? new Date(b.dueDate).getTime() : null;
+    if (da === null && db === null) return 0;
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return dueDateSort === 'asc' ? da - db : db - da;
   });
+
+  const toggleDueDateSort = () => {
+    setDueDateSort(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
+  };
 
   const filteredPOs = purchaseOrders.filter(po =>
     !search ||
@@ -922,7 +937,12 @@ const AccountingPage = ({ selectedCompany }) => {
                 <th>REMAINING</th>
                 <th>PROGRESS</th>
                 <th>STATUS</th>
-                <th>DUE DATE</th>
+                <th onClick={toggleDueDateSort} style={{ cursor: 'pointer', userSelect: 'none', color: dueDateSort ? 'var(--orange-primary)' : undefined }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    DUE DATE
+                    {dueDateSort === 'asc' ? <ChevronUp size={12} /> : dueDateSort === 'desc' ? <ChevronDown size={12} /> : <ChevronsUpDown size={11} style={{ opacity: 0.4 }} />}
+                  </span>
+                </th>
                 <th></th>
               </tr>
             </thead>
@@ -965,7 +985,7 @@ const AccountingPage = ({ selectedCompany }) => {
                     </td>
                     <td><StatusBadge status={inv.status} /></td>
                     <td style={{ color: isOverdue ? '#ef4444' : 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '—'}
+                      {inv.dueDate ? formatFullDateUTC(inv.dueDate) : '—'}
                       {isOverdue && <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>OVERDUE</div>}
                     </td>
                     <td onClick={e => e.stopPropagation()}>
