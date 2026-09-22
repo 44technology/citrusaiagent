@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
-  ChevronDown, ChevronUp, ChevronsUpDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock
+  ChevronDown, ChevronUp, ChevronsUpDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock, Filter
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi, documentsApi, contactsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
@@ -777,6 +777,8 @@ const AccountingPage = ({ selectedCompany }) => {
   const [docsPo, setDocsPo] = useState(null);
   const [statusFilter, setStatusFilter] = useState('All');
   const [dueDateSort, setDueDateSort] = useState(null); // null | 'asc' | 'desc'
+  const [showInvFilters, setShowInvFilters] = useState(false);
+  const [invFilters, setInvFilters] = useState({ customer: '', container: '' });
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [aosShipment, setAosShipment] = useState(null);
@@ -819,7 +821,10 @@ const AccountingPage = ({ selectedCompany }) => {
       String(inv.shipment?.containerNumber || '').toLowerCase().includes(q) ||
       String(inv.shipment?.bolNumber || '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'All' || inv.status === statusFilter;
-    return matchSearch && matchStatus;
+    const invCustomer = inv.order?.contact?.name || inv.purchaseOrder?.supplier?.name || inv.contact?.name || '';
+    const matchCustomer = !invFilters.customer || invCustomer === invFilters.customer;
+    const matchContainer = !invFilters.container || inv.shipment?.containerNumber === invFilters.container;
+    return matchSearch && matchStatus && matchCustomer && matchContainer;
   }).sort((a, b) => {
     if (!dueDateSort) return 0;
     // Invoices with no due date always sort to the bottom, in either direction.
@@ -830,6 +835,14 @@ const AccountingPage = ({ selectedCompany }) => {
     if (db === null) return -1;
     return dueDateSort === 'asc' ? da - db : db - da;
   });
+
+  const invoiceCustomerNames = [...new Set(
+    invoices.map(inv => inv.order?.contact?.name || inv.purchaseOrder?.supplier?.name || inv.contact?.name).filter(Boolean)
+  )].sort();
+  const invoiceContainerNumbers = [...new Set(
+    invoices.map(inv => inv.shipment?.containerNumber).filter(Boolean)
+  )].sort();
+  const hasInvFilters = !!(invFilters.customer || invFilters.container);
 
   const toggleDueDateSort = () => {
     setDueDateSort(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
@@ -911,17 +924,55 @@ const AccountingPage = ({ selectedCompany }) => {
 
       {/* Search & Filter */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <div className="glass-panel" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-          <Search size={16} className="text-muted" />
-          <input className="ui-input" style={{ border: 'none', background: 'transparent', flex: 1 }} placeholder={activeTab === 'invoices' ? 'Search invoices...' : activeTab === 'aos' ? 'Search by container, grower...' : 'Search purchase orders...'} value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>}
+        <div className="glass-panel" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <Search size={16} className="text-muted" style={{ flexShrink: 0 }} />
+          <input className="ui-input" style={{ border: 'none', background: 'transparent', flex: 1, width: 'auto', padding: 0 }} placeholder={activeTab === 'invoices' ? 'Search invoices...' : activeTab === 'aos' ? 'Search by container, grower...' : 'Search purchase orders...'} value={search} onChange={e => setSearch(e.target.value)} />
+          {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0 }}><X size={14} /></button>}
         </div>
         {activeTab === 'invoices' && (
-          <select className="ui-input glass-panel" style={{ padding: '10px 16px', minWidth: 140 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            {['All', 'Unpaid', 'Partial', 'Paid'].map(s => <option key={s}>{s}</option>)}
-          </select>
+          <>
+            <select className="ui-input glass-panel" style={{ padding: '10px 16px', width: 150, flexShrink: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              {['All', 'Unpaid', 'Partial', 'Paid'].map(s => <option key={s}>{s}</option>)}
+            </select>
+            <button
+              className={`btn ${showInvFilters || hasInvFilters ? 'btn-primary' : 'btn-glass'}`}
+              onClick={() => setShowInvFilters(v => !v)}
+              style={{ gap: 8, whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              <Filter size={15} /> Filters
+              {hasInvFilters && <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{[invFilters.customer, invFilters.container].filter(Boolean).length}</span>}
+            </button>
+          </>
         )}
       </div>
+
+      {activeTab === 'invoices' && showInvFilters && (
+        <div className="glass-panel" style={{ padding: '16px 18px', border: '1px solid rgba(255,107,0,0.2)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>CUSTOMER</label>
+              <select className="ui-input" value={invFilters.customer} onChange={e => setInvFilters(f => ({ ...f, customer: e.target.value }))}>
+                <option value="">All customers</option>
+                {invoiceCustomerNames.map(name => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 6, letterSpacing: '0.05em' }}>CONTAINER #</label>
+              <select className="ui-input" value={invFilters.container} onChange={e => setInvFilters(f => ({ ...f, container: e.target.value }))}>
+                <option value="">All containers</option>
+                {invoiceContainerNumbers.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          {hasInvFilters && (
+            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-glass" onClick={() => setInvFilters({ customer: '', container: '' })} style={{ fontSize: '0.78rem', gap: 6 }}>
+                <X size={13} /> Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Invoices Table */}
       {activeTab === 'invoices' && (
