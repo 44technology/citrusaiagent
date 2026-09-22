@@ -129,16 +129,16 @@ export const createInvoice = async (req, res) => {
   }
 };
 
-// Only an Unpaid invoice's core fields (amount, customer, dates, notes...)
-// may be edited — once a payment has landed (Partial/Paid) the invoice is
-// locked to keep it consistent with what was actually recorded.
+// A fully Paid invoice is locked — once every dollar is accounted for,
+// editing it (amount especially) would drift from what was actually
+// recorded. Unpaid and Partial invoices can still be corrected.
 export const updateInvoice = async (req, res) => {
   const { id } = req.params;
   try {
     const existing = await prisma.invoice.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ error: 'Invoice not found' });
-    if (existing.status !== 'Unpaid') {
-      return res.status(400).json({ error: `Cannot edit a ${existing.status.toLowerCase()} invoice — it already has payments recorded against it.` });
+    if (existing.status === 'Paid') {
+      return res.status(400).json({ error: 'Cannot edit a fully paid invoice.' });
     }
 
     const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes } = req.body;
@@ -154,11 +154,26 @@ export const updateInvoice = async (req, res) => {
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (notes !== undefined) data.notes = notes || null;
 
-    const invoice = await prisma.invoice.update({
+    let invoice = await prisma.invoice.update({
       where: { id },
       data,
       include: { ...INVOICE_INCLUDE, payments: true }
     });
+
+    // Amount can change on a Partial invoice — re-derive Unpaid/Partial/Paid
+    // against the new amount so the status doesn't drift from reality.
+    if (data.amount !== undefined) {
+      const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+      const status = totalPaid >= invoice.amount ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
+      if (status !== invoice.status) {
+        invoice = await prisma.invoice.update({
+          where: { id },
+          data: { status },
+          include: { ...INVOICE_INCLUDE, payments: true }
+        });
+      }
+    }
+
     res.json(invoice);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -262,7 +262,7 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
   const [editingPayment, setEditingPayment] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
-  const canEdit = invoice.status === 'Unpaid';
+  const canEdit = invoice.status !== 'Paid';
 
   const reload = async () => { onRefresh(); };
 
@@ -328,7 +328,7 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
               <Edit3 size={14} /> Edit
             </button>
           ) : (
-            <span className="text-muted" title="Only an Unpaid invoice can be edited" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem' }}>
+            <span className="text-muted" title="A fully Paid invoice can't be edited" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem' }}>
               <Lock size={12} /> Locked
             </span>
           )}
