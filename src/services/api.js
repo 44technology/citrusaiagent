@@ -197,6 +197,20 @@ export const paymentsApi = {
   delete: (id) => request(`/payments/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Products (catalog + quarterly sourcing program) ─
+export const productsApi = {
+  getAll: () => request('/products'),
+  create: (name) => request('/products', { method: 'POST', body: JSON.stringify({ name }) }),
+  update: (id, name) => request(`/products/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  delete: (id) => request(`/products/${id}`, { method: 'DELETE' }),
+  createVariety: (productId, data) => request(`/products/${productId}/varieties`, { method: 'POST', body: JSON.stringify(data) }),
+  updateVariety: (id, data) => request(`/products/varieties/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteVariety: (id) => request(`/products/varieties/${id}`, { method: 'DELETE' }),
+  createSource: (varietyId, data) => request(`/products/varieties/${varietyId}/sources`, { method: 'POST', body: JSON.stringify(data) }),
+  updateSource: (id, data) => request(`/products/sources/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteSource: (id) => request(`/products/sources/${id}`, { method: 'DELETE' }),
+};
+
 // ─── Documents ───────────────────────────────────────
 export const documentsApi = {
   getAll: (filters = {}) => {

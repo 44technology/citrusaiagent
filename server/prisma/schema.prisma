@@ -492,3 +492,42 @@ model VendorPackage {
   grower    Contact  @relation(fields: [growerId], references: [id], onDelete: Cascade)
   tenant    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 }
+
+// ── Products — catalog + quarterly sourcing program ─────────────────────
+// A Product (e.g. "Orange") has Varieties (e.g. "Valencia"); each variety
+// has Sources: which country supplies it in which quarters of the year.
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  companyId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  varieties ProductVariety[]
+
+  @@unique([companyId, name])
+}
+
+model ProductVariety {
+  id        String   @id @default(uuid())
+  productId String
+  name      String   // e.g. "Valencia", "Nadorcott"
+  isJuice   Boolean  @default(false) // sourced for juice rather than fresh
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sources   VarietySource[]
+
+  @@unique([productId, name, isJuice])
+}
+
+model VarietySource {
+  id        String   @id @default(uuid())
+  varietyId String
+  country   String
+  quarters  Int[]    // quarters (1–4) in which this country supplies the variety
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  variety   ProductVariety @relation(fields: [varietyId], references: [id], onDelete: Cascade)
+}
