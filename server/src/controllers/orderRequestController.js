@@ -109,7 +109,11 @@ export const approve = async (req, res) => {
       data: { status: 'Approved', reviewedBy: req.user?.username || null, reviewedAt: new Date() },
       include: PUBLIC_INCLUDE,
     });
-    res.json({ request: updated, ordersCreated: orders.length });
+    res.json({
+      request: updated,
+      ordersCreated: orders.length,
+      orders: orders.map(o => ({ id: o.id, departureWeek: o.departureWeek, fclCount: o.fclCount })),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

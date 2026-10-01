@@ -149,8 +149,13 @@ const RequestDetail = ({ request, onClose, onChanged }) => {
   const approve = async () => {
     if (!window.confirm(`Approve this request? It will create ${weeks.length} order${weeks.length > 1 ? 's' : ''} (one per week).`)) return;
     setBusy(true);
-    try { await orderRequestsApi.approve(request.id); onChanged(); onClose(); }
-    catch (e) { setError(e.message); }
+    try {
+      const result = await orderRequestsApi.approve(request.id);
+      const lines = (result.orders || []).map(o => `• Week ${o.departureWeek} — ${o.fclCount} containers — Order ID ${o.id.slice(0, 8)}`).join('\n');
+      window.alert(`Created ${result.ordersCreated} order(s) in the Orders page:\n\n${lines}\n\nLook these up by week/container count (or the start of the ID) if you need to find or delete them — e.g. for a test approval.`);
+      onChanged();
+      onClose();
+    } catch (e) { setError(e.message); }
     setBusy(false);
   };
 
