@@ -73,7 +73,7 @@ const NewLinkModal = ({ onClose, onCreated }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+      <div className="modal-content" style={{ maxWidth: 460, padding: 28 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ fontSize: '1.2rem' }}>New Order Link</h2>
           <button className="btn btn-glass" style={{ padding: '6px 8px' }} onClick={onClose}><X size={16} /></button>
@@ -163,43 +163,43 @@ const RequestDetail = ({ request, onClose, onChanged }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div className="modal-content" style={{ maxWidth: 560, padding: 28 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
           <div>
-            <h2 style={{ fontSize: '1.15rem' }}>{request.contact?.name}</h2>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: 2 }}>{request.product} · {request.variety}</p>
+            <h2 style={{ fontSize: '1.25rem' }}>{request.contact?.name}</h2>
+            <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: 4 }}>{request.product} · {request.variety}</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <StatusBadge status={request.status} />
             <button className="btn btn-glass" style={{ padding: '6px 8px' }} onClick={onClose}><X size={16} /></button>
           </div>
         </div>
 
         {request.status === 'Draft' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p className="text-muted" style={{ fontSize: '0.85rem' }}>Waiting on the customer to open the link and fill it in.</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input className="ui-input" readOnly value={publicUrl(request.token)} onClick={e => e.target.select()} style={{ flex: 1, fontSize: '0.8rem' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p className="text-muted" style={{ fontSize: '0.88rem' }}>Waiting on the customer to open the link and fill it in.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input className="ui-input" readOnly value={publicUrl(request.token)} onClick={e => e.target.select()} style={{ flex: 1, fontSize: '0.82rem' }} />
               <CopyLinkButton token={request.token} />
             </div>
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-              <div className="glass-panel" style={{ padding: 14 }}>
-                <p className="text-muted" style={{ fontSize: '0.72rem', marginBottom: 4 }}>LOCATION</p>
-                <p style={{ fontWeight: 600 }}>{request.location || '—'}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 22 }}>
+              <div className="glass-panel" style={{ padding: 18 }}>
+                <p className="text-muted" style={{ fontSize: '0.74rem', marginBottom: 6 }}>LOCATION</p>
+                <p style={{ fontWeight: 600, fontSize: '1.02rem' }}>{request.location || '—'}</p>
               </div>
-              <div className="glass-panel" style={{ padding: 14 }}>
-                <p className="text-muted" style={{ fontSize: '0.72rem', marginBottom: 4 }}>TOTAL CONTAINERS</p>
-                <p style={{ fontWeight: 700, color: 'var(--orange-primary)' }}>{totalContainers}</p>
+              <div className="glass-panel" style={{ padding: 18 }}>
+                <p className="text-muted" style={{ fontSize: '0.74rem', marginBottom: 6 }}>TOTAL CONTAINERS</p>
+                <p style={{ fontWeight: 700, fontSize: '1.02rem', color: 'var(--orange-primary)' }}>{totalContainers}</p>
               </div>
             </div>
 
-            <p className="text-muted" style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>WEEKS</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+            <p className="text-muted" style={{ fontSize: '0.76rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 12 }}>WEEKS</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
               {weeks.map((w, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: '0.85rem' }}>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, fontSize: '0.9rem' }}>
                   <span>Week {w.week}</span>
                   <strong>{w.containers} container{w.containers > 1 ? 's' : ''}</strong>
                 </div>
@@ -207,25 +207,25 @@ const RequestDetail = ({ request, onClose, onChanged }) => {
             </div>
 
             {request.notes && (
-              <div style={{ marginBottom: 14 }}>
-                <p className="text-muted" style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 6 }}>NOTES</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{request.notes}</p>
+              <div style={{ marginBottom: 22 }}>
+                <p className="text-muted" style={{ fontSize: '0.76rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 8 }}>NOTES</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{request.notes}</p>
               </div>
             )}
 
             {request.status === 'Submitted' && (
               <>
-                <input className="ui-input" placeholder="Reason (only needed if rejecting)" value={reason} onChange={e => setReason(e.target.value)} style={{ marginBottom: 10, fontSize: '0.85rem' }} />
-                {error && <div style={{ color: '#ef4444', fontSize: '0.82rem', marginBottom: 8 }}>{error}</div>}
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                  <button className="btn btn-glass" style={{ color: '#ef4444', gap: 6 }} disabled={busy} onClick={rejectIt}><ThumbsDown size={14} /> Reject</button>
-                  <button className="btn btn-primary" style={{ gap: 6 }} disabled={busy} onClick={approve}><ThumbsUp size={14} /> Approve & Create Orders</button>
+                <input className="ui-input" placeholder="Reason (only needed if rejecting)" value={reason} onChange={e => setReason(e.target.value)} style={{ marginBottom: 16, fontSize: '0.88rem' }} />
+                {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: 12 }}>{error}</div>}
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                  <button className="btn btn-glass" style={{ color: '#ef4444', gap: 7, padding: '9px 16px' }} disabled={busy} onClick={rejectIt}><ThumbsDown size={14} /> Reject</button>
+                  <button className="btn btn-primary" style={{ gap: 7, padding: '9px 18px' }} disabled={busy} onClick={approve}><ThumbsUp size={14} /> Approve & Create Orders</button>
                 </div>
               </>
             )}
 
             {request.status === 'Rejected' && request.rejectReason && (
-              <p style={{ fontSize: '0.82rem', color: '#ef4444' }}>Rejected: {request.rejectReason}</p>
+              <p style={{ fontSize: '0.85rem', color: '#ef4444' }}>Rejected: {request.rejectReason}</p>
             )}
           </>
         )}
