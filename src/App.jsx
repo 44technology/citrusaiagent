@@ -17,6 +17,8 @@ import VesselSchedulePage from './pages/VesselSchedulePage';
 import PLPage from './pages/PLPage';
 import CarriersPage from './pages/CarriersPage';
 import ProductsPage from './pages/ProductsPage';
+import OrderRequestsPage from './pages/OrderRequestsPage';
+import PublicOrderRequestPage from './pages/PublicOrderRequestPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
@@ -29,6 +31,7 @@ const TAB_TO_PATH = {
   shipments: '/shipments', tracking: '/tracking', vessels: '/vessels', growers: '/growers',
   carriers: '/carriers',
   products: '/products',
+  orderRequests: '/order-requests',
   accounting: '/accounting', outreach: '/outreach', documents: '/documents',
   analytics: '/pl', settings: '/settings',
 };
@@ -70,6 +73,7 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
             {activeTab === 'growers' && <GrowersPage selectedCompany={selectedCompany} />}
             {activeTab === 'carriers' && <CarriersPage />}
             {activeTab === 'products' && <ProductsPage selectedCompany={selectedCompany} />}
+            {activeTab === 'orderRequests' && <OrderRequestsPage />}
             {activeTab === 'outreach' && <OutreachPage />}
             {activeTab === 'analytics' && <PLPage selectedCompany={selectedCompany} />}
             {activeTab === 'settings' && <SettingsPage />}
@@ -150,6 +154,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/leads" /> : <LoginPage onLogin={handleLogin} />} />
+        <Route path="/order/:token" element={<PublicOrderRequestPage />} />
         <Route
           path="/:page"
           element={

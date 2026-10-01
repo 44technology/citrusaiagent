@@ -21,6 +21,7 @@ model Company {
   invoices       Invoice[]
   purchaseOrders PurchaseOrder[]
   vendorPackages VendorPackage[]
+  orderRequests  OrderRequest[]
 }
 
 model Contact {
@@ -70,6 +71,7 @@ model Contact {
   vendorPackages VendorPackage[]
   invoices       Invoice[]
   programs       CustomerProgram[]
+  orderRequests  OrderRequest[]
 }
 
 // A customer can run several trading programs over time — e.g. Orange from
@@ -530,4 +532,31 @@ model VarietySource {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   variety   ProductVariety @relation(fields: [varietyId], references: [id], onDelete: Cascade)
+}
+
+// ── Customer order-request links ─────────────────────────────────────────
+// Staff generates a one-time link for a customer (product/variety pre-set by
+// staff); the customer opens it — no login — and fills in how many
+// containers they want, for which weeks, and where to. Staff then reviews
+// and approves it into a real Order (one Order per week row).
+model OrderRequest {
+  id           String    @id @default(uuid())
+  token        String    @unique @default(uuid())
+  contactId    String
+  product      String
+  variety      String
+  status       String    @default("Draft") // Draft | Submitted | Approved | Rejected
+  location     String?
+  notes        String?
+  weeks        Json?     // [{ week: 36, containers: 3 }, ...] — filled in by the customer
+  createdBy    String?   // staff username who generated the link
+  submittedAt  DateTime?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  rejectReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  companyId    String?
+  tenant       Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contact      Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }

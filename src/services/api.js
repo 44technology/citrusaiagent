@@ -197,6 +197,33 @@ export const paymentsApi = {
   delete: (id) => request(`/payments/${id}`, { method: 'DELETE' }),
 };
 
+// ─── Order Requests (customer self-service order links) ─
+export const orderRequestsApi = {
+  getAll: () => request('/order-requests'),
+  create: (data) => request('/order-requests', { method: 'POST', body: JSON.stringify(data) }),
+  approve: (id) => request(`/order-requests/${id}/approve`, { method: 'POST' }),
+  reject: (id, reason) => request(`/order-requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  delete: (id) => request(`/order-requests/${id}`, { method: 'DELETE' }),
+};
+
+// Public — reached via the token link, no login. Plain fetch: no auth header,
+// no company header, and errors are surfaced the same way request() does.
+async function publicRequest(url, options = {}) {
+  const res = await fetch(`${API_BASE}${url}`, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(error.error || 'Request failed');
+  }
+  return res.json();
+}
+export const publicOrderRequestApi = {
+  get: (token) => publicRequest(`/public/order-requests/${token}`),
+  submit: (token, data) => publicRequest(`/public/order-requests/${token}/submit`, { method: 'POST', body: JSON.stringify(data) }),
+};
+
 // ─── Products (catalog + quarterly sourcing program) ─
 export const productsApi = {
   getAll: () => request('/products'),
