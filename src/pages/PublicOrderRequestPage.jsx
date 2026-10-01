@@ -53,16 +53,24 @@ const PublicOrderRequestPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0d14', display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
-      <div style={{ width: '100%', maxWidth: 560 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, justifyContent: 'center' }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    // #root (app shell) is a flex container sized to the viewport, so this
+    // page — rendered inside it, standalone, no Sidebar/Header — must claim
+    // the full width/height itself and manage its own scrolling, otherwise
+    // it shrinks to content size and sticks to the top-left instead of
+    // filling and centering in the viewport.
+    <div style={{
+      width: '100%', height: '100vh', overflowY: 'auto', background: '#0a0d14',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px', boxSizing: 'border-box',
+    }}>
+      <div style={{ width: '100%', maxWidth: 680 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, justifyContent: 'center' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
             <img src="/logo.png" alt="" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
           </div>
-          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'white' }}>Sweet Fresh Portal</span>
+          <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'white' }}>Sweet Fresh Portal</span>
         </div>
 
-        <div style={{ background: 'var(--bg-panel, #131722)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 28 }}>
+        <div style={{ background: 'var(--bg-panel, #131722)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: 'clamp(22px, 5vw, 40px)' }}>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 40, color: '#94a3b8' }}>
               <Loader2 size={24} className="animate-spin" />
@@ -100,17 +108,17 @@ const PublicOrderRequestPage = () => {
                 <Citrus size={18} style={{ color: '#ff6b00' }} />
                 <span style={{ color: '#ff6b00', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.05em' }}>ORDER REQUEST</span>
               </div>
-              <h1 style={{ color: 'white', fontSize: '1.3rem', margin: '4px 0 4px' }}>{request?.contact?.name}</h1>
-              <p style={{ color: '#94a3b8', fontSize: '0.88rem', marginBottom: 22, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Package size={14} /> {request?.product} · {request?.variety}
+              <h1 style={{ color: 'white', fontSize: '1.6rem', margin: '4px 0 4px' }}>{request?.contact?.name}</h1>
+              <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: 28, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Package size={16} /> {request?.product} · {request?.variety}
               </p>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'block', marginBottom: 8 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', display: 'block', marginBottom: 10 }}>
                     How many containers, and which week(s)? *
                   </label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {rows.map((r, i) => (
                       <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <div style={{ flex: 1 }}>
@@ -137,12 +145,12 @@ const PublicOrderRequestPage = () => {
                 </div>
 
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Location (destination port / country) *</label>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', display: 'block', marginBottom: 8 }}>Location (destination port / country) *</label>
                   <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Rotterdam, Netherlands" style={fieldStyle} />
                 </div>
 
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Notes (optional)</label>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', display: 'block', marginBottom: 8 }}>Notes (optional)</label>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Anything else we should know?" style={{ ...fieldStyle, resize: 'vertical' }} />
                 </div>
 
@@ -161,18 +169,18 @@ const PublicOrderRequestPage = () => {
 };
 
 const fieldStyle = {
-  width: '100%', padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+  width: '100%', padding: '13px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: '1rem', outline: 'none', boxSizing: 'border-box',
 };
 const addRowBtn = {
-  marginTop: 8, background: 'none', border: '1px dashed rgba(255,107,0,0.4)', color: '#ff6b00',
-  borderRadius: 8, padding: '7px 12px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+  marginTop: 10, background: 'none', border: '1px dashed rgba(255,107,0,0.4)', color: '#ff6b00',
+  borderRadius: 8, padding: '9px 14px', fontSize: '0.86rem', fontWeight: 600, cursor: 'pointer',
   display: 'inline-flex', alignItems: 'center', gap: 6,
 };
 const submitBtn = {
   background: 'linear-gradient(135deg, #ff6b00, #FF5100)', border: 'none', color: 'white',
-  borderRadius: 10, padding: '12px 20px', fontSize: '0.92rem', fontWeight: 700, cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  borderRadius: 11, padding: '15px 22px', fontSize: '1.02rem', fontWeight: 700, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
 };
 
 export default PublicOrderRequestPage;
