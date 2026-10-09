@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Receipt, FileText, ShoppingCart, Plus, Search, X,
   DollarSign, CreditCard, CheckCircle2, Clock, AlertCircle,
-  ChevronDown, ChevronUp, ChevronsUpDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock, Filter
+  ChevronDown, ChevronUp, ChevronsUpDown, ChevronRight, Trash2, ArrowLeft, FileSpreadsheet, Edit3, Lock, Filter, ExternalLink
 } from 'lucide-react';
 import { accountingApi, paymentsApi, shipmentsApi, documentsApi, contactsApi } from '../services/api';
 import { Loader2, FolderOpen, Eye, Download, UploadCloud } from 'lucide-react';
@@ -412,6 +412,11 @@ const InvoiceDetail = ({ invoice, onBack, onRefresh }) => {
               {invoice.shipment.containerNumber && <span className="text-muted"> · {invoice.shipment.containerNumber}</span>}
             </div>
           )}
+          {invoice.bcUrl && (
+            <a href={invoice.bcUrl} target="_blank" rel="noopener noreferrer" className="btn btn-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.82rem', textDecoration: 'none' }}>
+              <ExternalLink size={13} /> Open in Business Central
+            </a>
+          )}
           {invoice.notes && <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: 8 }}>{invoice.notes}</p>}
         </div>
       </div>
@@ -609,9 +614,10 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
     issueDate: editingInvoice.issueDate ? editingInvoice.issueDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
     dueDate: editingInvoice.dueDate ? editingInvoice.dueDate.slice(0, 10) : '',
     notes: editingInvoice.notes || '',
+    bcUrl: editingInvoice.bcUrl || '',
     contactId: editingInvoice.contactId || editingInvoice.order?.contactId || '',
     shipmentId: editingInvoice.shipmentId || '',
-  } : { invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '', contactId: '', shipmentId: '' });
+  } : { invoiceNumber: `INV-${Date.now()}`, type: 'Sales', amount: '', issueDate: new Date().toISOString().slice(0, 10), dueDate: '', notes: '', bcUrl: '', contactId: '', shipmentId: '' });
   const [shipments, setShipments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
@@ -739,6 +745,10 @@ const CreateInvoiceModal = ({ onClose, onSaved, editingInvoice }) => {
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Notes</label>
             <textarea className="ui-input" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
+          </div>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Business Central link (optional)</label>
+            <input className="ui-input no-uppercase" type="url" placeholder="Paste the invoice's address from Business Central" value={form.bcUrl} onChange={e => set('bcUrl', e.target.value)} />
           </div>
           <div>
             <label className="text-muted" style={{ fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>Invoice Document (optional)</label>

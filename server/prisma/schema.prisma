@@ -419,6 +419,7 @@ model Invoice {
   issueDate     DateTime  @default(now())
   dueDate       DateTime?
   notes         String?
+  bcUrl         String?   // link to this invoice in Microsoft Business Central (pasted by accounting)
   orderId       String?
   poId          String?
   contactId     String?   // customer picked directly when the invoice isn't tied to a Sales Order

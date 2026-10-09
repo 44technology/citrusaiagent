@@ -98,9 +98,17 @@ export const getAllInvoices = async (req, res) => {
   }
 };
 
+// BC link is pasted by staff and rendered as an href — only allow http(s).
+const cleanBcUrl = (v) => {
+  const t = typeof v === 'string' ? v.trim() : '';
+  if (!t) return null;
+  if (!/^https?:\/\//i.test(t)) throw new Error('Business Central link must start with http:// or https://');
+  return t;
+};
+
 export const createInvoice = async (req, res) => {
   try {
-    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes } = req.body;
+    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes, bcUrl } = req.body;
 
     if (type === 'Sales' && !shipmentId) {
       return res.status(400).json({ error: 'A Ref ID (shipment) is required for a Sales invoice' });
@@ -118,6 +126,7 @@ export const createInvoice = async (req, res) => {
         issueDate: issueDate ? new Date(issueDate) : new Date(),
         dueDate: dueDate ? new Date(dueDate) : null,
         notes: notes || null,
+        bcUrl: cleanBcUrl(bcUrl),
         status: 'Unpaid',
         companyId: req.companyId || null,
       },
@@ -141,7 +150,7 @@ export const updateInvoice = async (req, res) => {
       return res.status(400).json({ error: 'Cannot edit a fully paid invoice.' });
     }
 
-    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes } = req.body;
+    const { invoiceNumber, type, amount, orderId, poId, contactId, shipmentId, issueDate, dueDate, notes, bcUrl } = req.body;
     const data = {};
     if (invoiceNumber !== undefined) data.invoiceNumber = invoiceNumber;
     if (type !== undefined) data.type = type;
@@ -153,6 +162,7 @@ export const updateInvoice = async (req, res) => {
     if (issueDate !== undefined) data.issueDate = issueDate ? new Date(issueDate) : new Date();
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (notes !== undefined) data.notes = notes || null;
+    if (bcUrl !== undefined) data.bcUrl = cleanBcUrl(bcUrl);
 
     let invoice = await prisma.invoice.update({
       where: { id },
