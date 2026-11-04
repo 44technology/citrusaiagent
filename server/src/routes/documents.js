@@ -43,6 +43,7 @@ const upload = multer({
 
 router.get('/', documentController.getAllDocuments);
 router.post('/', upload.single('file'), documentController.uploadDocument);
+router.get('/zip', documentController.downloadContactDocumentsZip);
 router.get('/:id/download', documentController.downloadDocument);
 router.get('/:id/view', documentController.viewDocument);
 router.patch('/:id', documentController.updateDocument);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen, Edit3, Save } from 'lucide-react';
+import { Leaf, Plus, Search, X, ChevronDown, ChevronRight, Phone, Mail, Building, DollarSign, Package, Loader2, Trash2, FolderOpen, Edit3, Save, Download } from 'lucide-react';
 import { contactsApi, ordersApi } from '../services/api';
 
 import { PRODUCTS, PACK_OPTIONS } from '../constants/products';
@@ -451,6 +451,27 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
     })
     .catch(err => alert('Download failed: ' + err.message));
 
+  const [zipping, setZipping] = useState(false);
+  const handleDownloadAll = async () => {
+    setZipping(true);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || '/api';
+      const token = localStorage.getItem('citrus_token');
+      const r = await fetch(`${apiBase}/documents/zip?contactId=${encodeURIComponent(grower.id)}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.error || 'Request failed');
+      }
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(grower.company || grower.name || 'grower').replace(/[\\/:*?"<>|]/g, '_')}-documents.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) { alert('Download failed: ' + err.message); }
+    setZipping(false);
+  };
+
   return (
     <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
       {/* Header */}
@@ -738,7 +759,13 @@ const GrowerCard = ({ grower, orders, onAddOffer, onEditOffer, onRefresh }) => {
             {/* Documents tab */}
             {tab === 'documents' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  {docs.length > 0 && (
+                    <button className="btn btn-glass" onClick={handleDownloadAll} disabled={zipping}
+                      style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      {zipping ? <><Loader2 size={13} className="animate-spin" /> Preparing…</> : <><Download size={13} /> Download all (ZIP)</>}
+                    </button>
+                  )}
                   <label style={{ cursor: 'pointer' }}>
                     <input type="file" multiple style={{ display: 'none' }} onChange={handleUpload} />
                     <span className="btn btn-glass" style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
