@@ -16,6 +16,7 @@ const ROLES = [
   { value: 'grower support', label: 'Grower Support', color: '#4ade80' },
   { value: 'accounting',     label: 'Accounting',     color: '#facc15' },
   { value: 'customer',       label: 'Customer',       color: '#94a3b8' },
+  { value: 'market',         label: 'Market Data Only', color: '#22c55e' },
 ];
 
 // ─── Permission matrix ────────────────────────────────────────────────────────
@@ -28,18 +29,20 @@ const PAGES = [
   { key: 'accounting', label: 'Accounting'    },
   { key: 'outreach',   label: 'Outreach'      },
   { key: 'documents',  label: 'Documents'     },
+  { key: 'market',     label: 'Market Data'   },
   { key: 'settings',   label: 'Settings'      },
 ];
 
 const DEFAULT_PERMS = {
-  'super admin':    { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: true,  outreach: true,  documents: true,  settings: true  },
-  'admin':          { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: true,  outreach: true,  documents: true,  settings: false },
-  'sales':          { dashboard: true,  contacts: true,  shipments: false, orders: true,  accounting: false, outreach: true,  documents: true,  settings: false },
-  'logistics':      { dashboard: true,  contacts: false, shipments: true,  orders: false, accounting: false, outreach: false, documents: true,  settings: false },
-  'operation':      { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: false, outreach: false, documents: true,  settings: false },
-  'grower support': { dashboard: true,  contacts: true,  shipments: true,  orders: false, accounting: false, outreach: false, documents: false, settings: false },
-  'accounting':     { dashboard: true,  contacts: false, shipments: false, orders: true,  accounting: true,  outreach: false, documents: true,  settings: false },
-  'customer':       { dashboard: false, contacts: false, shipments: true,  orders: false, accounting: false, outreach: false, documents: false, settings: false },
+  'super admin':    { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: true,  outreach: true,  documents: true,  market: true, settings: true  },
+  'admin':          { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: true,  outreach: true,  documents: true,  market: true, settings: false },
+  'sales':          { dashboard: true,  contacts: true,  shipments: false, orders: true,  accounting: false, outreach: true,  documents: true,  market: true, settings: false },
+  'logistics':      { dashboard: true,  contacts: false, shipments: true,  orders: false, accounting: false, outreach: false, documents: true,  market: true, settings: false },
+  'operation':      { dashboard: true,  contacts: true,  shipments: true,  orders: true,  accounting: false, outreach: false, documents: true,  market: true, settings: false },
+  'grower support': { dashboard: true,  contacts: true,  shipments: true,  orders: false, accounting: false, outreach: false, documents: false, market: true, settings: false },
+  'accounting':     { dashboard: true,  contacts: false, shipments: false, orders: true,  accounting: true,  outreach: false, documents: true,  market: true, settings: false },
+  'customer':       { dashboard: false, contacts: false, shipments: true,  orders: false, accounting: false, outreach: false, documents: false, market: true, settings: false },
+  'market':         { dashboard: false, contacts: false, shipments: false, orders: false, accounting: false, outreach: false, documents: false, market: true,  settings: false },
 };
 
 const RoleBadge = ({ role }) => {

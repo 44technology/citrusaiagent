@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -18,6 +19,7 @@ import PLPage from './pages/PLPage';
 import CarriersPage from './pages/CarriersPage';
 import ProductsPage from './pages/ProductsPage';
 import OrderRequestsPage from './pages/OrderRequestsPage';
+import MarketDataPage from './pages/MarketDataPage';
 import PublicOrderRequestPage from './pages/PublicOrderRequestPage';
 
 // Protected Route Component
@@ -33,7 +35,7 @@ const TAB_TO_PATH = {
   products: '/products',
   orderRequests: '/order-requests',
   accounting: '/accounting', outreach: '/outreach', documents: '/documents',
-  analytics: '/pl', settings: '/settings',
+  analytics: '/pl', market: '/market', settings: '/settings',
 };
 const PATH_TO_TAB = Object.fromEntries(Object.entries(TAB_TO_PATH).map(([k, v]) => [v, k]));
 
@@ -44,6 +46,11 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const setActiveTab = (tab) => navigate(`/${TAB_TO_PATH[tab].slice(1)}`);
+
+  // 'market' accounts only get the Market Data page (the server enforces this too)
+  let role = '';
+  try { role = JSON.parse(localStorage.getItem('citrus_user') || '{}').role || ''; } catch { /* ignore */ }
+  if (role === 'market' && activeTab !== 'market') return <Navigate to="/market" replace />;
 
   return (
     <>
@@ -61,7 +68,17 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
           onCloseMobile={() => setMobileNavOpen(false)}
         />
         <main className="main-content">
-          <Header company={selectedCompany} onMenuClick={() => setMobileNavOpen(v => !v)} />
+          {role === 'market' ? (
+            // Market-only accounts: no campaign/search header, just the phone menu button (it holds Sign out)
+            <header className="header glass-panel">
+              <div className="header-left">
+                <button className="icon-btn menu-btn" onClick={() => setMobileNavOpen(v => !v)} title="Menu"><Menu size={20} /></button>
+                <h2>Market Data</h2>
+              </div>
+            </header>
+          ) : (
+            <Header company={selectedCompany} onMenuClick={() => setMobileNavOpen(v => !v)} />
+          )}
           <div className="scroll-content" key={selectedCompany?.id}>
             {(activeTab === 'leads' || activeTab === 'customers') && <Dashboard activeTab={activeTab} selectedCompany={selectedCompany} />}
             {activeTab === 'shipments' && <ShipmentsListPage selectedCompany={selectedCompany} />}
@@ -76,6 +93,7 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
             {activeTab === 'orderRequests' && <OrderRequestsPage />}
             {activeTab === 'outreach' && <OutreachPage />}
             {activeTab === 'analytics' && <PLPage selectedCompany={selectedCompany} />}
+            {activeTab === 'market' && <MarketDataPage />}
             {activeTab === 'settings' && <SettingsPage />}
           </div>
         </main>

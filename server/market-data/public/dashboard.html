@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>US Citrus & Grape Imports · ABD Narenciye & Üzüm İthalatı</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f5f6f2;--card:#fff;--ink:#1b2316;--muted:#6b7464;--line:#e2e6dc;--brand:#2f5a1f;--brand2:#5b8a3a;--soft:#eef3e7;--up:#2e8b3a;--down:#c0392b;--heat:47,107,58}
+@media (prefers-color-scheme:dark){:root{--bg:#121510;--card:#1b1f18;--ink:#eef2ea;--muted:#a1aa99;--line:#2f362a;--brand:#9cc77a;--brand2:#7fae5c;--soft:#232a1e;--up:#6fcf7a;--down:#ef7b6b;--heat:127,174,92}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:18px 26px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:20px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+main{display:grid;gap:18px;min-width:0;align-content:start}
+.layout{display:grid;grid-template-columns:272px minmax(0,1fr);gap:22px;max-width:1880px;margin:0 auto;padding:20px 24px}
+aside.side{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:14px}
+.side .card{padding:16px}
+.sideh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:15px}
+.link{background:none;border:0;color:var(--brand2);cursor:pointer;font:inherit;font-size:12.5px;padding:0}
+.side .f{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.side label{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.side select{width:100%;min-width:0}
+.side .seg{display:grid;grid-template-columns:1fr 1fr;width:100%}
+.side .seg button{border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left;font-size:13px;padding:8px 10px}
+.side .seg button:nth-child(2n){border-right:0}
+.nav{display:flex;flex-direction:column;gap:2px;padding:10px!important}
+.nav a{display:block;padding:7px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13.5px;border-left:3px solid transparent}
+.nav a:hover{background:var(--soft)}
+.nav a.on{background:var(--soft);font-weight:600;border-left-color:var(--brand2)}
+main>.card,main>div{scroll-margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+h2{font-size:16px;margin:0 0 4px}
+h3{font-size:14px;margin:14px 0 6px}
+.hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:500}
+.btn:hover{border-color:var(--brand2)}
+.bar{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.bar .f{display:flex;flex-direction:column;gap:5px}
+.bar label{font-size:12px;font-weight:600;color:var(--muted)}
+select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;min-width:160px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--ink);padding:8px 12px;font:inherit;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--brand);color:#fff}
+@media (prefers-color-scheme:dark){.seg button.on{color:#10140d}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .v{font-size:28px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--muted);font-size:12.5px}
+.kpi .y{font-size:12.5px;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--card);position:sticky;top:0;z-index:1}
+th .s{font-weight:400}
+td.n,th.n{text-align:right;white-space:nowrap}
+tbody tr:hover{background:var(--soft)}
+.tw{max-height:560px;overflow:auto}
+.pill{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--ink);white-space:nowrap}
+.big{font-weight:600}
+.muted{color:var(--muted)}
+.up{color:var(--up)} .down{color:var(--down)}
+.two{display:grid;grid-template-columns:1.6fr 1fr;gap:18px}
+.half{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:960px){.two,.half{grid-template-columns:1fr}}
+.chart{position:relative;height:330px}
+.more{margin-top:10px}
+footer{color:var(--muted);font-size:12.5px;padding:4px 2px 30px;line-height:1.6}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw;z-index:9}
+.toast.show{opacity:1}
+.wm{position:fixed;right:12px;bottom:8px;font-size:11px;color:var(--muted);opacity:.55;pointer-events:none;z-index:7}
+.drop-over{outline:3px dashed var(--brand2);outline-offset:-10px}
+svg.spark{display:block}
+.range{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13.5px}
+.heat td{text-align:center;font-size:12px;padding:6px 4px;border:1px solid var(--card)}
+.heat td:first-child{text-align:left;white-space:nowrap;font-size:13px;padding-right:10px}
+.heat th{text-align:center;padding:6px 4px}
+.heat th.cur{color:var(--ink);text-decoration:underline}
+.ctx{display:inline-block;background:var(--soft);border-radius:8px;padding:6px 10px;font-size:13px;margin-bottom:10px}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:960px){.calc{grid-template-columns:1fr}}
+.inp{display:grid;grid-template-columns:1fr 130px;gap:8px 12px;align-items:center}
+.inp label{font-size:13px}
+.inp small{display:block;color:var(--muted);font-size:11.5px}
+.inp input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;text-align:right;width:100%}
+.inp .grp{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:8px;border-top:1px solid var(--line);padding-top:10px}
+.inp .grp.first{margin-top:0;border-top:0;padding-top:0}
+.res table td{padding:8px 10px}
+.res .tot td{font-weight:700;border-top:2px solid var(--ink)}
+.box{background:var(--soft);border-radius:10px;padding:14px;margin-top:14px}
+.box .v{font-size:24px;font-weight:700}
+.warn{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+.hdr-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:8}
+.overlay.on{display:flex}
+.overlay .card{max-width:460px}
+main>*,.half>*,.two>*,.calc>*,.kpis>*{min-width:0}
+.ftoggle{display:none}
+.fclose{display:none}
+.mo{display:none}
+.tw{-webkit-overflow-scrolling:touch}
+@media(max-width:1100px){
+  .layout{display:block;padding:0 12px 12px}
+  aside.side{position:sticky;top:0;z-index:6;background:var(--bg);margin:0 -12px 12px;padding:8px 12px 6px;gap:6px;max-height:none;overflow:visible;border-bottom:1px solid var(--line)}
+  aside.side.open{max-height:100vh;max-height:100dvh;overflow:auto}
+  .ftoggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;cursor:pointer}
+  .ftoggle b{white-space:nowrap}
+  .ftoggle .fs{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+  aside.side .fcard{display:none}
+  aside.side.open .fcard{display:block}
+  aside.side.open .nav{display:none!important}
+  .fclose{display:block;width:100%;margin-top:14px;background:var(--brand);color:#fff;border-color:var(--brand)}
+  .nav{display:flex!important;flex-direction:row;gap:6px;padding:0!important;border:0!important;background:none!important;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;background:var(--card);border-left-width:1px}
+  .nav a.on{border-color:var(--brand2);border-left-color:var(--brand2)}
+  main>.card,main>div{scroll-margin-top:104px}
+  main{gap:12px}
+}
+@media (max-width:1100px) and (prefers-color-scheme:dark){.fclose{color:#10140d}}
+@media(max-width:700px){
+  body{font-size:13.5px}
+  header{padding:12px 14px;gap:8px}
+  h1{font-size:17px}
+  .sub{font-size:11.5px;line-height:1.4}
+  .lgt{display:none}
+  .hdr-r{gap:8px}
+  .hdr-r .btn,.hdr-r .seg button{padding:7px 10px;font-size:13px}
+  select,input,.inp input{font-size:16px!important}
+  .card{padding:14px;border-radius:10px}
+  h2{font-size:15px}
+  .hint{font-size:12.5px}
+  .range{padding:10px 12px;font-size:12.5px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .kpi .v{font-size:20px;overflow-wrap:anywhere}
+  #k4{font-size:15px!important;line-height:1.25}
+  .kpi .l,.kpi .s,.kpi .y{font-size:11.5px}
+  .chart{height:300px}
+  th,td{padding:7px 8px}
+  .tw{max-height:70vh}
+  .tw table{min-width:560px}
+  #prices,#halLatest{min-width:860px}
+  #cenTbl{min-width:680px}
+  #heat{min-width:620px}
+  #cRes{min-width:0}
+  .heat td:first-child,.heat th:first-child{position:sticky;left:0;background:var(--card);z-index:1;white-space:normal;min-width:120px}
+  .inp{grid-template-columns:minmax(0,1fr) 108px;gap:8px 10px}
+  .box .v{font-size:20px}
+  .mo{display:inline}
+  /* flows table -> card list */
+  #flowsW{max-height:none;overflow:visible}
+  #flows{min-width:0}
+  #flows thead{display:none}
+  #flows,#flows tbody{display:block}
+  #flows tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"p t" "o y" "port port" "f f" "l l";gap:3px 12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  #flows tr:hover{background:none}
+  #flows td{border:0;padding:0;text-align:left;white-space:normal}
+  #flows .cp{grid-area:p;font-size:14.5px}
+  #flows .ct{grid-area:t;text-align:right;font-size:14.5px;white-space:nowrap}
+  #flows .co{grid-area:o}
+  #flows .cy{grid-area:y;text-align:right;font-size:12px;color:var(--muted);white-space:nowrap}
+  #flows .cy div{display:inline;margin-left:4px}
+  #flows .cport{grid-area:port;color:var(--muted);font-size:12.5px}
+  #flows .cs{display:none}
+  #flows .cf{grid-area:f;margin-top:3px}
+  #flows .cf>div{display:inline;margin-left:6px}
+  #flows .cl{grid-area:l;font-size:12px}
+}
+code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px 7px;font-size:12.5px;display:inline-block;margin-top:6px;overflow-wrap:anywhere}
+@media(max-width:700px){#h10Tbl{min-width:520px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 data-i="title"></h1>
+    <div class="sub" id="dataInfo"></div>
+  </div>
+  <div class="hdr-r">
+    <div class="seg" id="lang"><button data-v="tr">🇹🇷 TR<span class="lgt"> · Türkçe</span></button><button data-v="en">🇺🇸 EN<span class="lgt"> · English</span></button></div>
+    <button class="btn" id="upBtn" data-i="upload"></button>
+    <input type="file" id="file" accept=".csv" multiple hidden>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="side" id="side">
+  <button class="ftoggle" id="fToggle" type="button"><b data-i="filtersBtn"></b><span class="fs" id="fSum"></span><span id="fArrow">▾</span></button>
+  <div class="card fcard">
+    <div class="sideh"><b data-i="filtersT"></b><button class="link" id="resetF" data-i="resetF"></button></div>
+    <div class="f"><label data-i="fProd"></label><select id="fProd"></select></div>
+    <div class="f"><label data-i="fOrig"></label><select id="fOrig"></select></div>
+    <div class="f"><label data-i="fMode"></label>
+      <div class="seg" id="fMode">
+        <button data-v="Boat" class="on" data-i="mBoat"></button>
+        <button data-v="Truck" data-i="mTruck"></button>
+        <button data-v="Air" data-i="mAir"></button>
+        <button data-v="" data-i="mAll"></button>
+      </div>
+    </div>
+    <div class="f"><label data-i="fPort"></label><select id="fPort"></select></div>
+    <div class="f" style="margin-bottom:0"><label data-i="fPer"></label>
+      <div class="seg" id="fPer">
+        <button data-v="7" data-i="p7"></button>
+        <button data-v="14" data-i="p14"></button>
+        <button data-v="28" class="on" data-i="p28"></button>
+        <button data-v="84" data-i="p84"></button>
+        <button data-v="ytd" data-i="pytd"></button>
+        <button data-v="365" data-i="p365"></button>
+        <button data-v="0" data-i="p0"></button>
+      </div>
+    </div>
+    <button class="btn fclose" id="fClose" type="button" data-i="fClose"></button>
+  </div>
+  <nav class="card nav" id="nav">
+    <a href="#s-kpis" data-i="nKpi"></a>
+    <a href="#s-flows" data-i="nFlows"></a>
+    <a href="#s-week" data-i="nWeek"></a>
+    <a href="#s-years" data-i="nYears"></a>
+    <a href="#s-cal" data-i="nCal"></a>
+    <a href="#s-fob" data-i="nFob"></a>
+    <a href="#s-hal" data-i="nHal"></a>
+    <a href="#s-hal10" data-i="nH10"></a>
+    <a href="#s-cen" data-i="nCen"></a>
+    <a href="#s-calc" data-i="nCalc"></a>
+  </nav>
+</aside>
+<main>
+  <div class="range" id="rangeInfo"></div>
+
+  <div class="kpis" id="s-kpis">
+    <div class="card kpi"><div class="l" data-i="k1"></div><div class="v" id="k1">–</div><div class="s" id="k1s"></div><div class="y" id="k1y"></div></div>
+    <div class="card kpi"><div class="l" data-i="k2"></div><div class="v" id="k2">–</div><div class="s" data-i="k2s"></div><div class="y" id="k2y"></div></div>
+    <div class="card kpi"><div class="l" data-i="k3"></div><div class="v" id="k3">–</div><div class="s" id="k3s"></div></div>
+    <div class="card kpi"><div class="l" data-i="k4"></div><div class="v" id="k4" style="font-size:22px">–</div><div class="s" id="k4s"></div></div>
+  </div>
+
+  <div class="card" id="s-flows">
+    <h2 data-i="flowsT"></h2>
+    <p class="hint" data-i="flowsH"></p>
+    <div class="tw" id="flowsW"><table id="flows"></table></div>
+    <button class="btn more" id="moreBtn"></button>
+  </div>
+
+  <div class="two" id="s-week">
+    <div class="card">
+      <h2 data-i="weekT"></h2>
+      <p class="hint" data-i="weekH"></p>
+      <div class="chart"><canvas id="cWeek"></canvas></div>
+    </div>
+    <div class="card">
+      <h2 data-i="portT"></h2>
+      <p class="hint" data-i="portH"></p>
+      <div class="chart"><canvas id="cPort"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" id="s-years">
+    <h2 data-i="yearT"></h2>
+    <p class="hint" data-i="yearH"></p>
+    <div class="half">
+      <div><h3 data-i="yearVolT"></h3><div class="chart"><canvas id="cYearVol"></canvas></div></div>
+      <div><h3 data-i="yearPriceT"></h3><div class="chart" id="yearPriceBox"><canvas id="cYearPrice"></canvas></div><p class="hint" id="yearPriceNote"></p></div>
+    </div>
+  </div>
+
+  <div class="card" id="s-cal">
+    <h2 data-i="calT"></h2>
+    <p class="hint" id="calH"></p>
+    <div class="tw"><table class="heat" id="heat"></table></div>
+  </div>
+
+  <div class="card" id="s-fob">
+    <h2 data-i="priceT"></h2>
+    <p class="hint" data-i="priceH"></p>
+    <div class="tw"><table id="prices"></table></div>
+  </div>
+
+  <div class="card" id="s-hal">
+    <h2 data-i="halT"></h2>
+    <p class="hint" data-i="halH"></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><div class="ctx" id="halCtx" style="margin:0"></div><label class="muted" style="font-size:12px;font-weight:600" data-i="gradeL"></label><select id="halGrade"></select></div>
+    <div class="half">
+      <div><h3 data-i="chainT"></h3><div class="chart"><canvas id="cChain"></canvas></div></div>
+      <div><h3 id="markupT"></h3><div class="tw"><table id="markup"></table></div></div>
+    </div>
+    <h3 data-i="latestHalT"></h3>
+    <div class="tw" style="max-height:420px"><table id="halLatest"></table></div>
+    <p class="hint" style="margin-top:8px" data-i="gradeNote"></p>
+  </div>
+
+  <div class="card" id="s-hal10">
+    <h2 data-i="h10T"></h2>
+    <p class="hint" data-i="h10H"></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><div class="ctx" id="h10Ctx" style="margin:0"></div><label class="muted" style="font-size:12px;font-weight:600" data-i="h10MkL"></label><select id="h10Mk"></select></div>
+    <div class="box" id="h10Hint" style="margin:0 0 12px"></div>
+    <div class="half">
+      <div><h3 data-i="h10YearT"></h3><div class="chart" style="height:380px"><canvas id="cH10Year"></canvas></div></div>
+      <div><h3 data-i="h10AvgT"></h3><div class="chart" style="height:380px"><canvas id="cH10Avg"></canvas></div></div>
+    </div>
+    <h3 data-i="h10LongT"></h3>
+    <div class="chart"><canvas id="cH10Long"></canvas></div>
+    <h3 data-i="h10TblT"></h3>
+    <div class="tw" style="max-height:420px"><table id="h10Tbl"></table></div>
+    <p class="hint" style="margin-top:8px" data-i="h10Note"></p>
+  </div>
+
+  <div class="card" id="s-cen">
+    <h2 data-i="cenT"></h2>
+    <p class="hint" data-i="cenH"></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><div class="ctx" id="cenCtx" style="margin:0"></div>
+      <label class="muted" style="font-size:12px;font-weight:600" data-i="cenDistL"></label><select id="cenDist"></select></div>
+    <div class="tw" style="max-height:440px"><table id="cenTbl"></table></div>
+    <p class="hint" id="cenNote" style="margin-top:8px"></p>
+    <div class="half">
+      <div><h3 id="cenChainT"></h3><div class="chart"><canvas id="cCenChain"></canvas></div></div>
+      <div><h3 data-i="cenOrigT"></h3><div class="chart"><canvas id="cCenOrig"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="card" id="s-calc">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span data-i="calcT"></span><button class="btn" id="cClear" data-i="cClear" style="font-size:13px;padding:6px 12px"></button></h2>
+    <p class="hint" data-i="calcH"></p>
+    <div class="calc">
+      <div class="inp">
+        <div class="grp first" data-i="gProd"></div>
+        <label data-i="lSel" style="grid-column:1/-1;margin-bottom:-4px"></label><select id="cSel" style="min-width:0;width:100%;grid-column:1/-1"></select>
+        <label><span data-i="lSale"></span><small id="cMktNote"></small></label><input id="cSale" type="number" step="0.01">
+        <label data-i="lKg"></label><input id="cKg" type="number" step="0.1">
+        <label><span data-i="lBoxes"></span><small data-i="lBoxesS"></small></label><input id="cBoxes" type="number" step="1">
+        <div class="grp" data-i="gBuy"></div>
+        <label><span data-i="lFob"></span><small data-i="lFobS"></small></label><input id="cFob" type="number" step="0.01">
+        <div class="grp" data-i="gCost"></div>
+        <label data-i="lFreight"></label><input id="cFreight" type="number" step="1">
+        <label data-i="lPortFee"></label><input id="cPortFee" type="number" step="1">
+        <label data-i="lInsp"></label><input id="cInsp" type="number" step="1">
+        <label data-i="lInland"></label><input id="cInland" type="number" step="1">
+        <label data-i="lOther"></label><input id="cOther" type="number" step="1">
+        <div class="grp" data-i="gTax"></div>
+        <label><span data-i="lDuty"></span><small data-i="lDutyS"></small></label><input id="cDuty" type="number" step="0.1">
+        <label><span data-i="lMargin"></span><small data-i="lMarginS"></small></label><input id="cMargin" type="number" step="0.5">
+      </div>
+      <div class="res">
+        <table id="cRes"></table>
+        <div class="box">
+          <div class="muted" style="font-size:13px" data-i="maxT"></div>
+          <div class="v" id="cMax">–</div>
+          <div class="muted" style="font-size:13px" id="cMaxKg"></div>
+        </div>
+        <div class="warn" id="cWarn"></div>
+        <div class="warn" data-i="calcNote"></div>
+      </div>
+    </div>
+  </div>
+  <footer data-i="footer"></footer>
+</main>
+</div>
+<div class="overlay" id="busy"><div class="card"><b id="busyT"></b><div class="muted" id="busyS" style="margin-top:6px"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<!--SF_USER-->
+<script>
+const TPL="";
+const $=s=>document.querySelector(s);
+
+// ================= i18n =================
+const I18N={
+tr:{
+ title:'🍇🍊 ABD\'ye Narenciye & Üzüm İthalatı', upload:'⬆ USDA dosyası ekle',
+ dataInfo:(v1,v2,p1,p2,h1,h2,pub,c1,c2)=>`📅 Hareket: <b>${v1} – ${v2}</b> · FOB fiyat: <b>${p1} – ${p2}</b>${h1?` · Hal fiyatları: <b>${h1} – ${h2}</b>`:''}${c1?` · Census: <b>${c1} – ${c2}</b>`:''}${pub?` · USDA son yayın: ${pub}`:''}`,
+ nH10:'📉 Hal — yıllar', h10T:'📉 Hal fiyatları — yıllara göre karşılaştırma', h10H:'Hallerdeki toptan fiyatın ($/kg) yıllar içindeki seyri. Ürün ve menşe filtreleri geçerli; seçilmemişse en çok verisi olan seçilir.',
+ h10MkL:'Hal', h10All:'Tüm haller (ortalama)', h10Ctx:(p,o,y1,y2,auto)=>`Gösterilen: <b>${p}</b> – <b>${o}</b> · Veri: <b>${y1} – ${y2}</b>${auto?' <span class="muted">(otomatik seçildi)</span>':''}`,
+ h10YearT:'Haftalık fiyat — yıllar üst üste ($/kg)', h10AvgT:'Yıllık ortalama fiyat ($/kg)', h10LongT:'Aylık ortalama — tüm dönem ($/kg)', h10TblT:'Yıl yıl özet',
+ h10Y:'Yıl', h10A:'Ortalama $/kg', h10C:'Önceki yıla göre', h10Lo:'En düşük hafta', h10Hi:'En yüksek hafta', h10W:'Fiyat olan hafta', h10Part:'devam ediyor', h10Ma:'12 aylık hareketli ortalama', h10Mo:'Aylık ortalama',
+ h10Hint1:'Şu an yalnızca panodaki günlük hal verisi (yaklaşık son 1 yıl) gösteriliyor. Son 10 yılın geçmişi sunucuda bir kez <code>node hal-history.js</code> çalıştırılınca eklenir.',
+ h10Note:'Haftalık değer = o hafta hallerde raporlanan fiyatların ortalaması (tüm çeşit, boy ve kaliteler; organik hariç; yalnızca ağırlığı yazan ambalajlar). Fiyatlar nominal dolardır, enflasyona göre düzeltilmemiştir. İçinde bulunulan yıl henüz bitmediği için yıllık ortalaması diğer yıllarla birebir karşılaştırılamaz.', noH10:'Bu ürün/menşe için hal fiyatı yok.', kindW:'hal geçmişi',
+ filtersBtn:'⚙ Filtreler', fClose:'Sonuçları göster', filtersT:'Filtreler', resetF:'Sıfırla', nKpi:'📊 Özet', nFlows:'🚢 Akışlar', nWeek:'📈 Haftalık & limanlar', nYears:'📅 Yıllara göre', nCal:'🗓️ Sezon takvimi', nFob:'💵 FOB fiyatları', nHal:'🏪 Hal fiyatları', nCen:'🧾 Alış & navlun', nCalc:'💰 Kârlılık hesabı', fProd:'Ürün', allProd:'Tüm narenciye + üzüm', fOrig:'Menşe', allOrig:'Tüm ülkeler', fMode:'Nasıl geliyor?', mBoat:'🚢 Gemi (konteyner)', mTruck:'🚚 Kamyon', mAir:'✈️ Uçak', mAll:'Hepsi',
+ fPer:'Dönem', p7:'Son 1 hafta', p14:'Son 2 hafta', p28:'Son 4 hafta', p84:'Son 12 hafta', pytd:'Bu yıl', p365:'Son 12 ay', p0:'Tüm veri', fPort:'Liman / giriş noktası', allPorts:'Tüm limanlar',
+ range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> ${a} – ${b} arasında ABD'ye <b>giriş yapan</b> mallar (${n} gün).${pa?` Karşılaştırma: geçen yıl aynı dönem (${pa} – ${pb}).`:''} USDA bir günün verisini ertesi iş günü yayınlar.`,
+ tonU:'ton', k1:'Toplam miktar', k1s:w=>`metrik ton (USDA)`, k2:'En çok gelen ürün', k2s:'', k3:'En çok gelen ülke', k3s:(p,n,w)=>`toplamın %${p}'i · ${n} ${w}`, k4:'En yoğun liman', k4s:p=>`toplamın %${p}'i`,
+ yoy:(prev,chg)=>`Geçen yıl aynı dönem: ${prev} · ${chg}`, pct:v=>`%${v}`,
+ lw:{Boat:'konteyner',Truck:'tır','':'yük',Air:'yük'},
+ flowsT:'Hangi ülkeden, hangi limana, ne geliyor?', flowsH:'Her satır bir akış: ürün + menşe ülke + giriş limanı. Büyükten küçüğe sıralı; yanında geçen yılın aynı dönemi.',
+ cProd:'Ürün', cOrig:'Menşe ülke', cPort:'Giriş limanı', cTon:'Ton', sel:'seçili dönem', cPrev:'Geçen yıl', prevS:'aynı dönem', newF:'yeni', c12:'Son 12 hafta', weekly:'haftalık', cLast:'Son giriş', cFob:'Son fiyat (kutu + kg)', viaHal:m=>`FOB yok · hal fiyatı (${m})`, noFobAny:'USDA fiyatlamıyor', arriving:'geliyor',
+ tiny:'20 tonun altında', tinyT:'Çok küçük miktar: numune, karışık yük veya gümrükte yanlış kodlama olabilir.', perBox:'/ kutu', kgBox:'kg kutu', perKg:'/kg', noData:'Bu filtrelerle veri yok.', showAll:n=>`Tümünü göster (${n})`, showLess:'İlk 25\'i göster',
+ weekT:'Haftalık geliş (seçili dönem)', weekH:'Ülkelere göre, ton.', weekOf:d=>`${d} haftası`, perWeek:w=>`${w} / hafta`, other:'Diğer',
+ portT:'Limanlara göre', portH:'Seçili dönemde en çok mal giren limanlar.',
+ yearT:'Yıllara göre karşılaştırma', yearH:'Aynı haftalarda bu yıl ve önceki yıllar. Ürün, menşe, taşıma ve liman filtreleri geçerli (dönem filtresi değil — her zaman tüm yıl).',
+ yearVolT:'Haftalık geliş — yıllara göre (ton)', yearPriceT:'FOB fiyatı — yıllara göre ($/kg)', pickProd:'Fiyat karşılaştırması için üstten bir ürün seç.', noPriceY:'Bu ürün/menşe için FOB fiyat verisi yok.', wk:n=>`${n}. hafta`, wkAx:'Yılın haftası',
+ calT:'Sezon takvimi', calH:y=>`Her ülkeden hangi ayda ne kadar geliyor: ${y} aylık ortalaması (ton). Koyu hücre = o akışın en yoğun ayları. Ürün, menşe, taşıma ve liman filtreleri geçerli.`, months:['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'], calAll:'mevcut veri',
+ priceT:'Son FOB fiyatları (ithalatçının toptancıya satış fiyatı)',
+ priceH:'USDA\'nın Philadelphia / New York bölgesine gelen ithal ürün fiyatları (son 4 ay). Kutu ağırlığına bölünerek kilo fiyatı hesaplandı. "Çoğunlukla" = işlemlerin çoğunun yapıldığı aralık. Soluk satırlar = sezonu bitmiş.',
+ pDate:'Tarih', pVar:'Çeşit', pPkg:'Ambalaj (kutu ağırlığı)', pSizes:'Boylar', pBox:'$ / kutu', pKg:'$ / kg', pSup:'Arz', pDem:'Talep', pNote:'Not', noMarket:'piyasa oluşmadı',
+ noPrice:'Bu filtrelerle FOB fiyat raporu yok (USDA bu raporda sadece Philadelphia/New York bölgesine gelen bazı ithal ürünleri fiyatlıyor).',
+ halT:'Toptan hal fiyatları (Terminal Market)', halH:'USDA\'nın 11 ABD halinden günlük toptan fiyatları: toptancının perakendeciye / restorana satış fiyatı. Zincir: ithalatçı FOB → hal. Ürün ve menşe filtreleri geçerli; seçilmemişse en çok verisi olan seçilir.',
+ halCtx:(p,o,auto)=>`Gösterilen: <b>${p}</b> – <b>${o}</b>${auto?' <span class="muted">(otomatik seçildi — üstten değiştirebilirsin)</span>':''}`,
+ chainT:'Fiyat zinciri: ithalatçı FOB → hal ($/kg, haftalık)', fobLine:'İthalatçı FOB (Phila./NY)', markupT:d=>`Hal – FOB farkı (son 4 hafta, ${d} itibarıyla)`,
+ gradeL:'Kalite (grade)', allGrade:'Tüm kaliteler', gCol:'Kalite', gradeTR:{'Class I':'Class I (1. sınıf)','Class II':'Class II (2. sınıf)','U.S. One':'U.S. One (ABD 1. sınıf)','U.S. No. One':'U.S. No. One (ABD 1. sınıf)','Shippers First Grade':'Shippers First Grade (gönderici 1. sınıf)','Shippers Choice':'Shippers Choice (gönderici seçme)','No Grade Marks':'Kalite işareti yok','No Grade Marked':'Kalite işareti yok','Unclassified (Standard)':'Sınıflandırılmamış (standart)'}, gradeNote:'Kalite, USDA hal raporunda kutunun üzerindeki/beyan edilen sınıftır. Class II satırları az; meyve suyu (işleme) fiyatları bu raporlarda yoktur.', mMarket:'Hal', mHal:'Hal $/kg', mFob:'FOB $/kg', mDiff:'Fark $/kg', mPct:'Fark', mLast:'Son hal fiyatı', noHal:'Bu ürün/menşe için hal fiyatı yok.', latestHalT:'Hallerde son fiyatlar', hDate:'Tarih', noKg:'kg belirsiz (hacim ölçülü kutu)',
+ cenT:'🧾 Alış fiyatı ve navlun (Census ithalat değeri)',
+ cenH:'ABD gümrüğüne beyan edilen değer. "Gümrük değeri" = malın menşe limanındaki işlem değeri (navlun, sigorta ve vergi hariç) ≈ ihracatçıya ödenen FOB menşe fiyatı. "CIF" = navlun ve sigorta dahil. Aylık veri, yaklaşık 6 hafta gecikmeli. Dikkat: konsinye mallarda girişte beyan edilen değer çoğu zaman kesin satış fiyatı değildir.',
+ cenDistL:'Gümrük bölgesi', allDist:'Tüm bölgeler (ABD toplamı)', cenCtx:(p,m1,m2,auto)=>`Ürün: <b>${p}</b> · Son 12 ay: <b>${m1} – ${m2}</b>${auto?' <span class="muted">(ürün otomatik seçildi — üstten değiştirebilirsin)</span>':''}`,
+ ceO:'Menşe', ceTon:'Ton (12 ay)', ceFob:'Gümrük değeri $/kg', ceFobS:'≈ FOB menşe (alış)', ceCif:'CIF $/kg', ceFr:'Navlun + sigorta $/kg', ceLast:'Son ay', ceUsda:'USDA FOB satış $/kg', ceUsdaS:'aynı aylar', ceSpr:'Fark', ceSprS:'satış − alış', ceCnt:'Konteyner payı',
+ cenChainT:(o)=>`Aylık fiyat zinciri — ${o} ($/kg)`, cenOrigT:'Gümrük değeri ülkelere göre ($/kg, aylık)', lCenFob:'Census gümrük değeri (FOB menşe)', lCenCif:'Census CIF (navlun+sigorta dahil)', lUsdaFob:'USDA FOB satış (Phila./NY)', lHal:'Hal ortalaması',
+ cenGrapes:'Üzüm: Census üzüm miktarını metreküp olarak verir. Bu yüzden kilo fiyatı yalnızca gemiyle gelenler için, gemi brüt ağırlığı (ambalaj dahil) üzerinden hesaplanır; kamyonla gelen Meksika üzümü dahil değildir. Brüt ağırlık net ağırlıktan fazla olduğu için üzümde $/kg net fiyattan biraz düşük görünür.',
+ cenMiami:'Census bölgeleri ABD gümrük bölgeleridir (ör. "Miami" bölgesi Miami ve Port Everglades gibi limanları kapsar); USDA\'nın liman adlarıyla birebir aynı değildir.', cenWarn:'⚠ Gümrük değeri ile USDA satış fiyatı arasındaki fark ithalatçı kârı DEĞİLDİR: konsinye mallarda girişte beyan edilen değer genelde geçici ve düşüktür; USDA fiyatı belirli premium ambalaj ve kaliteyi (Philadelphia/NY) gösterirken Census tüm kalite ve ambalajların ortalamasıdır; aradaki liman, depo, muayene, karantina, nakliye, fire ve komisyon masrafları da tabloda yoktur.', noCen:'Bu seçim için Census verisi yok.', kindC:'Census',
+ cClear:'🧹 Temizle', calcT:'💰 Kârlılık hesabı — FOB alış → ABD satış', calcH:'Ürünü seç (USDA FOB veya hal fiyatı; liste ürün/menşe filtresine göre daralır) ya da elle gir: fiyat ve kutu ağırlığı otomatik gelir. Kendi alış ve masraf rakamlarını gir; sayfa kutu, kg ve konteyner başına kârı ve hedef kârın için ödeyebileceğin en yüksek FOB fiyatını hesaplar. Rakamların bu tarayıcıda hatırlanır.',
+ gProd:'Ürün ve piyasa', lSel:'Ürün / menşe / ambalaj', lSale:'ABD satış fiyatı ($/kutu)', mktNote:(d,a,b)=>`USDA FOB ${d}: $${a}–${b} / kutu ("çoğunlukla") — değiştirebilirsin`, mktHal:(m,d,a,b)=>`Hal (${m}) ${d}: $${a}–${b} / kutu — bu toptancının satış fiyatı; kendi satış fiyatını yaz`, mktMan:'Kendi satış fiyatını ve kutu ağırlığını yaz', optMan:'✍️ Elle gir (kendi ürünüm / fiyatım)', grpFob:'USDA FOB — ithalatçı satış fiyatı (Phila./NY)', grpHal:'Hal fiyatları — toptancı satış fiyatı (son 45 gün)', kgQ:'kg yazmıyor', lKg:'Kutu ağırlığı (kg)',
+ lBoxes:'Konteynerde kutu sayısı', lBoxesS:'40 ft reefer, bu ambalajla', gBuy:'Alış', lFob:'FOB menşe alış fiyatı ($/kutu)', lFobS:'ihracatçının / üreticinin teklifi',
+ gCost:'Konteyner başına masraflar ($)', lFreight:'Okyanus navlunu + sigorta', lPortFee:'Liman, terminal, soğuk depo', lInsp:'Gümrük müşaviri, USDA muayene, karantina/fumigasyon', lInland:'İç nakliye (depoya / müşteriye)', lOther:'Diğer (finansman, sigorta, fire payı vb.)',
+ gTax:'Vergi ve kâr', lDuty:'Gümrük vergisi + ek tarifeler (%)', lDutyS:'FOB değeri üzerinden; menşe ve ürüne göre değişir — güncel oranı kontrol et', lMargin:'Hedef kâr marjı (%)', lMarginS:'satış fiyatı üzerinden',
+ rBox:'$ / kutu', rKg:'$ / kg', rCont:'$ / konteyner', rFob:'FOB menşe alış', rDuty:'Gümrük vergisi', rCost:'Konteyner masrafları (kutu başına)', rLanded:'Toplam maliyet (landed)', rSale:'ABD satış fiyatı', rProfit:'Kâr', rMargin:'Kâr marjı (satış üzerinden)',
+ maxT:'Hedef marjın için ihracatçıya ödeyebileceğin <b>en yüksek FOB</b>', maxV:v=>`$${v} / kutu`, maxNo:'Bu fiyatla mümkün değil', maxKg:(k,m,s)=>`= $${k} / kg · %${m} marj, ABD satışı $${s}/kutu varsayımıyla`, maxWait:'Kutu sayısı ve masrafları girince hesaplanır.',
+ wBoxes:'Konteyner masraflarını kutuya bölmek için "Konteynerde kutu sayısı"nı gir.', wFob:'FOB alış fiyatını gir.', wDuty:'Gümrük vergisi boş — 0 kabul edildi. Güncel oranı (ek tarifeler dahil) gümrük müşavirinle teyit et.',
+ calcNote:'Not: USDA FOB fiyatı Philadelphia/New York bölgesindeki <b>importer satış</b> fiyatıdır; başka limanlarda veya müşteriye teslimde fiyat farklı olabilir. Fire, kalite indirimi ve tahsilat riski hesaba ayrıca katılmalı.',
+ footer:'<b>Kaynak:</b> USDA AMS Specialty Crops Market News — ithalat hareketi (3283, 3125), ithal meyve FOB fiyatları (2401, OR_FV111) ve 11 hal piyasası meyve fiyatları (Terminal Market Fruit Prices); ABD Census Bureau aylık ithalat değeri (HS 0805, 0806.10).<br><b>Birimler:</b> USDA miktarları pound (lb) olarak verir. Ton = lb × 0,4536 ÷ 1000. Miktarlar USDA\'nın bildirdiği gerçek ağırlıktır (lb → ton). USDA konteyner sayısı yayınlamadığı için konteyner sayısı gösterilmez. FOB fiyatı olmayan akışlarda (USDA o ülke/ürünü FOB raporunda fiyatlamıyorsa) en son hal fiyatı, hangi halden olduğu yazılarak gösterilir. USDA, Güney Florida limanlarını ve Tampa\'yı tek grup ("South Florida/Tampa") olarak raporlar; Miami ayrıca görünmez. Kilo fiyatı yalnızca ağırlığı yazan ambalajlarda hesaplanır ("7/10 bushel" gibi hacim ölçülü kutularda hesaplanmaz). Organik hal fiyatları ortalamalara katılmamıştır. Kurutulmuş/dondurulmuş olarak işaretli kayıtlar çıkarılmıştır. 20 tonun altındaki akışlar "⚠" ile işaretlidir — bunlar numune, karışık yük veya gümrük kodlama hatası olabilir.<br><b>Güncelleme:</b> Veriler sunucuda her iş günü otomatik olarak USDA ve Census API\'lerinden çekilir.',
+ busyT:'Veri ekleniyor…', busyS:'Dosyalar işleniyor ve sayfa kaydediliyor. Sayfa birazdan yenilenecek.',
+ tSaved:'Kaydedildi — sayfa herkes için güncellendi.', tLocal:'Eklendi, ama kalıcı kaydedilemedi (düzenleme izni yok) — sadece bu oturumda görünür.', tConflict:'Aynı anda başka bir güncelleme oldu; dosyayı tekrar ekle.', tBig:'Veri sayfa sınırını aşıyor; kaydedilmedi. Daha kısa tarih aralığı ekle.', tAdded:(a)=>`Eklendi: ${a}`, tBad:n=>`${n}: tanınmayan dosya (hareket, FOB veya hal CSV'si değil)`, kindV:'hareket', kindP:'FOB fiyat', kindH:'hal fiyatı', tErr:e=>`Kaydedilemedi: ${e}`,
+ prod:{grapes:'Üzüm',oranges:'Portakal',mandarins:'Mandalina',clementines:'Klementin',lemons:'Limon',limes:'Misket limonu',grapefruit:'Greyfurt',tangelos:'Tangelo',minneolas:'Minneola',pomelos:'Pomelo',bloodorange:'Kan portakalı'},
+ ctry:{'Chile':'Şili','South Africa':'Güney Afrika','Colombia':'Kolombiya','Dominican Republic':'Dominik Cum.','Argentina':'Arjantin','Australia':'Avustralya','Morocco':'Fas','Mexico':'Meksika','South Korea':'Güney Kore','Brazil':'Brezilya','New Zealand':'Yeni Zelanda','Spain':'İspanya','Ecuador':'Ekvador','Turkey':'Türkiye','Italy':'İtalya','Japan':'Japonya','Egypt':'Mısır','Jamaica':'Jamaika','Canada':'Kanada','France':'Fransa','Israel':'İsrail','Costa Rica':'Kosta Rika','Greece':'Yunanistan','Portugal':'Portekiz','China':'Çin','India':'Hindistan','Netherlands':'Hollanda','California':'Kaliforniya (ABD)','Texas':'Teksas (ABD)','Florida':'Florida (ABD)','Arizona':'Arizona (ABD)','Arizona-California':'Arizona-Kaliforniya (ABD)','Georgia':'Georgia (ABD)','South Carolina':'Güney Karolina (ABD)','North Carolina':'Kuzey Karolina (ABD)','Michigan':'Michigan (ABD)','California-Central':'Orta Kaliforniya (ABD)','California-South':'Güney Kaliforniya (ABD)'},
+ airport:'Havalimanı', mexBorder:'Meksika sınırı',
+ pfix:{'PHILADELPHIA-CAMDEN PENNSYLVANIA-NEW JERSEY':'Philadelphia–Camden (PA/NJ)','SOUTH FLORIDA/TAMPA':'Güney Florida: Miami, Port Everglades vb. / Tampa (FL)','LOS ANGELES-LONG BEACH CALIFORNIA':'Los Angeles–Long Beach (CA)','NEWARK-ELIZABETH NEW JERSEY':'Newark–Elizabeth (NJ)','SEATTLE-TACOMA WASHINGTON':'Seattle–Tacoma (WA)','SAN FRANCISCO-OAKLAND CALIFORNIA':'San Francisco–Oakland (CA)','NEW YORK JFK AIRPORT':'New York JFK Havalimanı'},
+ tone:{'HEAVY':'Yoğun','FAIRLY HEAVY':'Oldukça yoğun','MODERATE':'Orta','FAIRLY LIGHT':'Oldukça az','LIGHT':'Az','VERY LIGHT':'Çok az','GOOD':'İyi','FAIRLY GOOD':'Oldukça iyi'}, toneNA:'Piyasa oluşmadı',
+ pkg:s=>s.replace(/flat cartons/i,'yassı karton').replace(/cartons/i,'karton').replace(/containers bagged/i,'poşetli kutu').replace(/lugs bagged/i,'poşetli kasa').replace(/containers/i,'kutu').replace(/mesh bags/i,'file torba').replace(/film bags/i,'film poşet').replace(/bags/i,'torba').replace(/bushel/i,'bushel').replace(/^karton (\d+) (\d+)-lb/i,'karton, $1 × $2 lb').replace(/(\d+) (\d+)-lb/,'$1 × $2 lb'),
+ note:s=>String(s).replace(/supplies (insufficient and )?(in )?too few hands to establish a market\.?/ig,'Piyasa oluşacak kadar mal yok.').replace(/LAST R[EP]+ORT\.?/ig,'Son rapor (sezon bitti).').replace(/FIRST REPORT\.?/ig,'İlk rapor (sezon başladı).').replace(/^(MARKET )?About Steady$/i,'Hemen hemen sabit').replace(/^(MARKET )?Steady$/i,'Sabit').replace(/^(MARKET )?Higher$/i,'Yükseliyor').replace(/^(MARKET )?Lower$/i,'Düşüyor').replace(/^MARKET (SLIGHTLY )?(STRONGER|WEAKER)$/i,(m,a,b)=>(a?'Biraz ':'')+(/STRONGER/i.test(b)?'güçleniyor':'zayıflıyor')).replace(/Some varieties/i,'Bazı çeşitler').replace(/occasional higher and lower/i,'ara sıra daha yüksek/düşük').replace(/occasional higher/i,'ara sıra daha yüksek').replace(/occasional lower/i,'ara sıra daha düşük').replace(/slightly lower, others about steady\.?/i,'biraz düştü, diğerleri sabit').replace(/slightly higher, others about steady\.?/i,'biraz yükseldi, diğerleri sabit'),
+},
+en:{
+ title:'🍇🍊 US Citrus & Grape Imports', upload:'⬆ Add USDA file',
+ dataInfo:(v1,v2,p1,p2,h1,h2,pub,c1,c2)=>`📅 Movement: <b>${v1} – ${v2}</b> · FOB prices: <b>${p1} – ${p2}</b>${h1?` · Terminal prices: <b>${h1} – ${h2}</b>`:''}${c1?` · Census: <b>${c1} – ${c2}</b>`:''}${pub?` · Latest USDA release: ${pub}`:''}`,
+ nH10:'📉 Terminal — years', h10T:'📉 Terminal prices — year-over-year comparison', h10H:'How the wholesale terminal price ($/kg) has moved over the years. Product and origin filters apply; if not set, the one with the most data is chosen.',
+ h10MkL:'Market', h10All:'All markets (average)', h10Ctx:(p,o,y1,y2,auto)=>`Showing: <b>${p}</b> – <b>${o}</b> · Data: <b>${y1} – ${y2}</b>${auto?' <span class="muted">(auto-selected)</span>':''}`,
+ h10YearT:'Weekly price — years overlaid ($/kg)', h10AvgT:'Annual average price ($/kg)', h10LongT:'Monthly average — full period ($/kg)', h10TblT:'Year-by-year summary',
+ h10Y:'Year', h10A:'Average $/kg', h10C:'vs previous year', h10Lo:'Lowest week', h10Hi:'Highest week', h10W:'Weeks with prices', h10Part:'in progress', h10Ma:'12-month moving average', h10Mo:'Monthly average',
+ h10Hint1:'Only the daily terminal data already in the dashboard (about the last year) is shown. The last 10 years are added once <code>node hal-history.js</code> has been run on the server.',
+ h10Note:'Weekly value = average of the prices reported at terminal markets that week (all varieties, sizes and grades; organic excluded; only packages that state a weight). Prices are nominal dollars, not adjusted for inflation. The current year is not finished, so its annual average is not directly comparable.', noH10:'No terminal prices for this product/origin.', kindW:'terminal history',
+ filtersBtn:'⚙ Filters', fClose:'Show results', filtersT:'Filters', resetF:'Reset', nKpi:'📊 Summary', nFlows:'🚢 Trade flows', nWeek:'📈 Weekly & ports', nYears:'📅 Year over year', nCal:'🗓️ Season calendar', nFob:'💵 FOB prices', nHal:'🏪 Terminal prices', nCen:'🧾 Purchase & freight', nCalc:'💰 Profitability', fProd:'Product', allProd:'All citrus + grapes', fOrig:'Origin', allOrig:'All countries', fMode:'How it arrives', mBoat:'🚢 Ocean (containers)', mTruck:'🚚 Truck', mAir:'✈️ Air', mAll:'All',
+ fPer:'Period', p7:'Last week', p14:'Last 2 weeks', p28:'Last 4 weeks', p84:'Last 12 weeks', pytd:'Year to date', p365:'Last 12 months', p0:'All data', fPort:'Port of entry', allPorts:'All ports',
+ range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> product that <b>entered the US</b> between ${a} and ${b} (${n} days).${pa?` Compared with the same period last year (${pa} – ${pb}).`:''} USDA publishes each day's data on the next business day.`,
+ tonU:'tons', k1:'Total volume', k1s:w=>`metric tons (USDA)`, k2:'Top product', k2s:'', k3:'Top origin', k3s:(p,n,w)=>`${p}% of total · ${n} ${w}`, k4:'Busiest port', k4s:p=>`${p}% of total`,
+ yoy:(prev,chg)=>`Same period last year: ${prev} · ${chg}`, pct:v=>`${v}%`,
+ lw:{Boat:'containers',Truck:'trucks','':'loads',Air:'loads'},
+ flowsT:'What is arriving, from where, into which port?', flowsH:'Each row is a trade flow: product + origin + port of entry, largest first, with the same period last year.',
+ cProd:'Product', cOrig:'Origin', cPort:'Port of entry', cTon:'Tons', sel:'selected period', cPrev:'Last year', prevS:'same period', newF:'new', c12:'Last 12 weeks', weekly:'weekly', cLast:'Last arrival', cFob:'Latest price (box + kg)', viaHal:m=>`no FOB · terminal price (${m})`, noFobAny:'not priced by USDA', arriving:'arriving',
+ tiny:'under 20 tons', tinyT:'Very small quantity: may be a sample, a mixed load or a customs coding error.', perBox:'/ box', kgBox:'kg box', perKg:'/kg', noData:'No data for these filters.', showAll:n=>`Show all (${n})`, showLess:'Show top 25',
+ weekT:'Weekly arrivals (selected period)', weekH:'By country of origin, in tons.', weekOf:d=>`Week of ${d}`, perWeek:w=>`${w} / week`, other:'Other',
+ portT:'By port', portH:'Ports receiving the most volume in the selected period.',
+ yearT:'Year-over-year comparison', yearH:'The same weeks this year and in previous years. Product, origin, transport and port filters apply (not the period filter — always the full year).',
+ yearVolT:'Weekly arrivals by year (tons)', yearPriceT:'FOB price by year ($/kg)', pickProd:'Select a product above to compare prices.', noPriceY:'No FOB price data for this product/origin.', wk:n=>`Week ${n}`, wkAx:'Week of year',
+ calT:'Season calendar', calH:y=>`How much arrives from each country by month: ${y} monthly average (tons). Darker = the busiest months of that flow. Product, origin, transport and port filters apply.`, months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], calAll:'available data',
+ priceT:'Latest FOB prices (importer selling price to the trade)',
+ priceH:'USDA prices for imported fruit arriving in the Philadelphia / New York area (last 4 months); price per kg is calculated from the box weight. "Mostly" = the range where most sales occurred. Faded rows = season ended.',
+ pDate:'Date', pVar:'Variety', pPkg:'Package (box weight)', pSizes:'Sizes', pBox:'$ / box', pKg:'$ / kg', pSup:'Supply', pDem:'Demand', pNote:'Note', noMarket:'no market established',
+ noPrice:'No FOB price report for these filters (this USDA report only covers certain imports into the Philadelphia/New York area).',
+ halT:'Terminal market prices (wholesale)', halH:'Daily USDA wholesale prices from 11 US terminal markets: the wholesaler\'s price to retailers / foodservice. Chain: importer FOB → terminal market. Product and origin filters apply; if not set, the one with the most data is chosen.',
+ halCtx:(p,o,auto)=>`Showing: <b>${p}</b> – <b>${o}</b>${auto?' <span class="muted">(auto-selected — change it with the filters above)</span>':''}`,
+ chainT:'Price chain: importer FOB → terminal ($/kg, weekly)', fobLine:'Importer FOB (Phila./NY)', markupT:d=>`Terminal – FOB spread (last 4 weeks, as of ${d})`,
+ gradeL:'Grade', allGrade:'All grades', gCol:'Grade', gradeTR:{}, gradeNote:'Grade is the class marked/declared on the box in the USDA terminal report. Class II rows are few; juice (processing) prices are not in these reports.', mMarket:'Market', mHal:'Terminal $/kg', mFob:'FOB $/kg', mDiff:'Spread $/kg', mPct:'Spread', mLast:'Latest terminal price', noHal:'No terminal prices for this product/origin.', latestHalT:'Latest terminal market prices', hDate:'Date', noKg:'kg unknown (volume-based box)',
+ cenT:'🧾 Purchase price & freight (Census import value)',
+ cenH:'Value declared to US Customs. "Customs value" = transaction value at the foreign port (excluding freight, insurance and duty) ≈ the FOB origin price paid to the exporter. "CIF" = including freight and insurance. Monthly data, about 6 weeks behind. Note: for consignment shipments the value declared at entry is often not the final sale price.',
+ cenDistL:'Customs district', allDist:'All districts (US total)', cenCtx:(p,m1,m2,auto)=>`Product: <b>${p}</b> · Last 12 months: <b>${m1} – ${m2}</b>${auto?' <span class="muted">(auto-selected — change it with the filters above)</span>':''}`,
+ ceO:'Origin', ceTon:'Tons (12 mo)', ceFob:'Customs value $/kg', ceFobS:'≈ FOB origin (purchase)', ceCif:'CIF $/kg', ceFr:'Freight + insurance $/kg', ceLast:'Latest month', ceUsda:'USDA FOB sale $/kg', ceUsdaS:'same months', ceSpr:'Spread', ceSprS:'sale − purchase', ceCnt:'Containerized',
+ cenChainT:(o)=>`Monthly price chain — ${o} ($/kg)`, cenOrigT:'Customs value by origin ($/kg, monthly)', lCenFob:'Census customs value (FOB origin)', lCenCif:'Census CIF (incl. freight+insurance)', lUsdaFob:'USDA FOB sale (Phila./NY)', lHal:'Terminal market average',
+ cenGrapes:'Grapes: Census reports grape quantity in cubic meters, so price per kg is calculated only for ocean shipments using vessel gross weight (including packaging); Mexican grapes arriving by truck are not included. Because gross weight exceeds net weight, grape $/kg appears slightly lower than a net price.',
+ cenMiami:'Census districts are US Customs districts (e.g. the "Miami" district covers ports such as Miami and Port Everglades); they do not match USDA port names one-to-one.', cenWarn:'⚠ The gap between customs value and the USDA sale price is NOT importer profit: for consignment shipments the value declared at entry is usually provisional and low; the USDA price reflects a specific premium pack and grade (Philadelphia/NY) while Census averages all grades and packs; port, storage, inspection, treatment, freight, shrink and commission costs are not in the table.', noCen:'No Census data for this selection.', kindC:'Census',
+ cClear:'🧹 Clear', calcT:'💰 Profitability — FOB purchase → US sale', calcH:'Pick a product (USDA FOB or terminal price; the list narrows with the product/origin filters) or enter manually: price and box weight fill in automatically. Enter your own purchase and cost figures; the page calculates profit per box, kg and container, and the maximum FOB you can pay for your target margin. Your inputs are remembered in this browser.',
+ gProd:'Product & market', lSel:'Product / origin / package', lSale:'US selling price ($/box)', mktNote:(d,a,b)=>`USDA FOB ${d}: $${a}–${b} / box ("mostly") — editable`, mktHal:(m,d,a,b)=>`Terminal (${m}) ${d}: $${a}–${b} / box — this is the wholesaler's price; enter your own sale price`, mktMan:'Enter your own selling price and box weight', optMan:'✍️ Enter manually (my own product / price)', grpFob:'USDA FOB — importer selling price (Phila./NY)', grpHal:'Terminal prices — wholesaler selling price (last 45 days)', kgQ:'kg not stated', lKg:'Box weight (kg)',
+ lBoxes:'Boxes per container', lBoxesS:'40 ft reefer, this package', gBuy:'Purchase', lFob:'FOB origin purchase price ($/box)', lFobS:'exporter / grower offer',
+ gCost:'Costs per container ($)', lFreight:'Ocean freight + insurance', lPortFee:'Port, terminal, cold storage', lInsp:'Customs broker, USDA inspection, treatment/fumigation', lInland:'Inland freight (to warehouse / customer)', lOther:'Other (financing, insurance, shrink, etc.)',
+ gTax:'Duty & margin', lDuty:'Import duty + additional tariffs (%)', lDutyS:'on FOB value; varies by origin and product — confirm the current rate', lMargin:'Target margin (%)', lMarginS:'on selling price',
+ rBox:'$ / box', rKg:'$ / kg', rCont:'$ / container', rFob:'FOB origin purchase', rDuty:'Import duty', rCost:'Container costs (per box)', rLanded:'Total landed cost', rSale:'US selling price', rProfit:'Profit', rMargin:'Margin (on sales)',
+ maxT:'<b>Maximum FOB</b> you can pay the exporter for your target margin', maxV:v=>`$${v} / box`, maxNo:'Not achievable at this price', maxKg:(k,m,s)=>`= $${k} / kg · ${m}% margin, assuming US sale at $${s}/box`, maxWait:'Enter boxes per container and costs to calculate.',
+ wBoxes:'Enter "Boxes per container" to spread container costs per box.', wFob:'Enter the FOB purchase price.', wDuty:'Duty is blank — treated as 0. Confirm the current rate (incl. additional tariffs) with your customs broker.',
+ calcNote:'Note: the USDA FOB price is the <b>importer selling</b> price in the Philadelphia/New York area; prices at other ports or delivered to customers may differ. Shrink, quality claims and collection risk should be considered separately.',
+ footer:'<b>Source:</b> USDA AMS Specialty Crops Market News — import movement (3283, 3125), imported fruit FOB prices (2401, OR_FV111) and 11 terminal market fruit price reports; US Census Bureau monthly import values (HS 0805, 0806.10).<br><b>Units:</b> USDA reports volume in pounds (lb). Tons = lb × 0.4536 ÷ 1000. Volumes are the actual weights reported by USDA (lb → tons). USDA does not publish container counts, so none are shown. Where there is no FOB price (USDA does not price that origin/product in its FOB report), the latest terminal market price is shown with the market name. USDA reports South Florida ports and Tampa as one group ("South Florida/Tampa"); Miami is not shown separately. Price per kg is only calculated for packages that state a weight (not for volume-based boxes such as "7/10 bushel"). Organic terminal prices are excluded from averages. Records flagged as dried/frozen are excluded. Flows under 20 tons are marked "⚠" — they may be samples, mixed loads or customs coding errors.<br><b>Updates:</b> Data is pulled automatically from the USDA and Census APIs on the server every business day.',
+ busyT:'Adding data…', busyS:'Processing files and saving the page. It will reload shortly.',
+ tSaved:'Saved — the page is updated for everyone.', tLocal:'Added, but could not be saved permanently (no edit permission) — visible in this session only.', tConflict:'Another update happened at the same time; please add the file again.', tBig:'Data exceeds the page limit; not saved. Add a shorter date range.', tAdded:(a)=>`Added: ${a}`, tBad:n=>`${n}: unrecognized file (not a movement, FOB or terminal CSV)`, kindV:'movement', kindP:'FOB price', kindH:'terminal price', tErr:e=>`Could not save: ${e}`,
+ prod:{grapes:'Grapes',oranges:'Oranges',mandarins:'Mandarins',clementines:'Clementines',lemons:'Lemons',limes:'Limes',grapefruit:'Grapefruit',tangelos:'Tangelos',minneolas:'Minneolas',pomelos:'Pomelos',bloodorange:'Blood oranges'},
+ ctry:{}, airport:'Airport', mexBorder:'Mexico border',
+ pfix:{'PHILADELPHIA-CAMDEN PENNSYLVANIA-NEW JERSEY':'Philadelphia–Camden (PA/NJ)','SOUTH FLORIDA/TAMPA':'South Florida: Miami, Port Everglades etc. / Tampa (FL)','LOS ANGELES-LONG BEACH CALIFORNIA':'Los Angeles–Long Beach (CA)','NEWARK-ELIZABETH NEW JERSEY':'Newark–Elizabeth (NJ)','SEATTLE-TACOMA WASHINGTON':'Seattle–Tacoma (WA)','SAN FRANCISCO-OAKLAND CALIFORNIA':'San Francisco–Oakland (CA)','NEW YORK JFK AIRPORT':'New York JFK Airport'},
+ tone:{}, toneNA:'No market established',
+ pkg:s=>s, note:s=>String(s),
+}};
+let LANG='tr'; try{LANG=localStorage.getItem('sf_lang')||((navigator.language||'').toLowerCase().startsWith('en')?'en':'tr')}catch(e){}
+const L=()=>I18N[LANG];
+const tt=(k,...a)=>{const v=L()[k];return typeof v==='function'?v(...a):v};
+
+// ================= helpers =================
+const COMM={'Grapes':'grapes','Oranges':'oranges','Royal Mandarin':'mandarins','Tangerines':'mandarins','Mandarins':'mandarins','Clementines':'clementines','Lemons':'lemons','Limes':'limes','Grapefruit':'grapefruit','Tangelos':'tangelos','Minneolas':'minneolas','Pomelos':'pomelos','Blood Orange':'bloodorange'};
+const KEEP=new Set(Object.keys(COMM));
+const FLAG={'Chile':'🇨🇱','Peru':'🇵🇪','South Africa':'🇿🇦','Colombia':'🇨🇴','Dominican Republic':'🇩🇴','Argentina':'🇦🇷','Honduras':'🇭🇳','Australia':'🇦🇺','Uruguay':'🇺🇾','Morocco':'🇲🇦','Mexico':'🇲🇽','Guatemala':'🇬🇹','South Korea':'🇰🇷','Brazil':'🇧🇷','New Zealand':'🇳🇿','Spain':'🇪🇸','Ecuador':'🇪🇨','Turkey':'🇹🇷','Italy':'🇮🇹','Japan':'🇯🇵','Egypt':'🇪🇬','Jamaica':'🇯🇲','Canada':'🇨🇦','France':'🇫🇷','Israel':'🇮🇱','Costa Rica':'🇨🇷','Greece':'🇬🇷','Portugal':'🇵🇹','China':'🇨🇳','India':'🇮🇳','Netherlands':'🇳🇱'};
+const US_STATES=new Set(['California','Texas','Florida','Arizona','Arizona-California','Georgia','South Carolina','North Carolina','Michigan','California-Central','California-South','Alabama','Tennessee','Virginia','Washington','New York']);
+const CTRY_KEYS=Object.keys(FLAG);
+const STATES={'CALIFORNIA':'CA','TEXAS':'TX','ARIZONA':'AZ','FLORIDA':'FL','GEORGIA':'GA','NEW YORK':'NY','NEW JERSEY':'NJ','DELAWARE':'DE','PENNSYLVANIA':'PA','MICHIGAN':'MI','WASHINGTON':'WA','TENNESSEE':'TN','KENTUCKY':'KY','VERMONT':'VT','NEW MEXICO':'NM','PUERTO RICO':'PR','SOUTH CAROLINA':'SC','VIRGINIA':'VA','MARYLAND':'MD','LOUISIANA':'LA','MASSACHUSETTS':'MA'};
+const tc=s=>String(s||'').toLowerCase().replace(/(^|[\s\-\/])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+function portName(d){
+  let s=String(d||'').toUpperCase().trim(); let mex=false;
+  if(s.startsWith('MEXICO CROSSINGS THROUGH ')){s=s.slice(25);mex=true}
+  else if(s.startsWith('IMPORTS THROUGH ')) s=s.slice(16);
+  if(L().pfix[s]) return L().pfix[s];
+  let st='';
+  for(const k of Object.keys(STATES).sort((a,b)=>b.length-a.length)){ if(s.endsWith(' '+k)){st=STATES[k];s=s.slice(0,-k.length-1);break;} }
+  s=tc(s).replace('Airport',tt('airport'));
+  return s+(st?` (${st})`:'')+(mex?' — '+tt('mexBorder'):'');
+}
+const prodName=k=>L().prod[k]||k;
+const ctry=c=>L().ctry[c]||c;
+const flag=c=>FLAG[c]||(US_STATES.has(c)?'🇺🇸':'');
+const oName=c=>`${flag(c)} ${ctry(c)}`.trim();
+const loc=()=>LANG==='tr'?'tr-TR':'en-US';
+const fmt=(n,d=0)=>n==null||isNaN(n)||!isFinite(n)?'–':n.toLocaleString(loc(),{maximumFractionDigits:d,minimumFractionDigits:d});
+const dF=iso=>{if(!iso)return'';const [y,m,d]=iso.split('-');return LANG==='tr'?`${d}.${m}.${y}`:new Date(+y,+m-1,+d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+const sumU=rows=>rows.reduce((s,r)=>s+r.u,0);
+const TON=0.45359237/1000, LB=0.45359237;
+const PAL=['#2f6b3a','#e8892b','#3a78b5','#b54a6a','#8a6bbf','#c9a227','#2aa198','#7a5230','#9aa39a'];
+const YCOL=['#2f6b3a','#e8892b','#3a78b5','#9aa39a','#b54a6a'];
+function toast(m,ms=3200){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),ms)}
+const D0=iso=>{const p=String(iso||'').split('-');return Date.UTC(+p[0],(+p[1]||1)-1,+p[2]||1)};
+const ISO=ms=>isNaN(ms)?'':new Date(ms).toISOString().slice(0,10);
+function wk(iso){const t=D0(iso);if(isNaN(t))return'';return ISO(t-((new Date(t).getUTCDay()+6)%7)*864e5)}
+function woy(iso){return Math.min(52,Math.floor((D0(iso)-Date.UTC(+iso.slice(0,4),0,1))/864e5/7)+1)}
+function addDays(iso,n){return ISO(D0(iso)+n*864e5)}
+function pkgKg(p){
+  const s=String(p||'').toLowerCase();
+  let m=s.match(/(\d+)\s+(\d+(?:\.\d+)?)\s*-?\s*(lb|kg)/); if(m) return (+m[1])*(+m[2])*(m[3]==='lb'?LB:1);
+  m=s.match(/(\d+(?:\.\d+)?)\s*-?\s*(kg|lb)/); if(m) return (+m[1])*(m[2]==='lb'?LB:1);
+  return null;
+}
+function pkgLabel(p){if(!p)return'';const kg=pkgKg(p);const s=L().pkg(p);return kg?`${s} <b>= ${fmt(kg,1)} kg</b>`:s}
+function toneLabel(s){if(!s)return'';if(/insufficient|too few hands/i.test(s))return tt('toneNA');return L().tone[String(s).toUpperCase()]||tc(s)}
+function normCtry(s){return CTRY_KEYS.find(x=>x.toLowerCase()===s.toLowerCase())||tc(s)}
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const chg=(a,b)=>b>0?(a-b)/b*100:null;
+function chgHtml(a,b){const c=chg(a,b);if(c==null)return a>0?`<span class="muted">${tt('newF')}</span>`:'';const cls=c>=0?'up':'down';return `<span class="${cls}">${c>=0?'▲':'▼'} ${tt('pct',fmt(Math.abs(c)))}</span>`}
+
+// ================= data (encoded <-> raw) =================
+const SPEC={vol:[1,1,1,1,1,1,1,0],price:[1,1,1,1,1,1,1,0,0,0,0,1,1,1,1],hal:[1,1,1,1,1,1,1,0,0,0,1,1],cen:[1,1,1,1,0,0,0,1,0,0,0,0],halw:[1,1,1,1,0,0]};
+function decode(E){const d=(E.dict||[]).map(s=>typeof s==='string'?s.replace(/[<>]/g,'').replace(/"/g,'″'):s);const o={meta:E.meta||{},markets:E.markets||{}};for(const t in SPEC){const sp=SPEC[t];o[t]=(E[t]||[]).map(r=>r.map((c,i)=>sp[i]?d[c]:c))}return o}
+function encode(D){const dic=[],idx=new Map();const s=v=>{v=v||'';if(!idx.has(v)){idx.set(v,dic.length);dic.push(v)}return idx.get(v)};const o={v:2,meta:D.meta,markets:D.markets,dict:dic};for(const t in SPEC){const sp=SPEC[t];o[t]=(D[t]||[]).map(r=>r.map((c,i)=>sp[i]?s(c):c))}return o}
+const safe=s=>s.replace(/</g,'\\u003c');
+function buildHtml(D){return TPL.replace('/*__D__*/',()=>safe(JSON.stringify(encode(D)))).replace('/*__T__*/',()=>safe(JSON.stringify(TPL)))}
+let RAW={meta:{},markets:{},vol:[],price:[],hal:[],cen:[],halw:[]};
+
+let VOL=[], PRICE=[], HAL=[], CEN=[], HALW=[], HALW_FULL=false, META={};
+const HSMAP=[['08055020','lemons'],['08055030','limes'],['08055040','limes'],['080510','oranges'],['080521','mandarins'],['080522','clementines'],['080529','mandarins'],['0805408090','pomelos'],['0805404090','pomelos'],['080540','grapefruit'],['080610','grapes']];
+const hsProd=hs=>{const m=HSMAP.find(([p])=>String(hs).startsWith(p));return m?m[1]:null};
+const mF=ym=>{if(!ym)return'';const [y,m]=ym.split('-');return LANG==='tr'?`${L().months[+m-1]} ${y}`:`${L().months[+m-1]} ${y}`};
+function load(){
+  VOL=RAW.vol.map(([d,rb,slug,c,o,p,m,lb])=>({d,rb,slug,y:+d.slice(0,4),w:wk(d),c:COMM[c]||c,o,praw:p,m,lb}));
+  VOL.forEach(r=>r.u=r.lb*0.45359237/1000);
+  PRICE=RAW.price.map(r=>{
+    const [d,slug,c,dist,v,pkg,size,lo,hi,mlo,mhi,sup,dem,tone,cmt]=r;
+    const o=normCtry(((String(dist).match(/^(.*?) IMPORTS/i)||[,''])[1]).trim());
+    const a=mlo??lo, b=mhi??hi;
+    return {d,w:wk(d),y:+d.slice(0,4),slug,c:COMM[c]||c,o,v,pkg,kg:pkgKg(pkg),size,lo,hi,mlo,mhi,mid:(a!=null&&b!=null)?(a+b)/2:null,sup,dem,tone,cmt};
+  });
+  HAL=RAW.hal.map(([d,slug,c,o,v,pkg,sizes,lo,hi,mid,tone,gr])=>({d,w:wk(d),slug,mk:RAW.markets[slug]||slug,c:COMM[c]||c,o,v,pkg,kg:pkgKg(pkg),sizes,lo,hi,mid,tone,gr:gr||''}));
+  CEN=(RAW.cen||[]).map(([tm,cty,hs,dist,val,cif,qty,unit,cv,cw,vv,vw])=>{
+    const c=hsProd(hs); if(!c) return null;
+    const o=cty==='KOREA, SOUTH'?'South Korea':normCtry(tc(cty));
+    let r={t:tm,c,o,dist,tot:dist==='TOTAL FOR ALL DISTRICTS',cv,gv:val};
+    if(unit==='KG'){r.kg=qty;r.val=val;r.cifV=cif;r.cifB=val;r.cifK=qty;r.net=true}
+    else{r.kg=vw;r.val=vv;r.net=false;if(vv>0&&vv>=val*0.999){r.cifV=cif;r.cifB=val;r.cifK=vw}else{r.cifV=0;r.cifB=0;r.cifK=0}}
+    return r;}).filter(Boolean);
+  const mm=(arr,k)=>{let a='',b='';arr.forEach(r=>{const v=r[k];if(!v)return;if(!a||v<a)a=v;if(v>b)b=v});return [a,b]};
+  HALW_FULL=(RAW.halw||[]).length>0;
+  if(HALW_FULL) HALW=RAW.halw.map(([w,slug,c,o,n,v])=>({w,slug,c:COMM[c]||c,o,n:+n||1,v:+v}));
+  else { const g=new Map(); HAL.forEach(r=>{if(!r.kg)return;const k=r.w+'|'+r.slug+'|'+r.c+'|'+r.o;let x=g.get(k);if(!x){x={w:r.w,slug:r.slug,c:r.c,o:r.o,s:0,n:0};g.set(k,x)}x.s+=r.mid/r.kg;x.n++});
+    HALW=[...g.values()].map(x=>({w:x.w,slug:x.slug,c:x.c,o:x.o,n:x.n,v:x.s/x.n})); }
+  const [vf,vt]=mm(VOL,'rb'),[pf,pt]=mm(PRICE,'d'),[hf,ht]=mm(HAL,'d');
+  const [cf,ct]=mm(CEN,'t');
+  META={vFrom:vf,vTo:vt,pFrom:pf,pTo:pt,hFrom:hf,hTo:ht,cFrom:cf,cTo:ct,vPub:RAW.meta.vPub};
+}
+function relabel(){ VOL.forEach(r=>r.p=portName(r.praw)); }
+
+// ================= filters =================
+let F={prod:'',orig:'',mode:'Boat',per:28,port:''}, showAll=false;
+function fillSelects(){
+  const prods=[...new Set(VOL.map(r=>r.c).concat(PRICE.map(r=>r.c)))].sort((a,b)=>prodName(a).localeCompare(prodName(b),loc()));
+  $('#fProd').innerHTML=`<option value="">${tt('allProd')}</option>`+prods.map(p=>`<option value="${p}" ${p===F.prod?'selected':''}>${prodName(p)}</option>`).join('');
+  fillOrig(); fillPorts();
+}
+function fillOrig(){
+  const t=new Map(); VOL.filter(r=>(!F.prod||r.c===F.prod)&&(!F.mode||r.m===F.mode)).forEach(r=>t.set(r.o,(t.get(r.o)||0)+r.lb));
+  HAL.filter(r=>!F.prod||r.c===F.prod).forEach(r=>{if(!t.has(r.o))t.set(r.o,0)});
+  const os=[...t.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]).filter(Boolean);
+  if(F.orig&&!os.includes(F.orig)) F.orig='';
+  $('#fOrig').innerHTML=`<option value="">${tt('allOrig')}</option>`+os.map(o=>`<option value="${o}" ${o===F.orig?'selected':''}>${oName(o)}</option>`).join('');
+}
+function fillPorts(){
+  const t=new Map(); VOL.filter(r=>(!F.mode||r.m===F.mode)).forEach(r=>t.set(r.praw,(t.get(r.praw)||0)+r.lb));
+  const ps=[...t.entries()].filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  if(F.port && !ps.includes(F.port)) F.port='';
+  $('#fPort').innerHTML=`<option value="">${tt('allPorts')}</option>`+ps.map(p=>`<option value="${p}" ${p===F.port?'selected':''}>${portName(p)}</option>`).join('');
+}
+function win(){
+  const to=META.vTo; let from;
+  if(F.per==='ytd') from=to.slice(0,4)+'-01-01'; else if(+F.per) from=addDays(to,-(+F.per-1)); else from=META.vFrom;
+  let pf=null,pt=null;
+  if(F.per!=='0'&&F.per!==0){pf=addDays(from,-364);pt=addDays(to,-364);if(pf<META.vFrom){pf=null;pt=null}}
+  return {from,to,pf,pt};
+}
+const base=r=>(!F.prod||r.c===F.prod)&&(!F.orig||r.o===F.orig)&&(!F.mode||r.m===F.mode)&&(!F.port||r.praw===F.port);
+const rowsIn=(a,b)=>VOL.filter(r=>base(r)&&r.d>=a&&r.d<=b);
+function sumBy(rows,key){const m=new Map();rows.forEach(r=>{const k=key(r);m.set(k,(m.get(k)||0)+r.lb)});return m}
+$('#fProd').onchange=e=>{F.prod=e.target.value;fillOrig();render()};
+$('#fOrig').onchange=e=>{F.orig=e.target.value;render()};
+$('#fPort').onchange=e=>{F.port=e.target.value;render()};
+
+function seg(id,key){$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;F[key]=b.dataset.v;[...$(id).children].forEach(x=>x.classList.toggle('on',x===b));if(key==='mode'){fillOrig();fillPorts()}render()}}
+seg('#fMode','mode');seg('#fPer','per');
+F.per='28';
+$('#moreBtn').onclick=()=>{showAll=!showAll;flows(CUR.rows,CUR.prev)};
+document.querySelectorAll('#nav a').forEach(a=>a.onclick=e=>{e.preventDefault();const el=document.querySelector(a.getAttribute('href'));if(el)el.scrollIntoView({behavior:'smooth',block:'start'})});
+function navOn(id){document.querySelectorAll('#nav a').forEach(a=>{const on=a.getAttribute('href')==='#'+id;a.classList.toggle('on',on);if(on&&window.innerWidth<=1100){const n=$('#nav');n.scrollLeft=a.offsetLeft-n.offsetLeft-12}})}
+try{const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){navOn(en.target.id)}})},{rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('#nav a').forEach(a=>{const el=document.querySelector(a.getAttribute('href'));if(el)io.observe(el)})}catch(e){}
+$('#resetF').onclick=()=>{F={prod:'',orig:'',mode:'Boat',per:'28',port:''};showAll=false;HGRADE='';CDIST='';
+  [['#fMode','Boat'],['#fPer','28']].forEach(([id,v])=>[...$(id).children].forEach(x=>x.classList.toggle('on',x.dataset.v===v)));fillSelects();render()};
+$('#lang').onclick=e=>{const b=e.target.closest('button');if(!b)return;setLang(b.dataset.v)};
+
+function setLang(l){
+  LANG=l; try{localStorage.setItem('sf_lang',l)}catch(e){}
+  document.documentElement.lang=l;
+  [...$('#lang').children].forEach(x=>x.classList.toggle('on',x.dataset.v===l));
+  document.querySelectorAll('[data-i]').forEach(el=>{const v=tt(el.dataset.i);if(typeof v==='string')el.innerHTML=v});
+  document.title=l==='tr'?'ABD Narenciye & Üzüm İthalatı':'US Citrus & Grape Imports';
+  $('#dataInfo').innerHTML=tt('dataInfo',dF(META.vFrom),dF(META.vTo),dF(META.pFrom),dF(META.pTo),dF(META.hFrom),dF(META.hTo),META.vPub?dF(META.vPub):'',mF(META.cFrom),mF(META.cTo));
+  relabel(); fillSelects(); render(); if(!calcInit) setupCalc();
+}
+
+// ================= render =================
+let CH={}; let CUR={rows:[],prev:null};
+const isSm=()=>window.innerWidth<=700;
+function mkChart(id,cfg){
+  if(CH[id])CH[id].destroy();
+  try{const dk=window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches;const d=Chart.defaults;
+    if(d){d.color=ink();d.borderColor=dk?'rgba(255,255,255,.09)':'rgba(0,0,0,.08)';if(d.font){d.font.family='Inter,system-ui,sans-serif';d.font.size=isSm()?10.5:12}}
+    const lg=cfg.options&&cfg.options.plugins&&cfg.options.plugins.legend;if(lg&&lg.labels&&isSm()){lg.labels.boxWidth=9;lg.labels.padding=7}
+    const sx=cfg.options&&cfg.options.scales&&cfg.options.scales.x;if(sx&&sx.ticks&&isSm()){sx.ticks.maxTicksLimit=cfg.options.indexAxis==='y'?5:8}
+    const sy=cfg.options&&cfg.options.scales&&cfg.options.scales.y;if(sy&&sy.ticks&&sy.ticks.font&&isSm())sy.ticks.font.size=9.5;
+  }catch(e){}
+  CH[id]=new Chart($('#'+id),cfg)}
+function fSummary(){
+  const parts=[F.prod?prodName(F.prod):tt('allProd'),F.orig?ctry(F.orig):null,tt({Boat:'mBoat',Truck:'mTruck',Air:'mAir','':'mAll'}[F.mode]).replace(/\s*\(.*\)/,''),F.port?portName(F.port):null,tt('p'+F.per)].filter(Boolean);
+  $('#fSum').textContent=parts.join(' · ');
+}
+function setOpen(o){$('#side').classList.toggle('open',o);$('#fArrow').textContent=o?'▴':'▾';if(o)$('#side').scrollTop=0}
+$('#fToggle').onclick=()=>setOpen(!$('#side').classList.contains('open'));
+$('#fClose').onclick=()=>{setOpen(false);const el=$('#s-kpis');if(el)el.scrollIntoView({block:'start'})};
+try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch(e){}
+let _rw=window.innerWidth;window.addEventListener('resize',()=>{const a=_rw<=700,b=window.innerWidth<=700;_rw=window.innerWidth;if(a!==b)render()});
+const lw=()=>tt('tonU');
+const ink=()=>getComputedStyle(document.body).color;
+function render(){
+  const W=win();
+  const days=Math.round((new Date(W.to)-new Date(W.from))/864e5)+1;
+  $('#rangeInfo').innerHTML=tt('range',tt('p'+F.per),dF(W.from),dF(W.to),days,W.pf?dF(W.pf):'',W.pt?dF(W.pt):'');
+  const rows=rowsIn(W.from,W.to), prev=W.pf?rowsIn(W.pf,W.pt):null;
+  CUR={rows,prev};
+  const tot=rows.reduce((s,r)=>s+r.lb,0), ptot=prev?prev.reduce((s,r)=>s+r.lb,0):null;
+  $('#k1').textContent=fmt(sumU(rows)); $('#k1s').textContent=tt('k1s',lw());
+  const byC=[...sumBy(rows,r=>r.c)].sort((a,b)=>b[1]-a[1]);
+  $('#k2').textContent=byC[0]?prodName(byC[0][0]):'–';
+  $('#k1y').innerHTML=prev?tt('yoy',fmt(sumU(prev)),chgHtml(tot,ptot)):'';
+  $('#k2y').innerHTML=byC[0]&&tot?tt('k4s',fmt(byC[0][1]/tot*100))+` · ${fmt(byC[0][1]*TON)} ${lw()}`:'';
+  const byO=[...sumBy(rows,r=>r.o)].sort((a,b)=>b[1]-a[1]);
+  $('#k3').textContent=byO[0]?oName(byO[0][0]):'–';
+  $('#k3s').textContent=byO[0]&&tot?tt('k3s',fmt(byO[0][1]/tot*100),fmt(sumU(rows.filter(r=>r.o===byO[0][0]))),lw()):'';
+  const byP=[...sumBy(rows,r=>r.p)].sort((a,b)=>b[1]-a[1]);
+  $('#k4').textContent=byP[0]?byP[0][0]:'–';
+  $('#k4s').textContent=byP[0]&&tot?tt('k4s',fmt(byP[0][1]/tot*100)):'';
+  [()=>flows(rows,prev),()=>weekly(rows),()=>ports(rows),yearCharts,heat,prices,hal,h10,cen,()=>{if(calcInit)setupCalc()},fSummary].forEach(f=>{try{f()}catch(e){console.error(e)}});
+}
+function spark(vals){
+  const w=110,h=26,mx=Math.max(...vals,1),bw=w/vals.length;
+  return `<svg class="spark" width="${w}" height="${h}">${vals.map((v,i)=>{const bh=Math.max(0,v)/mx*(h-2);return `<rect x="${(i*bw).toFixed(1)}" y="${(h-bh).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${bh.toFixed(1)}" fill="var(--brand2)" rx="1"/>`}).join('')}</svg>`;
+}
+function lastPrice(c,o){
+  const lim=addDays(META.pTo||'2000-01-01',-120);
+  const ps=PRICE.filter(p=>p.c===c&&p.o===o&&p.mid!=null&&p.d>=lim); if(!ps.length) return null;
+  const last=ps.reduce((a,b)=>a.d>b.d?a:b).d; let day=ps.filter(p=>p.d===last);
+  const cnt={}; day.forEach(p=>cnt[p.pkg]=(cnt[p.pkg]||0)+1); const pk=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]; day=day.filter(p=>p.pkg===pk);
+  return {d:last,lo:Math.min(...day.map(p=>p.mlo??p.lo)),hi:Math.max(...day.map(p=>p.mhi??p.hi)),kg:day[0].kg};
+}
+function lastHal(c,o){
+  const hs=HAL.filter(r=>r.c===c&&r.o===o); if(!hs.length) return null;
+  const last=hs.reduce((a,b)=>a.d>b.d?a:b).d; if((new Date(META.hTo)-new Date(last))/864e5>120) return null;
+  let day=hs.filter(r=>r.d===last); if(day.some(r=>r.kg)) day=day.filter(r=>r.kg); const pc={}; day.forEach(r=>pc[r.slug+'|'+r.pkg]=(pc[r.slug+'|'+r.pkg]||0)+1);
+  const k=Object.keys(pc).sort((a,b)=>pc[b]-pc[a])[0]; day=day.filter(r=>r.slug+'|'+r.pkg===k);
+  return {d:last,mk:day[0].mk,lo:Math.min(...day.map(r=>r.lo)),hi:Math.max(...day.map(r=>r.hi)),kg:day[0].kg};
+}
+function flows(rows,prev){
+  const Wk=[...new Set(VOL.map(r=>r.w))].sort().slice(-12);
+  const key=r=>r.c+'|'+r.o+'|'+r.praw;
+  const m=new Map();
+  rows.forEach(r=>{const k=key(r);if(!m.has(k))m.set(k,{k,c:r.c,o:r.o,p:r.p,lb:0,u:0});const g=m.get(k);g.lb+=r.lb;g.u+=r.u});
+  const pm=prev?sumBy(prev,key):null; const pmu=new Map(); if(prev)prev.forEach(r=>{const k=key(r);pmu.set(k,(pmu.get(k)||0)+r.u)});
+  const all=[...m.values()].filter(x=>x.lb>0).sort((a,b)=>b.lb-a.lb);
+  const list=showAll?all:all.slice(0,25);
+  const keys=new Set(list.map(x=>x.k)); const wkm={}, last={};
+  VOL.forEach(r=>{if(F.mode&&r.m!==F.mode)return;const k=key(r);if(!keys.has(k))return;(wkm[k]=wkm[k]||{})[r.w]=(wkm[k][r.w]||0)+r.lb;if(r.lb>0&&(!last[k]||r.d>last[k]))last[k]=r.d});
+  const S=`<div class="s">${tt('sel')}</div>`;
+  let h=`<thead><tr><th>${tt('cProd')}</th><th>${tt('cOrig')}</th><th>${tt('cPort')}</th><th class="n">${tt('cTon')}${S}</th>${prev?`<th class="n">${tt('cPrev')}<div class="s">${tt('prevS')}</div></th>`:''}<th>${tt('c12')}<div class="s">${tt('weekly')}</div></th><th class="n">${tt('cLast')}</th><th class="n">${tt('cFob')}</th></tr></thead><tbody>`;
+  list.forEach(x=>{
+    const lp=lastPrice(x.c,x.o), ld=last[x.k]||'';
+    const active=ld&&(new Date(META.vTo)-new Date(ld))/864e5<14;
+    const lh=lp?null:lastHal(x.c,x.o);
+    const price=lp?`<b>$${fmt(lp.lo)}–${fmt(lp.hi)}</b> ${tt('perBox')}<div class="muted" style="font-size:12px">${lp.kg?`${fmt(lp.kg,1)} ${tt('kgBox')} · <b style="color:var(--ink)">$${fmt(lp.lo/lp.kg,2)}–${fmt(lp.hi/lp.kg,2)} ${tt('perKg')}</b> · `:''}${dF(lp.d)}</div>`:(lh?`<b>$${fmt(lh.lo)}–${fmt(lh.hi)}</b> ${tt('perBox')}<div class="muted" style="font-size:12px">${tt('viaHal',lh.mk)}${lh.kg?` · <b style="color:var(--ink)">$${fmt(lh.lo/lh.kg,2)}–${fmt(lh.hi/lh.kg,2)} ${tt('perKg')}</b>`:''} · ${dF(lh.d)}</div>`:`<span class="muted" style="font-size:12px">${tt('noFobAny')}</span>`);
+    const pv=pm?(pm.get(x.k)||0):null;
+    h+=`<tr><td class="big cp">${prodName(x.c)}</td><td class="co">${oName(x.o)}</td><td class="cport"><span class="mo">→ </span>${x.p}</td><td class="n big ct">${x.u<20?`<span class="pill" title="${tt('tinyT')}">⚠ ${tt('tiny')}</span> `:''}${fmt(x.u)}<span class="mo"> ${lw()}</span></td>${prev?`<td class="n cy"><span class="mo">${tt('cPrev')}: </span>${fmt(pmu.get(x.k)||0)}<div style="font-size:12px">${chgHtml(x.lb,pv)}</div></td>`:''}<td class="cs">${spark(Wk.map(w=>(wkm[x.k]||{})[w]||0))}</td><td class="n cl">${active?`<span class="pill">🟢 ${tt('arriving')}</span> `:''}<span class="muted"><span class="mo">${tt('cLast')}: </span>${dF(ld)}</span></td><td class="n cf">${price}</td></tr>`;
+  });
+  if(!list.length) h+=`<tr><td colspan="8" class="muted cp">${tt('noData')}</td></tr>`;
+  $('#flows').innerHTML=h+'</tbody>';
+  $('#moreBtn').style.display=all.length>25?'':'none';
+  $('#moreBtn').textContent=showAll?tt('showLess'):tt('showAll',all.length);
+}
+function weekly(rows){
+  const W=[...new Set(rows.map(r=>r.w))].sort();
+  const top=[...sumBy(rows,r=>r.o)].sort((a,b)=>b[1]-a[1]); const keep=top.slice(0,7).map(e=>e[0]);
+  const ds=keep.map((o,i)=>({label:oName(o),data:W.map(w=>rows.filter(r=>r.w===w&&r.o===o).reduce((s,r)=>s+r.u,0)),backgroundColor:PAL[i]}));
+  if(top.length>7) ds.push({label:tt('other'),data:W.map(w=>rows.filter(r=>r.w===w&&!keep.includes(r.o)).reduce((s,r)=>s+r.u,0)),backgroundColor:PAL[8]});
+  mkChart('cWeek',{type:'bar',data:{labels:W.map(dF),datasets:ds},options:{maintainAspectRatio:false,animation:false,
+    plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{mode:'index',intersect:false,callbacks:{title:t=>tt('weekOf',t[0].label),label:c=>c.raw>0.05?`${c.dataset.label}: ${fmt(c.raw)} ${lw()}`:null}}},
+    scales:{x:{stacked:true,ticks:{color:ink(),maxRotation:60}},y:{stacked:true,ticks:{color:ink()},title:{display:true,text:tt('perWeek',lw()),color:ink()}}}}});
+}
+function ports(rows){
+  const tu=new Map();rows.forEach(r=>tu.set(r.p,(tu.get(r.p)||0)+r.u));const t=[...tu].filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkChart('cPort',{type:'bar',data:{labels:t.map(e=>e[0]),datasets:[{data:t.map(e=>e[1]),backgroundColor:'#5b8a3a'}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} ${lw()}`}}},
+    scales:{x:{ticks:{color:ink()},title:{display:true,text:lw(),color:ink()}},y:{ticks:{color:ink(),font:{size:11}}}}}});
+}
+function yearCharts(){
+  const labels=[...Array(52)].map((_,i)=>i+1);
+  const rows=VOL.filter(base);
+  const yrs=[...new Set(rows.map(r=>r.y))].sort().reverse();
+  const curW=woy(META.vTo), curY=+META.vTo.slice(0,4);
+  const ds=yrs.map((y,i)=>{const a=Array(52).fill(0);rows.forEach(r=>{if(r.y===y)a[woy(r.d)-1]+=r.u});return{label:String(y),data:a.map((v,j)=>y===curY&&j+1>curW?null:v),borderColor:YCOL[i%5],backgroundColor:YCOL[i%5],borderWidth:i?1.5:3,pointRadius:0,tension:.25}});
+  const sc={x:{ticks:{color:ink(),callback:(v,i)=>(i%4===0?labels[i]:'')},title:{display:true,text:tt('wkAx'),color:ink()}},y:{ticks:{color:ink()},beginAtZero:true}};
+  mkChart('cYearVol',{type:'line',data:{labels,datasets:ds},options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{title:t=>tt('wk',t[0].label),label:c=>c.raw==null?null:`${c.dataset.label}: ${fmt(c.raw)} ${lw()}`}}},scales:sc}});
+  // price by year
+  const note=$('#yearPriceNote');
+  if(!F.prod){note.textContent=tt('pickProd');if(CH.cYearPrice){CH.cYearPrice.destroy();delete CH.cYearPrice}return}
+  const ps=PRICE.filter(p=>p.c===F.prod&&(!F.orig||p.o===F.orig)&&p.mid!=null&&p.kg);
+  if(!ps.length){note.textContent=tt('noPriceY');if(CH.cYearPrice){CH.cYearPrice.destroy();delete CH.cYearPrice}return}
+  note.textContent='';
+  const pys=[...new Set(ps.map(p=>p.y))].sort().reverse();
+  const pds=pys.map((y,i)=>{const s=Array.from({length:52},()=>[]);ps.forEach(p=>{if(p.y===y)s[woy(p.d)-1].push(p.mid/p.kg)});return{label:String(y),data:s.map(a=>a.length?avg(a):null),borderColor:YCOL[i%5],backgroundColor:YCOL[i%5],borderWidth:i?1.5:3,pointRadius:2,spanGaps:false,tension:.25}});
+  mkChart('cYearPrice',{type:'line',data:{labels,datasets:pds},options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{title:t=>tt('wk',t[0].label),label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:sc.x,y:{ticks:{color:ink(),callback:v=>'$'+Number(v).toFixed(2)},title:{display:true,text:'$ / kg',color:ink()}}}}});
+}
+function heat(){
+  const rows=VOL.filter(base);
+  const y0=+META.vFrom.slice(0,4), y1=+META.vTo.slice(0,4);
+  let full=[]; for(let y=y0;y<=y1;y++){ if(META.vFrom<=`${y}-01-07`&&META.vTo>=`${y}-12-24`) full.push(y); }
+  const use=full.length?full:[...new Set(rows.map(r=>r.y))];
+  const ny=use.length||1;
+  const m=new Map();
+  rows.forEach(r=>{if(!use.includes(r.y))return;const k=r.c+'|'+r.o;if(!m.has(k))m.set(k,Array(12).fill(0));m.get(k)[+r.d.slice(5,7)-1]+=r.u/ny});
+  const list=[...m.entries()].map(([k,a])=>({k,a,t:a.reduce((x,y)=>x+y,0)})).filter(x=>x.t>=20).sort((a,b)=>b.t-a.t).slice(0,25);
+  $('#calH').textContent=tt('calH',full.length?full.join(', '):tt('calAll'));
+  const cm=+META.vTo.slice(5,7)-1;
+  let h=`<thead><tr><th></th>${L().months.map((x,i)=>`<th class="${i===cm?'cur':''}">${x}</th>`).join('')}</tr></thead><tbody>`;
+  list.forEach(x=>{const [c,o]=x.k.split('|');const mx=Math.max(...x.a);
+    h+=`<tr><td><b>${prodName(c)}</b> · ${oName(o)}</td>${x.a.map(v=>{const al=mx?Math.max(0,v)/mx:0;return `<td style="background:rgba(var(--heat),${(al*0.85).toFixed(2)});color:${al>0.55?'#fff':'inherit'}">${v>=1?fmt(v):''}</td>`}).join('')}</tr>`});
+  if(!list.length) h+=`<tr><td colspan="13" class="muted">${tt('noData')}</td></tr>`;
+  $('#heat').innerHTML=h+'</tbody>';
+}
+function prices(){
+  const lim=addDays(META.pTo||'2000-01-01',-120);
+  const ps=PRICE.filter(p=>(!F.prod||p.c===F.prod)&&(!F.orig||p.o===F.orig)&&p.d>=lim);
+  const m=new Map(); ps.forEach(p=>{const k=[p.c,p.o,p.v,p.pkg,p.size].join('|'); if(!m.has(k)||m.get(k).d<p.d) m.set(k,p)});
+  const lastD=ps.reduce((a,b)=>a>b.d?a:b.d,'');
+  const latest=[...m.values()].sort((a,b)=>b.d.localeCompare(a.d));
+  const g=new Map(); latest.forEach(p=>{const k=[p.c,p.o,p.v,p.pkg].join('|'); if(!g.has(k)) g.set(k,{...p,sizes:[],min:Infinity,max:-Infinity}); const x=g.get(k); if(p.d!==x.d) return; x.sizes.push(p.size); const a=p.mlo??p.lo,b=p.mhi??p.hi; if(a!=null)x.min=Math.min(x.min,a); if(b!=null)x.max=Math.max(x.max,b); if(p.sup)x.sup=p.sup; if(p.dem)x.dem=p.dem; if(p.tone)x.tone=p.tone; if(p.cmt)x.cmt=p.cmt;});
+  const rows=[...g.values()].sort((a,b)=>(b.d.localeCompare(a.d))||prodName(a.c).localeCompare(prodName(b.c)));
+  let h=`<thead><tr><th>${tt('pDate')}</th><th>${tt('cProd')}</th><th>${tt('cOrig')}</th><th>${tt('pVar')}</th><th>${tt('pPkg')}</th><th>${tt('pSizes')}</th><th class="n">${tt('pBox')}</th><th class="n">${tt('pKg')}</th><th>${tt('pSup')}</th><th>${tt('pDem')}</th><th>${tt('pNote')}</th></tr></thead><tbody>`;
+  rows.forEach(x=>{
+    const old=(new Date(lastD)-new Date(x.d))/864e5>10, ok=isFinite(x.min);
+    h+=`<tr style="${old?'opacity:.55':''}"><td>${dF(x.d)}</td><td class="big">${prodName(x.c)}</td><td>${oName(x.o)}</td><td>${tc(x.v)}</td><td>${pkgLabel(x.pkg)}</td><td class="muted" style="max-width:180px">${x.sizes.filter(Boolean).join(', ')}</td><td class="n big">${ok?`$${fmt(x.min)}–${fmt(x.max)}`:`<span class="muted">${tt('noMarket')}</span>`}</td><td class="n big">${ok&&x.kg?`$${fmt(x.min/x.kg,2)}–${fmt(x.max/x.kg,2)}`:'<span class="muted">–</span>'}</td><td>${toneLabel(x.sup)}</td><td>${toneLabel(x.dem)}</td><td class="muted" style="max-width:240px;font-size:12.5px">${L().note(x.cmt||x.tone||'')}</td></tr>`;
+  });
+  if(!rows.length) h+=`<tr><td colspan="11" class="muted">${tt('noPrice')}</td></tr>`;
+  $('#prices').innerHTML=h+'</tbody>';
+}
+let H10MK='';
+$('#h10Mk').onchange=e=>{H10MK=e.target.value;h10()};
+function h10(){
+  $('#h10Hint').style.display=HALW_FULL?'none':''; if(!HALW_FULL)$('#h10Hint').innerHTML=tt('h10Hint1');
+  const kill=()=>['cH10Year','cH10Avg','cH10Long'].forEach(k=>{if(CH[k]){CH[k].destroy();delete CH[k]}});
+  let p=F.prod,o=F.orig,auto=false;
+  if(!p){auto=true;const c={};HALW.forEach(r=>{if(!US_STATES.has(r.o))c[r.c]=(c[r.c]||0)+1});p=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]}
+  if(p&&!o){auto=true;const c={};HALW.forEach(r=>{if(r.c===p&&r.o)c[r.o]=(c[r.o]||0)+1});const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]);o=ks.find(k=>!US_STATES.has(k))||ks[0]}
+  const all=(p&&o)?HALW.filter(r=>r.c===p&&r.o===o):[];
+  if(!all.length){$('#h10Ctx').innerHTML=tt('noH10');$('#h10Mk').innerHTML='';$('#h10Tbl').innerHTML='';kill();return}
+  const mc={};all.forEach(r=>mc[r.slug]=(mc[r.slug]||0)+1);const ml=Object.keys(mc).sort((a,b)=>mc[b]-mc[a]);
+  if(H10MK&&!ml.includes(H10MK))H10MK='';
+  $('#h10Mk').innerHTML=`<option value="">${tt('h10All')}</option>`+ml.map(s=>`<option value="${s}" ${s===H10MK?'selected':''}>${RAW.markets[s]||s}</option>`).join('');
+  const rows=H10MK?all.filter(r=>r.slug===H10MK):all;
+  const wm=new Map();rows.forEach(r=>{let x=wm.get(r.w);if(!x){x=[0,0];wm.set(r.w,x)}x[0]+=r.v*r.n;x[1]+=r.n});
+  const W=[...wm.entries()].map(([w,x])=>({w,y:+w.slice(0,4),v:x[0]/x[1]})).sort((a,b)=>a.w<b.w?-1:1);
+  const years=[...new Set(W.map(x=>x.y))].sort();
+  $('#h10Ctx').innerHTML=tt('h10Ctx',prodName(p),oName(o),years[0],years.at(-1),auto);
+  const curY=years.at(-1), n=years.length;
+  const col=i=>{const k=n-1-i;if(k===0)return PAL[0];if(k===1)return PAL[1];if(k===2)return PAL[2];const a=Math.max(.25,.75-(k-3)*.08);return `rgba(140,150,140,${a})`};
+  const labels=[...Array(52)].map((_,i)=>i+1);
+  const ds=years.map((y,i)=>{const s=Array.from({length:52},()=>[]);W.forEach(x=>{if(x.y===y)s[woy(x.w)-1].push(x.v)});const k=n-1-i;return{label:String(y),data:s.map(a=>a.length?avg(a):null),borderColor:col(i),backgroundColor:col(i),borderWidth:k===0?3:k<3?2:1.3,pointRadius:k===0?2:0,spanGaps:true,tension:.25,order:k}});
+  const yAx={ticks:{color:ink(),callback:v=>'$'+Number(v).toFixed(2)},title:{display:true,text:'$ / kg',color:ink()}};
+  mkChart('cH10Year',{type:'line',data:{labels,datasets:ds},options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{itemSort:(a,b)=>b.dataset.label-a.dataset.label,callbacks:{title:t=>tt('wk',t[0].label),label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:{ticks:{color:ink(),callback:(v,i)=>(i%4===0?labels[i]:'')},title:{display:true,text:tt('wkAx'),color:ink()}},y:yAx}}});
+  const st=years.map(y=>{const a=W.filter(x=>x.y===y);const lo=a.reduce((m,x)=>x.v<m.v?x:m,a[0]),hi=a.reduce((m,x)=>x.v>m.v?x:m,a[0]);return {y,avg:avg(a.map(x=>x.v)),lo,hi,n:a.length}});
+  const lastW=W.at(-1).w, part=y=>y===curY&&lastW<`${curY}-12-15`;
+  mkChart('cH10Avg',{type:'bar',data:{labels:st.map(s=>s.y+(part(s.y)?'*':'')),datasets:[{data:st.map(s=>s.avg),backgroundColor:st.map((s,i)=>part(s.y)?'rgba(91,138,58,.45)':'#5b8a3a')}]},
+    options:{maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${fmt(c.raw,2)}/kg`}}},scales:{x:{ticks:{color:ink()}},y:{...yAx,beginAtZero:true}}}});
+  const mm=new Map();W.forEach(x=>{const k=x.w.slice(0,7);(mm.get(k)||mm.set(k,[]).get(k)).push(x.v)});
+  const ms=[];{let [yy,mo]=W[0].w.slice(0,7).split('-').map(Number);const end=lastW.slice(0,7);for(;;){const k=`${yy}-${String(mo).padStart(2,'0')}`;ms.push(k);if(k>=end)break;mo++;if(mo>12){mo=1;yy++}}}
+  const mv=ms.map(k=>mm.has(k)?avg(mm.get(k)):null);
+  const ma=mv.map((_,i)=>{const a=mv.slice(Math.max(0,i-11),i+1).filter(v=>v!=null);return i>=11&&a.length>=3?avg(a):null});
+  mkChart('cH10Long',{type:'line',data:{labels:ms.map(mF),datasets:[{label:tt('h10Mo'),data:mv,borderColor:PAL[0],backgroundColor:PAL[0],borderWidth:1.6,pointRadius:1.5,spanGaps:false},{label:tt('h10Ma'),data:ma,borderColor:PAL[1],backgroundColor:PAL[1],borderWidth:2.5,pointRadius:0,spanGaps:true,tension:.3}]},
+    options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:{ticks:{color:ink(),maxRotation:60,autoSkip:true,maxTicksLimit:24}},y:yAx}}});
+  let h=`<thead><tr><th>${tt('h10Y')}</th><th class="n">${tt('h10A')}</th><th class="n">${tt('h10C')}</th><th class="n">${tt('h10Lo')}</th><th class="n">${tt('h10Hi')}</th><th class="n">${tt('h10W')}</th></tr></thead><tbody>`;
+  [...st].reverse().forEach(s=>{const i=st.indexOf(s),pv=i>0?st[i-1]:null;
+    h+=`<tr><td class="big">${s.y}${part(s.y)?` <span class="pill">${tt('h10Part')}</span>`:''}</td><td class="n big">$${fmt(s.avg,2)}</td><td class="n">${pv?chgHtml(s.avg,pv.avg):''}</td><td class="n">$${fmt(s.lo.v,2)}<div class="muted" style="font-size:12px">${dF(s.lo.w)}</div></td><td class="n">$${fmt(s.hi.v,2)}<div class="muted" style="font-size:12px">${dF(s.hi.w)}</div></td><td class="n">${s.n}</td></tr>`});
+  $('#h10Tbl').innerHTML=h+'</tbody>';
+}
+let HGRADE='';
+$('#halGrade').onchange=e=>{HGRADE=e.target.value;hal()};
+function hal(){
+  let p=F.prod, o=F.orig, auto=false;
+  if(!p){auto=true;const c={};HAL.forEach(r=>{if(!US_STATES.has(r.o))c[r.c]=(c[r.c]||0)+1});const fobC=new Set(PRICE.map(x=>x.c));p=Object.keys(c).filter(k=>fobC.has(k)).sort((a,b)=>c[b]-c[a])[0]||Object.keys(c)[0]}
+  if(!o){auto=true;const c={};HAL.forEach(r=>{if(r.c===p)c[r.o]=(c[r.o]||0)+1});const fobO=new Set(PRICE.filter(x=>x.c===p).map(x=>x.o));const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]);o=ks.find(k=>fobO.has(k))||ks[0]}
+  if(!p||!o){$('#halCtx').innerHTML=tt('noHal');['cChain'].forEach(k=>{if(CH[k]){CH[k].destroy();delete CH[k]}});$('#markup').innerHTML='';$('#halLatest').innerHTML='';$('#markupT').textContent='';return}
+  $('#halCtx').innerHTML=tt('halCtx',prodName(p),oName(o),auto);
+  const hrAll=HAL.filter(r=>r.c===p&&r.o===o);
+  const gc={}; hrAll.forEach(r=>{if(r.gr)gc[r.gr]=(gc[r.gr]||0)+1});
+  const gl=Object.keys(gc).sort((a,b)=>gc[b]-gc[a]);
+  if(HGRADE&&!gl.includes(HGRADE))HGRADE='';
+  const gName=g=>L().gradeTR[g]||g;
+  $('#halGrade').innerHTML=`<option value="">${tt('allGrade')}</option>`+gl.map(g=>`<option value="${g}" ${g===HGRADE?'selected':''}>${gName(g)} (${gc[g]})</option>`).join('');
+  const hr=HGRADE?hrAll.filter(r=>r.gr===HGRADE):hrAll;
+  const fr=PRICE.filter(r=>r.c===p&&r.o===o&&r.mid!=null&&r.kg);
+  // chain chart: last 52 weeks of hal range
+  const lo=addDays(META.hTo||META.pTo,-364);
+  const W=[...new Set(hr.filter(r=>r.d>=lo).map(r=>r.w).concat(fr.filter(r=>r.d>=lo).map(r=>r.w)))].sort();
+  const cnt={};hr.forEach(r=>cnt[r.slug]=(cnt[r.slug]||0)+1);
+  const mks=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6);
+  const wavg=(rows,w)=>{const a=rows.filter(r=>r.w===w&&r.kg).map(r=>r.mid/r.kg);return a.length?avg(a):null};
+  const ds=[{label:tt('fobLine'),data:W.map(w=>wavg(fr,w)),borderColor:'#1b2316',backgroundColor:'#1b2316',borderWidth:3,borderDash:[6,4],spanGaps:true,pointRadius:2}];
+  mks.forEach((s,i)=>{const rr=hr.filter(r=>r.slug===s);ds.push({label:RAW.markets[s]||s,data:W.map(w=>wavg(rr,w)),borderColor:PAL[i],backgroundColor:PAL[i],borderWidth:1.8,spanGaps:true,pointRadius:1.5,tension:.2})});
+  if(getComputedStyle(document.body).backgroundColor!=='rgb(245, 246, 242)'){ds[0].borderColor=ds[0].backgroundColor='#eef2ea'}
+  mkChart('cChain',{type:'line',data:{labels:W.map(dF),datasets:ds},options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:{ticks:{color:ink(),maxRotation:60}},y:{ticks:{color:ink(),callback:v=>'$'+Number(v).toFixed(2)},title:{display:true,text:'$ / kg',color:ink()}}}}});
+  // markup table
+  const hEnd=hr.reduce((a,r)=>r.d>a?r.d:a,''); const from=addDays(hEnd||META.hTo,-27);
+  $('#markupT').textContent=tt('markupT',dF(hEnd||META.hTo));
+  const fobA=avg(fr.filter(r=>r.d>=from&&r.d<=hEnd).map(r=>r.mid/r.kg));
+  const mk=[...new Set(hr.map(r=>r.slug))].map(s=>{const rr=hr.filter(r=>r.slug===s&&r.d>=from);const kgr=rr.filter(r=>r.kg);const a=avg(kgr.map(r=>r.mid/r.kg));
+    const ld=rr.reduce((x,r)=>r.d>x?r.d:x,'');const day=rr.filter(r=>r.d===ld);const pc={};day.forEach(r=>pc[r.pkg]=(pc[r.pkg]||0)+1);const pk=Object.keys(pc).sort((x,y)=>pc[y]-pc[x])[0];const dr=day.filter(r=>r.pkg===pk);
+    return {s,name:RAW.markets[s]||s,a,ld,pk,lo:dr.length?Math.min(...dr.map(r=>r.lo)):null,hi:dr.length?Math.max(...dr.map(r=>r.hi)):null}}).filter(x=>x.ld).sort((x,y)=>(y.a??-1)-(x.a??-1));
+  let h=`<thead><tr><th>${tt('mMarket')}</th><th class="n">${tt('mHal')}</th><th class="n">${tt('mFob')}</th><th class="n">${tt('mDiff')}</th><th class="n">${tt('mPct')}</th><th class="n">${tt('mLast')}</th></tr></thead><tbody>`;
+  mk.forEach(x=>{const d=x.a!=null&&fobA!=null?x.a-fobA:null;const pc=d!=null?d/fobA*100:null;
+    h+=`<tr><td class="big">${x.name}</td><td class="n big">${x.a!=null?'$'+fmt(x.a,2):`<span class="muted" title="${tt('noKg')}">–</span>`}</td><td class="n">${fobA!=null?'$'+fmt(fobA,2):'–'}</td><td class="n ${d!=null?(d>=0?'up':'down'):''}">${d!=null?(d>=0?'+':'')+'$'+fmt(d,2):'–'}</td><td class="n ${pc!=null?(pc>=0?'up':'down'):''}">${pc!=null?(pc>=0?'+':'')+tt('pct',fmt(pc)):'–'}</td><td class="n">$${fmt(x.lo)}–${fmt(x.hi)} ${tt('perBox')}<div class="muted" style="font-size:12px">${L().pkg(x.pk||'')} · ${dF(x.ld)}</div></td></tr>`});
+  if(!mk.length) h+=`<tr><td colspan="6" class="muted">${tt('noHal')}</td></tr>`;
+  $('#markup').innerHTML=h+'</tbody>';
+  // latest per market/variety/package
+  const lm=new Map(); hr.forEach(r=>{const k=[r.slug,r.v,r.pkg,r.gr].join('|');if(!lm.has(k)||lm.get(k).d<r.d)lm.set(k,r)});
+  const lat=[...lm.values()].filter(r=>!hEnd||r.d>=addDays(hEnd,-30)).sort((a,b)=>a.mk.localeCompare(b.mk)||b.d.localeCompare(a.d));
+  let g=`<thead><tr><th>${tt('mMarket')}</th><th>${tt('hDate')}</th><th>${tt('pVar')}</th><th>${tt('gCol')}</th><th>${tt('pPkg')}</th><th>${tt('pSizes')}</th><th class="n">${tt('pBox')}</th><th class="n">${tt('pKg')}</th><th>${tt('pNote')}</th></tr></thead><tbody>`;
+  lat.forEach(r=>{g+=`<tr><td class="big">${r.mk}</td><td>${dF(r.d)}</td><td>${tc(r.v)}</td><td>${r.gr?gName(r.gr):''}</td><td>${pkgLabel(r.pkg)}</td><td class="muted" style="max-width:200px">${r.sizes}</td><td class="n big">$${fmt(r.lo)}–${fmt(r.hi)}</td><td class="n big">${r.kg?`$${fmt(r.lo/r.kg,2)}–${fmt(r.hi/r.kg,2)}`:`<span class="muted" title="${tt('noKg')}">–</span>`}</td><td class="muted" style="font-size:12.5px">${L().note(tc(r.tone||''))}</td></tr>`});
+  if(!lat.length) g+=`<tr><td colspan="9" class="muted">${tt('noHal')}</td></tr>`;
+  $('#halLatest').innerHTML=g+'</tbody>';
+}
+
+// ================= census =================
+let CDIST='';
+$('#cenDist').onchange=e=>{CDIST=e.target.value;cen()};
+function cagg(rows){let val=0,kg=0,cv=0,cb=0,ck=0,cnt=0,gv=0;rows.forEach(r=>{val+=r.val;kg+=r.kg;cv+=r.cifV;cb+=r.cifB;ck+=r.cifK;cnt+=r.cv;gv+=r.gv});
+  return {kg,fob:kg>0?val/kg:null,cif:ck>0?cv/ck:null,fr:ck>0?(cv-cb)/ck:null,cnt:gv>0?cnt/gv:null}}
+function cen(){
+  let p=F.prod, auto=false;
+  if(!p){auto=true;p=CEN.some(r=>r.c==='mandarins')?'mandarins':(CEN[0]||{}).c}
+  if(!p||!CEN.length){$('#cenCtx').innerHTML=tt('noCen');$('#cenTbl').innerHTML='';return}
+  const pr=CEN.filter(r=>r.c===p);
+  // district list
+  const dk={}; pr.forEach(r=>{if(!r.tot)dk[r.dist]=(dk[r.dist]||0)+r.kg});
+  const dl=Object.keys(dk).sort((a,b)=>dk[b]-dk[a]);
+  if(CDIST&&!dl.includes(CDIST))CDIST='';
+  const dn=d=>{const m=String(d).match(/^(.*),\s*([A-Z]{2})$/);return m?`${tc(m[1])} (${m[2]})`:tc(d)};
+  $('#cenDist').innerHTML=`<option value="">${tt('allDist')}</option>`+dl.map(d=>`<option value="${d}" ${d===CDIST?'selected':''}>${dn(d)}</option>`).join('');
+  const rows=pr.filter(r=>CDIST?r.dist===CDIST:r.tot);
+  const months=[...new Set(CEN.map(r=>r.t))].sort(); const last12=months.slice(-12), ms=new Set(last12);
+  $('#cenCtx').innerHTML=tt('cenCtx',prodName(p),mF(last12[0]),mF(last12.at(-1)),auto);
+  // usda fob monthly per origin
+  const usda=(o,mset)=>{const a=PRICE.filter(x=>x.c===p&&x.o===o&&x.mid!=null&&x.kg&&mset.has(x.d.slice(0,7))).map(x=>x.mid/x.kg);return a.length?avg(a):null};
+  const by={}; rows.filter(r=>ms.has(r.t)&&(!F.orig||r.o===F.orig)).forEach(r=>(by[r.o]=by[r.o]||[]).push(r));
+  const list=Object.entries(by).map(([o,rs])=>{const a=cagg(rs);const lm=rs.reduce((x,r)=>r.kg>0&&r.t>x?r.t:x,'');const la=cagg(rs.filter(r=>r.t===lm));const ofMonths=new Set(rs.filter(r=>r.kg>0).map(r=>r.t));return {o,a,lm,la,u:usda(o,ofMonths)}})
+    .filter(x=>x.a.kg>0).sort((a,b)=>b.a.kg-a.a.kg);
+  const $k=v=>v!=null&&isFinite(v)?'$'+fmt(v,2):'<span class="muted">–</span>';
+  let h=`<thead><tr><th>${tt('ceO')}</th><th class="n">${tt('ceTon')}</th><th class="n">${tt('ceFob')}<div class="s">${tt('ceFobS')}</div></th><th class="n">${tt('ceCif')}</th><th class="n">${tt('ceFr')}</th><th class="n">${tt('ceLast')}</th><th class="n">${tt('ceUsda')}<div class="s">${tt('ceUsdaS')}</div></th><th class="n">${tt('ceCnt')}</th></tr></thead><tbody>`;
+  list.forEach(x=>{const sp=x.u!=null&&x.a.fob?(x.u-x.a.fob)/x.a.fob*100:null;
+    h+=`<tr><td class="big">${oName(x.o)}</td><td class="n">${x.a.kg/1000<20?`<span class="pill" title="${tt('tinyT')}">⚠</span> `:''}${fmt(x.a.kg/1000)}</td><td class="n big">${$k(x.a.fob)}</td><td class="n">${$k(x.a.cif)}</td><td class="n">${$k(x.a.fr)}</td><td class="n">${$k(x.la.fob)}<div class="muted" style="font-size:12px">${mF(x.lm)}</div></td><td class="n">${$k(x.u)}</td><td class="n">${x.a.cnt!=null?tt('pct',fmt(x.a.cnt*100)):'–'}</td></tr>`});
+  if(!list.length) h+=`<tr><td colspan="8" class="muted">${tt('noCen')}</td></tr>`;
+  $('#cenTbl').innerHTML=h+'</tbody>';
+  $('#cenNote').textContent=tt('cenWarn')+' '+(p==='grapes'?tt('cenGrapes')+' ':'')+tt('cenMiami');
+  // chain chart for one origin
+  const o=F.orig||(list[0]||{}).o;
+  $('#cenChainT').textContent=tt('cenChainT',o?oName(o):'–');
+  const orow=rows.filter(r=>r.o===o);
+  const mAll=months;
+  const cm=mAll.map(m=>cagg(orow.filter(r=>r.t===m)));
+  const um=mAll.map(m=>{const a=PRICE.filter(x=>x.c===p&&x.o===o&&x.mid!=null&&x.kg&&x.d.slice(0,7)===m).map(x=>x.mid/x.kg);return a.length?avg(a):null});
+  const hm=mAll.map(m=>{const a=HAL.filter(x=>x.c===p&&x.o===o&&x.kg&&x.d.slice(0,7)===m).map(x=>x.mid/x.kg);return a.length?avg(a):null});
+  const dark=getComputedStyle(document.body).backgroundColor!=='rgb(245, 246, 242)';
+  mkChart('cCenChain',{type:'line',data:{labels:mAll.map(mF),datasets:[
+    {label:tt('lCenFob'),data:cm.map(a=>a.fob),borderColor:PAL[0],backgroundColor:PAL[0],borderWidth:3,pointRadius:2,spanGaps:false},
+    {label:tt('lCenCif'),data:cm.map(a=>a.cif),borderColor:PAL[2],backgroundColor:PAL[2],borderWidth:1.5,borderDash:[4,3],pointRadius:1,spanGaps:false},
+    {label:tt('lUsdaFob'),data:um,borderColor:dark?'#eef2ea':'#1b2316',backgroundColor:dark?'#eef2ea':'#1b2316',borderWidth:2.5,pointRadius:2,spanGaps:false},
+    {label:tt('lHal'),data:hm,borderColor:PAL[1],backgroundColor:PAL[1],borderWidth:2,pointRadius:2,spanGaps:false}]},
+    options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:{ticks:{color:ink(),maxRotation:60}},y:{ticks:{color:ink(),callback:v=>'$'+Number(v).toFixed(2)},title:{display:true,text:'$ / kg',color:ink()}}}}});
+  // by origin chart
+  const tops=Object.entries(rows.reduce((m,r)=>{m[r.o]=(m[r.o]||0)+r.kg;return m},{})).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
+  const sel=F.orig&&!tops.includes(F.orig)?[F.orig,...tops.slice(0,5)]:tops;
+  mkChart('cCenOrig',{type:'line',data:{labels:mAll.map(mF),datasets:sel.map((oo,i)=>({label:oName(oo),data:mAll.map(m=>cagg(rows.filter(r=>r.o===oo&&r.t===m)).fob),borderColor:PAL[i],backgroundColor:PAL[i],borderWidth:oo===F.orig?3:1.8,pointRadius:1.5,spanGaps:false}))},
+    options:{maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:ink(),boxWidth:12}},tooltip:{callbacks:{label:c=>c.raw==null?null:`${c.dataset.label}: $${fmt(c.raw,2)}/kg`}}},
+    scales:{x:{ticks:{color:ink(),maxRotation:60}},y:{ticks:{color:ink(),callback:v=>'$'+Number(v).toFixed(2)},title:{display:true,text:'$ / kg',color:ink()}}}}});
+}
+
+// ================= calculator =================
+const CK=['cSale','cKg','cBoxes','cFob','cFreight','cPortFee','cInsp','cInland','cOther','cDuty','cMargin'];
+let CSTORE={}; try{CSTORE=JSON.parse(localStorage.getItem('sf_calc')||'{}')}catch(e){}
+let COPTS=[], calcInit=false;
+function calcOptions(){
+  const fp=r=>(!F.prod||r.c===F.prod)&&(!F.orig||r.o===F.orig);
+  const out=[{k:'manual',src:'man'}];
+  const grp=(rows,keyf,lim)=>{const m=new Map();rows.forEach(r=>{if(r.mid==null||r.d<lim||!fp(r))return;const k=keyf(r);const g=m.get(k);if(!g||g.d<r.d)m.set(k,{d:r.d,rows:[r]});else if(g.d===r.d)g.rows.push(r)});return m};
+  const fob=[...grp(PRICE,p=>[p.c,p.o,p.v,p.pkg].join('|'),addDays(META.pTo||'2000-01-01',-120))].map(([k,g])=>{const p=g.rows[0];const lo=Math.min(...g.rows.map(q=>q.mlo??q.lo)),hi=Math.max(...g.rows.map(q=>q.mhi??q.hi));return {k:'fob|'+k,src:'fob',c:p.c,o:p.o,v:p.v,pkg:p.pkg,kg:p.kg,d:g.d,lo,hi,mid:(lo+hi)/2}});
+  const hal=[...grp(HAL.filter(r=>!US_STATES.has(r.o)),r=>[r.c,r.o,r.v,r.pkg,r.slug].join('|'),addDays(META.hTo||'2000-01-01',-45))].map(([k,g])=>{const r=g.rows[0];return {k:'hal|'+k,src:'hal',mk:r.mk,c:r.c,o:r.o,v:r.v,pkg:r.pkg,kg:r.kg,d:g.d,lo:Math.min(...g.rows.map(q=>q.lo)),hi:Math.max(...g.rows.map(q=>q.hi)),mid:avg(g.rows.map(q=>q.mid))}});
+  const srt=(a,b)=>prodName(a.c).localeCompare(prodName(b.c),loc())||ctry(a.o).localeCompare(ctry(b.o),loc())||b.d.localeCompare(a.d);
+  return out.concat(fob.sort(srt),hal.sort(srt));
+}
+function optLabel(o){
+  if(o.src==='man') return tt('optMan');
+  return `${prodName(o.c)} – ${ctry(o.o)}${o.v?' – '+tc(o.v):''} · ${o.kg?fmt(o.kg,1)+' kg':tt('kgQ')}${o.src==='hal'?' · '+o.mk:''} · ${dF(o.d)}`;
+}
+function setupCalc(){
+  const keep=COPTS[+$('#cSel').value]?.k;
+  COPTS=calcOptions();
+  const grp=(src,lab)=>{const items=COPTS.map((o,i)=>[o,i]).filter(([o])=>o.src===src);return items.length?`<optgroup label="${lab}">${items.map(([o,i])=>`<option value="${i}">${optLabel(o)}</option>`).join('')}</optgroup>`:''};
+  $('#cSel').innerHTML=`<option value="0">${tt('optMan')}</option>`+grp('fob',tt('grpFob'))+grp('hal',tt('grpHal'));
+  if(!calcInit){
+    calcInit=true;
+    const saved=COPTS.findIndex(o=>o.k===CSTORE._k); $('#cSel').value=saved>=0?saved:(COPTS.length>1?1:0);
+    CK.forEach(id=>{ if(CSTORE[id]!=null&&CSTORE[id]!=='') $('#'+id).value=CSTORE[id]; });
+    if(saved<0) applyOpt();
+    $('#cSel').onchange=()=>{applyOpt();calc()};
+    CK.forEach(id=>$('#'+id).oninput=calc);
+  } else { const i=COPTS.findIndex(o=>o.k===keep); if(i>=0)$('#cSel').value=i; else if(keep&&keep!=='manual'&&COPTS.length>1){$('#cSel').value=1;applyOpt()} else $('#cSel').value=0; }
+  calc();
+}
+$('#cClear').onclick=()=>{['cBoxes','cFob','cFreight','cPortFee','cInsp','cInland','cOther','cDuty','cMargin'].forEach(id=>$('#'+id).value='');applyOpt();calc()};
+function applyOpt(){const o=COPTS[+$('#cSel').value]; if(!o||o.src==='man') return; $('#cSale').value=o.mid.toFixed(2); $('#cKg').value=o.kg?o.kg.toFixed(2):'';}
+const val=id=>{const v=parseFloat($('#'+id).value);return isNaN(v)?null:v};
+function calc(){
+  const o=COPTS[+$('#cSel').value];
+  try{const s={_k:o&&o.k};CK.forEach(id=>s[id]=$('#'+id).value);localStorage.setItem('sf_calc',JSON.stringify(s))}catch(e){}
+  $('#cMktNote').textContent=!o?'':o.src==='man'?tt('mktMan'):o.src==='hal'?tt('mktHal',o.mk,dF(o.d),fmt(o.lo),fmt(o.hi)):tt('mktNote',dF(o.d),fmt(o.lo),fmt(o.hi));
+  const sale=val('cSale'),kg=val('cKg'),boxes=val('cBoxes'),fob=val('cFob'),duty=(val('cDuty')||0)/100,margin=(val('cMargin')||0)/100;
+  const cont=['cFreight','cPortFee','cInsp','cInland','cOther'].reduce((s,id)=>s+(val(id)||0),0);
+  const warn=[]; if(!boxes) warn.push(tt('wBoxes')); if(fob==null) warn.push(tt('wFob')); if(!$('#cDuty').value) warn.push(tt('wDuty'));
+  const perBox=boxes?cont/boxes:null, dutyBox=fob!=null?fob*duty:null;
+  const landed=(fob!=null&&perBox!=null)?fob+dutyBox+perBox:null;
+  const profit=(landed!=null&&sale!=null)?sale-landed:null;
+  const pk=v=>v!=null&&kg?`$${fmt(v/kg,2)}`:'–', pb=v=>v!=null?`$${fmt(v,2)}`:'–', pc=v=>v!=null&&boxes?'$'+fmt(v*boxes):'–';
+  const cls=profit==null?'':profit>=0?'up':'down';
+  let h=`<thead><tr><th></th><th class="n">${tt('rBox')}</th><th class="n">${tt('rKg')}</th><th class="n">${tt('rCont')}</th></tr></thead><tbody>`;
+  [['rFob',fob],['rDuty',dutyBox],['rCost',perBox]].forEach(([l,v])=>h+=`<tr><td>${tt(l)}</td><td class="n">${pb(v)}</td><td class="n">${pk(v)}</td><td class="n">${pc(v)}</td></tr>`);
+  h+=`<tr class="tot"><td>${tt('rLanded')}</td><td class="n">${pb(landed)}</td><td class="n">${pk(landed)}</td><td class="n">${pc(landed)}</td></tr>`;
+  h+=`<tr><td>${tt('rSale')}</td><td class="n">${pb(sale)}</td><td class="n">${pk(sale)}</td><td class="n">${pc(sale)}</td></tr>`;
+  h+=`<tr class="tot"><td>${tt('rProfit')}</td><td class="n ${cls}">${pb(profit)}</td><td class="n ${cls}">${pk(profit)}</td><td class="n ${cls}">${pc(profit)}</td></tr>`;
+  h+=`<tr><td>${tt('rMargin')}</td><td class="n ${cls}" colspan="3">${profit!=null&&sale?tt('pct',fmt(profit/sale*100,1)):'–'}</td></tr>`;
+  $('#cRes').innerHTML=h+'</tbody>';
+  if(sale!=null&&perBox!=null){
+    const mx=(sale*(1-margin)-perBox)/(1+duty);
+    $('#cMax').textContent=mx>0?tt('maxV',fmt(mx,2)):tt('maxNo');
+    $('#cMaxKg').textContent=mx>0&&kg?tt('maxKg',fmt(mx/kg,2),fmt(margin*100,1),fmt(sale,2)):'';
+  } else {$('#cMax').textContent='–';$('#cMaxKg').textContent=tt('maxWait')}
+  $('#cWarn').innerHTML=warn.map(w=>'• '+w).join('<br>');
+}
+
+// ================= upload + persistent save =================
+let ART=null; const SERVER_MODE=true; $('#upBtn').style.display='none';
+$('#upBtn').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const fs=[...e.target.files];e.target.value='';ingest(fs)};
+document.addEventListener('dragover',e=>{e.preventDefault();document.body.classList.add('drop-over')});
+document.addEventListener('dragleave',e=>{if(e.target===document.documentElement||e.clientX===0)document.body.classList.remove('drop-over')});
+document.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('drop-over');if(e.dataTransfer.files.length)ingest([...e.dataTransfer.files])});
+const isoUS=s=>{const m=String(s||'').match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[1]}-${m[2]}`:''};
+const num=v=>{if(v==null||v==='')return null;const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?null:n};
+const na=v=>{v=String(v??'').trim();return v==='N/A'?'':v};
+function convVol(rows){
+  return rows.filter(x=>String(x['import/Export']||'').startsWith('I')&&KEEP.has(x.commodity)&&!String(x.asw_Flag||'').includes('Week Ending')&&!/dried|frozen/i.test(x.properties||''))
+    .map(x=>{const rb=isoUS(x.report_begin_date);return [isoUS(x.asw_date)||rb,rb,String(x.slug_id||''),x.commodity,x.origin||'',x.district||'',x.trans_Mode||'',num(x['1 lb units'])||0]}).filter(r=>r[0]&&r[1]);
+}
+function convPrice(rows){
+  return rows.filter(x=>KEEP.has(x.commodity)).map(x=>[isoUS(x.report_date),String(x.slug_id||''),x.commodity,x.district||'',na(x.var),na(x.pkg),na(x.item_size),num(x.low_price),num(x.high_price),num(x.mostly_low_price),num(x.mostly_high_price),x.supply_tone_comments||'',x.demand_tone_comments||'',x.market_tone_comments||'',x.rep_cmt||'']).filter(r=>r[0]);
+}
+function convHal(rows,markets){
+  const agg=new Map();
+  rows.forEach(x=>{
+    if(!KEEP.has(x.commodity)||x.organic==='Y')return;
+    const lo=num(x.low_price),hi=num(x.high_price),ml=num(x.mostly_low_price),mh=num(x.mostly_high_price);
+    const a=ml??lo,b=mh??hi; if(a==null||b==null)return;
+    const slug=String(x.slug_id||''); markets[slug]=String(x.market_location_name||slug).replace(' Terminal Market','').trim();
+    const k=[isoUS(x.report_date),slug,x.commodity,na(x.origin),na(x.variety),na(x.package),na(x.grade)].join('\u0001');
+    let g=agg.get(k); if(!g){g={sizes:[],lo:lo??a,hi:hi??b,s:0,n:0,tone:''};agg.set(k,g)}
+    const sz=na(x.item_size); if(sz&&!g.sizes.includes(sz))g.sizes.push(sz);
+    g.lo=Math.min(g.lo,lo??a); g.hi=Math.max(g.hi,hi??b); g.s+=(a+b)/2; g.n++; if(!g.tone&&x.market_tone_comments)g.tone=x.market_tone_comments;
+  });
+  return [...agg.entries()].map(([k,g])=>{const p=k.split('\u0001');return [p[0],p[1],p[2],p[3],p[4],p[5],g.sizes.join(', '),g.lo,g.hi,Math.round(g.s/g.n*1000)/1000,g.tone,p[6]||'']}).filter(r=>r[0]);
+}
+function mergeRows(old,neu,slugI,keyI){
+  const rng={}; neu.forEach(r=>{const s=r[slugI],k=r[keyI];const g=rng[s]||(rng[s]=[k,k]);if(k<g[0])g[0]=k;if(k>g[1])g[1]=k});
+  const kept=old.filter(r=>{const g=rng[r[slugI]];return !(g&&r[keyI]>=g[0]&&r[keyI]<=g[1])});
+  return kept.concat(neu).sort((a,b)=>a[keyI]<b[keyI]?-1:a[keyI]>b[keyI]?1:0);
+}
+async function ingest(files){
+  if(SERVER_MODE) return;
+  const D={meta:{...RAW.meta},markets:{...RAW.markets},vol:RAW.vol,price:RAW.price,hal:RAW.hal,cen:RAW.cen||[],halw:RAW.halw||[]};
+  const kinds=[]; let changed=false;
+  $('#busyT').textContent=tt('busyT');$('#busyS').textContent=tt('busyS');$('#busy').classList.add('on');
+  await new Promise(r=>setTimeout(r,30));
+  try{
+    for(const f of files){
+      const rows=Papa.parse(await f.text(),{header:true,skipEmptyLines:true}).data; if(!rows.length) continue;
+      const h=Object.keys(rows[0]);
+      if(h.includes('usd_kg')&&h.includes('hafta')){
+        const nw=rows.filter(x=>x.hafta&&KEEP.has(x.commodity)&&num(x.usd_kg)!=null).map(x=>{const s=String(x.slug_id||'');if(x.market&&!D.markets[s])D.markets[s]=x.market;return [x.hafta,s,x.commodity,na(x.origin),+x.n||1,num(x.usd_kg)]});
+        D.halw=mergeRows(D.halw,nw,1,0); kinds.push(tt('kindW')+` (${fmt(nw.length)})`); changed=true;
+      } else if(h.includes('GEN_VAL_MO')){
+        const nc=rows.filter(x=>x.time&&x.I_COMMODITY).map(x=>[x.time,x.CTY_NAME||'',x.I_COMMODITY,x.DIST_NAME||'',num(x.GEN_VAL_MO)||0,num(x.GEN_CIF_MO)||0,num(x.GEN_QY1_MO)||0,x.UNIT_QY1||'',num(x.CNT_VAL_MO)||0,num(x.CNT_WGT_MO)||0,num(x.VES_VAL_MO)||0,num(x.VES_WGT_MO)||0]);
+        const ts=nc.map(r=>r[0]).sort(); const a=ts[0],b=ts.at(-1);
+        D.cen=D.cen.filter(r=>!(r[0]>=a&&r[0]<=b)).concat(nc).sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0); kinds.push(tt('kindC')+` (${fmt(nc.length)})`); changed=true;
+      } else if(h.includes('1 lb units')){
+        const nv=convVol(rows); const pub=rows.map(x=>isoUS(x.report_date)).filter(Boolean).sort().at(-1);
+        if(pub&&(!D.meta.vPub||pub>D.meta.vPub))D.meta.vPub=pub;
+        D.vol=mergeRows(D.vol,nv,2,1); kinds.push(tt('kindV')+` (${fmt(nv.length)})`); changed=true;
+      } else if(h.includes('low_price')&&(h.includes('basis_of_sale')||String(rows[0].market_type||'')==='Shipping Point')){
+        const np=convPrice(rows); D.price=mergeRows(D.price,np,1,0); kinds.push(tt('kindP')+` (${fmt(np.length)})`); changed=true;
+      } else if(h.includes('low_price')&&(String(rows[0].market_type||'')==='Terminal'||h.includes('offerings_comments'))){
+        const nh=convHal(rows,D.markets); D.hal=mergeRows(D.hal,nh,1,0); kinds.push(tt('kindH')+` (${fmt(nh.length)})`); changed=true;
+      } else toast(tt('tBad',f.name));
+    }
+  }catch(e){ $('#busy').classList.remove('on'); toast(tt('tErr',e.message||e)); return; }
+  if(!changed){ $('#busy').classList.remove('on'); return; }
+  RAW=D; load(); setLang(LANG);
+  toast(tt('tAdded',kinds.join(', ')));
+  // persist for everyone
+  let saved=false;
+  if(ART){
+    const html=buildHtml(D);
+    if(html.length>15.5*1024*1024){ toast(tt('tBig'),6000); }
+    else{
+      try{ await ART.publish(html); saved=true; toast(tt('tSaved'),6000); }
+      catch(e){ const c=String(e&&(e.code||e.name||e.message)||e); if(/conflict/i.test(c)) toast(tt('tConflict'),6000); else if(/not_granted|not_writer/i.test(c)) toast(tt('tLocal'),6000); else toast(tt('tErr',c),6000); }
+    }
+  } else toast(tt('tLocal'),6000);
+  $('#busy').classList.remove('on');
+}
+
+const DATA_URL=window.SF_DATA_URL||'/api/market-data';
+(function(){
+  $('#busyT').textContent=LANG==='tr'?'Veriler yükleniyor…':'Loading data…'; $('#busyS').textContent=''; $('#busy').classList.add('on');
+  fetch(DATA_URL,{credentials:'same-origin',headers:{Authorization:'Bearer '+(function(){try{return window.parent.localStorage.getItem('citrus_token')||localStorage.getItem('citrus_token')||''}catch(e){return ''}})()}}).then(r=>{if(r.status===401){try{window.top.location.href='/login'}catch(e){location.href='/login'};throw new Error('login')}if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .then(E=>{RAW=decode(E);RAW.halw=RAW.halw||[];load();setLang(LANG);$('#busy').classList.remove('on');
+      if(E.meta&&E.meta.updatedAt){const s=document.createElement('span');s.textContent=(LANG==='tr'?' · Son otomatik güncelleme: ':' · Last automatic update: ')+new Date(E.meta.updatedAt).toLocaleString(LANG==='tr'?'tr-TR':'en-US');$('#dataInfo').appendChild(s)}})
+    .catch(e=>{if(e.message==='login')return;$('#busyT').textContent=(LANG==='tr'?'Veri yüklenemedi: ':'Could not load data: ')+e.message;$('#busyS').textContent=''});
+  const wm=document.createElement('div');wm.className='wm';wm.textContent=(window.SF_USER_EMAIL?window.SF_USER_EMAIL+' · ':'')+'© Sweet Fresh — '+(LANG==='tr'?'yalnızca dahili kullanım':'internal use only');document.body.appendChild(wm);
+})();
+</script>
+</body>
+</html>

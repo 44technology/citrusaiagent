@@ -20,6 +20,9 @@ import carrierRoutes from './routes/carriers.js';
 import aosRoutes from './routes/aos.js';
 import productRoutes from './routes/products.js';
 import orderRequestRoutes from './routes/orderRequests.js';
+import marketDataRoutes from './routes/marketData.js';
+import { restrictMarketRole } from './middleware/marketRole.js';
+import { startMarketDataScheduler } from './services/marketData.js';
 import publicOrderRequestRoutes from './routes/publicOrderRequests.js';
 
 const app = express();
@@ -48,6 +51,7 @@ app.use('/api/public/order-requests', publicOrderRequestRoutes);
 
 // Auth middleware for all other /api routes
 app.use('/api', authMiddleware);
+app.use('/api', restrictMarketRole);
 
 // Protected routes
 app.use('/api/contacts', contactRoutes);
@@ -67,7 +71,9 @@ app.use('/api/carriers', carrierRoutes);
 app.use('/api/aos', aosRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/order-requests', orderRequestRoutes);
+app.use('/api/market-data', marketDataRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🍊 Citrus AI Caller server running on port ${PORT}`);
+  startMarketDataScheduler();
 });

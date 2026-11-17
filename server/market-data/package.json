@@ -1,0 +1,12 @@
+{
+  "name": "sweetfresh-market-data",
+  "version": "1.0.0",
+  "private": true,
+  "description": "US citrus & grape import dashboard: USDA + Census data updater and dashboard page",
+  "main": "update.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "update": "node update.js",
+    "update:census": "node update.js --census"
+  }
+}

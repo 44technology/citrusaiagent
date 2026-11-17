@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, BarChart3, Settings, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List, Anchor, Truck, Citrus, ClipboardList } from 'lucide-react';
+import { Users, BarChart3, Settings, CheckCircle2, LogOut, ShoppingBag, Receipt, FolderOpen, Leaf, Navigation, Mail, ChevronDown, List, Anchor, Truck, Citrus, ClipboardList, TrendingUp } from 'lucide-react';
 import '../index.css';
 
 const COMPANIES = [
@@ -25,6 +25,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany, 
     { id: 'outreach',   label: 'Outreach',   icon: Mail },
     { id: 'documents',  label: 'Documents',  icon: FolderOpen },
     { id: 'analytics',  label: 'P&L',        icon: BarChart3 },
+    { id: 'market',     label: 'Market Data', icon: TrendingUp },
     { id: 'settings',   label: 'Settings',   icon: Settings },
   ];
 
@@ -137,7 +138,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany, 
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.map((item) => {
+        {menuItems.filter(item => userRole !== 'market' || item.id === 'market').map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const color = activeCompany.color;
