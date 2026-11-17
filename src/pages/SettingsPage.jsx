@@ -16,7 +16,9 @@ const ROLES = [
   { value: 'grower support', label: 'Grower Support', color: '#4ade80' },
   { value: 'accounting',     label: 'Accounting',     color: '#facc15' },
   { value: 'customer',       label: 'Customer',       color: '#94a3b8' },
-  { value: 'market',         label: 'Market Data Only', color: '#22c55e' },
+  { value: 'market',         label: 'Market Data (all)',     color: '#22c55e' },
+  { value: 'market grapes',  label: 'Market Data (grapes)',  color: '#a855f7' },
+  { value: 'market citrus',  label: 'Market Data (citrus)',  color: '#f59e0b' },
 ];
 
 // ─── Permission matrix ────────────────────────────────────────────────────────
@@ -43,6 +45,8 @@ const DEFAULT_PERMS = {
   'accounting':     { dashboard: true,  contacts: false, shipments: false, orders: true,  accounting: true,  outreach: false, documents: true,  market: true, settings: false },
   'customer':       { dashboard: false, contacts: false, shipments: true,  orders: false, accounting: false, outreach: false, documents: false, market: true, settings: false },
   'market':         { dashboard: false, contacts: false, shipments: false, orders: false, accounting: false, outreach: false, documents: false, market: true,  settings: false },
+  'market grapes':  { dashboard: false, contacts: false, shipments: false, orders: false, accounting: false, outreach: false, documents: false, market: true,  settings: false },
+  'market citrus':  { dashboard: false, contacts: false, shipments: false, orders: false, accounting: false, outreach: false, documents: false, market: true,  settings: false },
 };
 
 const RoleBadge = ({ role }) => {

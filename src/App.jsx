@@ -50,7 +50,8 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
   // 'market' accounts only get the Market Data page (the server enforces this too)
   let role = '';
   try { role = JSON.parse(localStorage.getItem('citrus_user') || '{}').role || ''; } catch { /* ignore */ }
-  if (role === 'market' && activeTab !== 'market') return <Navigate to="/market" replace />;
+  const isMarketRole = role === 'market' || role.startsWith('market ');
+  if (isMarketRole && activeTab !== 'market') return <Navigate to="/market" replace />;
 
   return (
     <>
@@ -68,7 +69,7 @@ function AppInner({ isAuthenticated, selectedCompany, handleLogout, handleSwitch
           onCloseMobile={() => setMobileNavOpen(false)}
         />
         <main className="main-content">
-          {role === 'market' ? (
+          {isMarketRole ? (
             // Market-only accounts: no campaign/search header, just the phone menu button (it holds Sign out)
             <header className="header glass-panel">
               <div className="header-left">

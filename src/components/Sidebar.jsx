@@ -138,7 +138,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, company, onSwitchCompany, 
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.filter(item => userRole !== 'market' || item.id === 'market').map((item) => {
+        {menuItems.filter(item => !(userRole === 'market' || String(userRole).startsWith('market ')) || item.id === 'market').map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           const color = activeCompany.color;

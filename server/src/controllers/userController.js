@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 export const ROLES = [
-  'super admin', 'admin', 'sales', 'logistics', 'operation', 'grower support', 'accounting', 'customer', 'market'
+  'super admin', 'admin', 'sales', 'logistics', 'operation', 'grower support', 'accounting', 'customer', 'market', 'market grapes', 'market citrus'
 ];
 
 export const createUser = async (req, res) => {

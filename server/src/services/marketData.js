@@ -1,6 +1,7 @@
 import { createRequire } from 'module';
 import path from 'path';
 import fs from 'fs';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 
 // Market Data module (server/market-data) is plain CommonJS with its own
@@ -11,6 +12,21 @@ const paths = require('../../market-data/lib/paths.js');
 
 export const DASHBOARD_FILE = path.join(__dirname, '../../market-data/public/dashboard.html');
 export const getDataFile = () => paths.ensureDataFile();
+
+// Product-restricted copies (grapes-only / citrus-only), cached until the data file changes.
+const { filterGroup } = require('../../market-data/lib/filter.js');
+const scopedCache = new Map();
+export function getScopedData(group) {
+  const file = getDataFile();
+  const st = fs.statSync(file);
+  const key = `${st.size}-${Math.round(st.mtimeMs)}`;
+  const hit = scopedCache.get(group);
+  if (hit && hit.key === key) return hit;
+  const json = Buffer.from(JSON.stringify(filterGroup(JSON.parse(fs.readFileSync(file, 'utf8')), group)));
+  const entry = { key, etag: `"${group}-${key}"`, json, gz: zlib.gzipSync(json) };
+  scopedCache.set(group, entry);
+  return entry;
+}
 
 // Date parts as seen on a New York wall clock.
 const etParts = () => Object.fromEntries(
