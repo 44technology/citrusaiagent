@@ -6,52 +6,7 @@ import bcrypt from 'bcryptjs';
 const router = Router();
 const prisma = new PrismaClient();
 
-// POST /api/auth/signup
-router.post('/signup', async (req, res) => {
-  try {
-    const { username, password, contactId } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    const existing = await prisma.user.findUnique({ where: { username } });
-    if (existing) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // If contactId is provided, we assign the 'customer' role
-    const role = contactId ? 'customer' : 'user';
-
-    const user = await prisma.user.create({
-      data: { 
-        username, 
-        password: hashedPassword,
-        role,
-        contactId: contactId || null
-      }
-    });
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role, contactId: user.contactId },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({ 
-      success: true, 
-      token, 
-      username: user.username, 
-      role: user.role, 
-      contactId: user.contactId 
-    });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Failed to create account' });
-  }
-});
+// No public signup: accounts are created by an admin (POST /api/users, Settings page).
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
