@@ -226,6 +226,7 @@ code{background:var(--card);border:1px solid var(--line);border-radius:6px;paddi
     <a href="#s-years" data-i="nYears"></a>
     <a href="#s-cal" data-i="nCal"></a>
     <a href="#s-fob" data-i="nFob"></a>
+    <a href="#s-dom" data-i="nDom"></a>
     <a href="#s-hal" data-i="nHal"></a>
     <a href="#s-hal10" data-i="nH10"></a>
     <a href="#s-cen" data-i="nCen"></a>
@@ -284,6 +285,12 @@ code{background:var(--card);border:1px solid var(--line);border-radius:6px;paddi
     <h2 data-i="priceT"></h2>
     <p class="hint" data-i="priceH"></p>
     <div class="tw"><table id="prices"></table></div>
+  </div>
+
+  <div class="card" id="s-dom">
+    <h2 data-i="domT"></h2>
+    <p class="hint" data-i="domH"></p>
+    <div class="tw"><table id="domPrices"></table></div>
   </div>
 
   <div class="card" id="s-hal">
@@ -385,7 +392,7 @@ tr:{
  h10Hint1:'Şu an yalnızca panodaki günlük hal verisi (yaklaşık son 1 yıl) gösteriliyor. Son 10 yılın geçmişi sunucuda bir kez <code>node hal-history.js</code> çalıştırılınca eklenir.',
  h10Note:'Haftalık değer = o hafta hallerde raporlanan fiyatların ortalaması (tüm çeşit, boy ve kaliteler; organik hariç; yalnızca ağırlığı yazan ambalajlar). Fiyatlar nominal dolardır, enflasyona göre düzeltilmemiştir. İçinde bulunulan yıl henüz bitmediği için yıllık ortalaması diğer yıllarla birebir karşılaştırılamaz.', noH10:'Bu ürün/menşe için hal fiyatı yok.', kindW:'hal geçmişi',
  filtersBtn:'⚙ Filtreler', fClose:'Sonuçları göster', filtersT:'Filtreler', resetF:'Sıfırla', nKpi:'📊 Özet', nFlows:'🚢 Akışlar', nWeek:'📈 Haftalık & limanlar', nYears:'📅 Yıllara göre', nCal:'🗓️ Sezon takvimi', nFob:'💵 FOB fiyatları', nHal:'🏪 Hal fiyatları', nCen:'🧾 Alış & navlun', nCalc:'💰 Kârlılık hesabı', fProd:'Ürün', allProd:'Tüm narenciye + üzüm', fOrig:'Menşe', allOrig:'Tüm ülkeler', fMode:'Nasıl geliyor?', mBoat:'🚢 Gemi (konteyner)', mTruck:'🚚 Kamyon', mAir:'✈️ Uçak', mAll:'Hepsi',
- fPer:'Dönem', yTblT:'Yıl yıl özet (tüm yıllar)', yTblH:'Seçili ürün, menşe, taşıma ve liman filtreleriyle her yılın toplam gelişi. "Yılbaşından bugüne" sütunları yılları adil kıyaslamak için her yılın aynı gününe kadar olan kısmı gösterir. FOB fiyatı için bir ürün seçin.', yY:'Yıl', yTot:'Yıllık toplam', yVs:'Önceki yıla göre', yYtd:'Yılbaşından bugüne', yFob:'Ort. FOB $/kg', yPart:'devam ediyor', pcustom:'Özel tarih aralığı', fFrom:'Başlangıç', fTo:'Bitiş', p7:'Son 1 hafta', p14:'Son 2 hafta', p28:'Son 4 hafta', p84:'Son 12 hafta', pytd:'Bu yıl', p365:'Son 12 ay', p0:'Tüm veri', fPort:'Liman / giriş noktası', allPorts:'Tüm limanlar',
+ fPer:'Dönem', nDom:'🇺🇸 Yurt içi fiyat', cReg:'Bölge', noDom:'Bu filtrelerle yurt içi fiyat yok (bu raporlar Kaliforniya/Arizona çıkış fiyatlarını içerir; ürün filtresi geçerli, menşe filtresi geçerli değildir).', domT:'Yurt içi çıkış fiyatları (ithal DEĞİL)', domH:'Kaliforniya ve Arizona üretim bölgelerinde çıkış noktası (shipping point) fiyatları, USDA Fresno ve Phoenix raporları. Bunlar ABD içinde üretilen ürünün fiyatıdır; ithal FOB fiyatlarına ve yukarıdaki ortalamalara dahil edilmez. Rekabeti görmek için karşılaştırma amaçlıdır. Menşe filtresi bu tabloyu etkilemez.', yTblT:'Yıl yıl özet (tüm yıllar)', yTblH:'Seçili ürün, menşe, taşıma ve liman filtreleriyle her yılın toplam gelişi. "Yılbaşından bugüne" sütunları yılları adil kıyaslamak için her yılın aynı gününe kadar olan kısmı gösterir. FOB fiyatı için bir ürün seçin.', yY:'Yıl', yTot:'Yıllık toplam', yVs:'Önceki yıla göre', yYtd:'Yılbaşından bugüne', yFob:'Ort. FOB $/kg', yPart:'devam ediyor', pcustom:'Özel tarih aralığı', fFrom:'Başlangıç', fTo:'Bitiş', p7:'Son 1 hafta', p14:'Son 2 hafta', p28:'Son 4 hafta', p84:'Son 12 hafta', pytd:'Bu yıl', p365:'Son 12 ay', p0:'Tüm veri', fPort:'Liman / giriş noktası', allPorts:'Tüm limanlar',
  range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> ${a} – ${b} arasında ABD'ye <b>giriş yapan</b> mallar (${n} gün).${pa?` Karşılaştırma: geçen yıl aynı dönem (${pa} – ${pb}).`:''} USDA bir günün verisini ertesi iş günü yayınlar.`,
  tonU:'ton', k1:'Toplam miktar', k1s:w=>`metrik ton (USDA)`, k2:'En çok gelen ürün', k2s:'', k3:'En çok gelen ülke', k3s:(p,n,w)=>`toplamın %${p}'i · ${n} ${w}`, k4:'En yoğun liman', k4s:p=>`toplamın %${p}'i`,
  yoy:(prev,chg)=>`Geçen yıl aynı dönem: ${prev} · ${chg}`, pct:v=>`%${v}`,
@@ -443,7 +450,7 @@ en:{
  h10Hint1:'Only the daily terminal data already in the dashboard (about the last year) is shown. The last 10 years are added once <code>node hal-history.js</code> has been run on the server.',
  h10Note:'Weekly value = average of the prices reported at terminal markets that week (all varieties, sizes and grades; organic excluded; only packages that state a weight). Prices are nominal dollars, not adjusted for inflation. The current year is not finished, so its annual average is not directly comparable.', noH10:'No terminal prices for this product/origin.', kindW:'terminal history',
  filtersBtn:'⚙ Filters', fClose:'Show results', filtersT:'Filters', resetF:'Reset', nKpi:'📊 Summary', nFlows:'🚢 Trade flows', nWeek:'📈 Weekly & ports', nYears:'📅 Year over year', nCal:'🗓️ Season calendar', nFob:'💵 FOB prices', nHal:'🏪 Terminal prices', nCen:'🧾 Purchase & freight', nCalc:'💰 Profitability', fProd:'Product', allProd:'All citrus + grapes', fOrig:'Origin', allOrig:'All countries', fMode:'How it arrives', mBoat:'🚢 Ocean (containers)', mTruck:'🚚 Truck', mAir:'✈️ Air', mAll:'All',
- fPer:'Period', yTblT:'Year-by-year summary (all years)', yTblH:'Total arrivals per year with the selected product, origin, transport and port filters. The "year to date" columns compare every year up to the same calendar day, so years are comparable. Select a product for the FOB price.', yY:'Year', yTot:'Full-year total', yVs:'vs previous year', yYtd:'Year to date', yFob:'Avg FOB $/kg', yPart:'in progress', pcustom:'Custom date range', fFrom:'Begin date', fTo:'End date', p7:'Last week', p14:'Last 2 weeks', p28:'Last 4 weeks', p84:'Last 12 weeks', pytd:'Year to date', p365:'Last 12 months', p0:'All data', fPort:'Port of entry', allPorts:'All ports',
+ fPer:'Period', nDom:'🇺🇸 Domestic prices', cReg:'Region', noDom:'No domestic prices for these filters (these reports cover California/Arizona shipping point prices; the product filter applies, the origin filter does not).', domT:'Domestic shipping point prices (NOT imports)', domH:'Shipping point prices in the California and Arizona growing regions, from the USDA Fresno and Phoenix reports. These are US-grown product prices; they are not included in the import FOB prices or averages above. For comparison with competition only. The origin filter does not affect this table.', yTblT:'Year-by-year summary (all years)', yTblH:'Total arrivals per year with the selected product, origin, transport and port filters. The "year to date" columns compare every year up to the same calendar day, so years are comparable. Select a product for the FOB price.', yY:'Year', yTot:'Full-year total', yVs:'vs previous year', yYtd:'Year to date', yFob:'Avg FOB $/kg', yPart:'in progress', pcustom:'Custom date range', fFrom:'Begin date', fTo:'End date', p7:'Last week', p14:'Last 2 weeks', p28:'Last 4 weeks', p84:'Last 12 weeks', pytd:'Year to date', p365:'Last 12 months', p0:'All data', fPort:'Port of entry', allPorts:'All ports',
  range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> product that <b>entered the US</b> between ${a} and ${b} (${n} days).${pa?` Compared with the same period last year (${pa} – ${pb}).`:''} USDA publishes each day's data on the next business day.`,
  tonU:'tons', k1:'Total volume', k1s:w=>`metric tons (USDA)`, k2:'Top product', k2s:'', k3:'Top origin', k3s:(p,n,w)=>`${p}% of total · ${n} ${w}`, k4:'Busiest port', k4s:p=>`${p}% of total`,
  yoy:(prev,chg)=>`Same period last year: ${prev} · ${chg}`, pct:v=>`${v}%`,
@@ -542,14 +549,14 @@ const chg=(a,b)=>b>0?(a-b)/b*100:null;
 function chgHtml(a,b){const c=chg(a,b);if(c==null)return a>0?`<span class="muted">${tt('newF')}</span>`:'';const cls=c>=0?'up':'down';return `<span class="${cls}">${c>=0?'▲':'▼'} ${tt('pct',fmt(Math.abs(c)))}</span>`}
 
 // ================= data (encoded <-> raw) =================
-const SPEC={vol:[1,1,1,1,1,1,1,0],price:[1,1,1,1,1,1,1,0,0,0,0,1,1,1,1],hal:[1,1,1,1,1,1,1,0,0,0,1,1],cen:[1,1,1,1,0,0,0,1,0,0,0,0],halw:[1,1,1,1,0,0]};
+const SPEC={vol:[1,1,1,1,1,1,1,0],price:[1,1,1,1,1,1,1,0,0,0,0,1,1,1,1],dom:[1,1,1,1,1,1,1,0,0,0,0,1,1,1,1],hal:[1,1,1,1,1,1,1,0,0,0,1,1],cen:[1,1,1,1,0,0,0,1,0,0,0,0],halw:[1,1,1,1,0,0]};
 function decode(E){const d=(E.dict||[]).map(s=>typeof s==='string'?s.replace(/[<>]/g,'').replace(/"/g,'″'):s);const o={meta:E.meta||{},markets:E.markets||{}};for(const t in SPEC){const sp=SPEC[t];o[t]=(E[t]||[]).map(r=>r.map((c,i)=>sp[i]?d[c]:c))}return o}
 function encode(D){const dic=[],idx=new Map();const s=v=>{v=v||'';if(!idx.has(v)){idx.set(v,dic.length);dic.push(v)}return idx.get(v)};const o={v:2,meta:D.meta,markets:D.markets,dict:dic};for(const t in SPEC){const sp=SPEC[t];o[t]=(D[t]||[]).map(r=>r.map((c,i)=>sp[i]?s(c):c))}return o}
 const safe=s=>s.replace(/</g,'\\u003c');
 function buildHtml(D){return TPL.replace('/*__D__*/',()=>safe(JSON.stringify(encode(D)))).replace('/*__T__*/',()=>safe(JSON.stringify(TPL)))}
-let RAW={meta:{},markets:{},vol:[],price:[],hal:[],cen:[],halw:[]};
+let RAW={meta:{},markets:{},vol:[],price:[],dom:[],hal:[],cen:[],halw:[]};
 
-let VOL=[], PRICE=[], HAL=[], CEN=[], HALW=[], HALW_FULL=false, META={};
+let VOL=[], PRICE=[], DOM=[], HAL=[], CEN=[], HALW=[], HALW_FULL=false, META={};
 const HSMAP=[['08055020','lemons'],['08055030','limes'],['08055040','limes'],['080510','oranges'],['080521','mandarins'],['080522','clementines'],['080529','mandarins'],['0805408090','pomelos'],['0805404090','pomelos'],['080540','grapefruit'],['080610','grapes']];
 const hsProd=hs=>{const m=HSMAP.find(([p])=>String(hs).startsWith(p));return m?m[1]:null};
 const mF=ym=>{if(!ym)return'';const [y,m]=ym.split('-');return LANG==='tr'?`${L().months[+m-1]} ${y}`:`${L().months[+m-1]} ${y}`};
@@ -561,6 +568,11 @@ function load(){
     const o=normCtry(((String(dist).match(/^(.*?) IMPORTS/i)||[,''])[1]).trim());
     const a=mlo??lo, b=mhi??hi;
     return {d,w:wk(d),y:+d.slice(0,4),slug,c:COMM[c]||c,o,v,pkg,kg:pkgKg(pkg),size,lo,hi,mlo,mhi,mid:(a!=null&&b!=null)?(a+b)/2:null,sup,dem,tone,cmt};
+  });
+  DOM=(RAW.dom||[]).map(r=>{
+    const [d,slug,c,dist,v,pkg,size,lo,hi,mlo,mhi,sup,dem,tone,cmt]=r;
+    const a=mlo??lo, b=mhi??hi;
+    return {d,w:wk(d),y:+d.slice(0,4),slug,c:COMM[c]||c,dist,v,pkg,kg:pkgKg(pkg),size,lo,hi,mlo,mhi,mid:(a!=null&&b!=null)?(a+b)/2:null,sup,dem,tone,cmt};
   });
   HAL=RAW.hal.map(([d,slug,c,o,v,pkg,sizes,lo,hi,mid,tone,gr])=>({d,w:wk(d),slug,mk:RAW.markets[slug]||slug,c:COMM[c]||c,o,v,pkg,kg:pkgKg(pkg),sizes,lo,hi,mid,tone,gr:gr||''}));
   CEN=(RAW.cen||[]).map(([tm,cty,hs,dist,val,cif,qty,unit,cv,cw,vv,vw])=>{
@@ -687,7 +699,7 @@ function render(){
   const byP=[...sumBy(rows,r=>r.p)].sort((a,b)=>b[1]-a[1]);
   $('#k4').textContent=byP[0]?byP[0][0]:'–';
   $('#k4s').textContent=byP[0]&&tot?tt('k4s',fmt(byP[0][1]/tot*100)):'';
-  [()=>flows(rows,prev),()=>weekly(rows),()=>ports(rows),yearCharts,yearTable,heat,prices,hal,h10,cen,()=>{if(calcInit)setupCalc()},fSummary].forEach(f=>{try{f()}catch(e){console.error(e)}});
+  [()=>flows(rows,prev),()=>weekly(rows),()=>ports(rows),yearCharts,yearTable,heat,prices,domPrices,hal,h10,cen,()=>{if(calcInit)setupCalc()},fSummary].forEach(f=>{try{f()}catch(e){console.error(e)}});
 }
 function spark(vals){
   const w=110,h=26,mx=Math.max(...vals,1),bw=w/vals.length;
@@ -811,6 +823,22 @@ function prices(){
   });
   if(!rows.length) h+=`<tr><td colspan="11" class="muted">${tt('noPrice')}</td></tr>`;
   $('#prices').innerHTML=h+'</tbody>';
+}
+function domPrices(){
+  const lim=addDays(DOM.reduce((a,b)=>a>b.d?a:b.d,'')||'2000-01-01',-120);
+  const ps=DOM.filter(p=>(!F.prod||p.c===F.prod)&&p.d>=lim);
+  const m=new Map(); ps.forEach(p=>{const k=[p.c,p.dist,p.v,p.pkg,p.size].join('|'); if(!m.has(k)||m.get(k).d<p.d) m.set(k,p)});
+  const lastD=ps.reduce((a,b)=>a>b.d?a:b.d,'');
+  const latest=[...m.values()].sort((a,b)=>b.d.localeCompare(a.d));
+  const g=new Map(); latest.forEach(p=>{const k=[p.c,p.dist,p.v,p.pkg].join('|'); if(!g.has(k)) g.set(k,{...p,sizes:[],min:Infinity,max:-Infinity}); const x=g.get(k); if(p.d!==x.d) return; x.sizes.push(p.size); const a=p.mlo??p.lo,b=p.mhi??p.hi; if(a!=null)x.min=Math.min(x.min,a); if(b!=null)x.max=Math.max(x.max,b); if(p.sup)x.sup=p.sup; if(p.dem)x.dem=p.dem; if(p.tone)x.tone=p.tone; if(p.cmt)x.cmt=p.cmt;});
+  const rows=[...g.values()].sort((a,b)=>(b.d.localeCompare(a.d))||prodName(a.c).localeCompare(prodName(b.c)));
+  let h=`<thead><tr><th>${tt('pDate')}</th><th>${tt('cProd')}</th><th>${tt('cReg')}</th><th>${tt('pVar')}</th><th>${tt('pPkg')}</th><th>${tt('pSizes')}</th><th class="n">${tt('pBox')}</th><th class="n">${tt('pKg')}</th><th>${tt('pSup')}</th><th>${tt('pDem')}</th><th>${tt('pNote')}</th></tr></thead><tbody>`;
+  rows.forEach(x=>{
+    const old=(new Date(lastD)-new Date(x.d))/864e5>10, ok=isFinite(x.min);
+    h+=`<tr style="${old?'opacity:.55':''}"><td>${dF(x.d)}</td><td class="big">${prodName(x.c)}</td><td>${tc(x.dist)}</td><td>${tc(x.v)}</td><td>${pkgLabel(x.pkg)}</td><td class="muted" style="max-width:180px">${x.sizes.filter(Boolean).join(', ')}</td><td class="n big">${ok?`$${fmt(x.min)}–${fmt(x.max)}`:`<span class="muted">${tt('noMarket')}</span>`}</td><td class="n big">${ok&&x.kg?`$${fmt(x.min/x.kg,2)}–${fmt(x.max/x.kg,2)}`:'<span class="muted">–</span>'}</td><td>${toneLabel(x.sup)}</td><td>${toneLabel(x.dem)}</td><td class="muted" style="max-width:240px;font-size:12.5px">${L().note(x.cmt||x.tone||'')}</td></tr>`;
+  });
+  if(!rows.length) h+=`<tr><td colspan="11" class="muted">${tt('noDom')}</td></tr>`;
+  $('#domPrices').innerHTML=h+'</tbody>';
 }
 let H10MK='';
 $('#h10Mk').onchange=e=>{H10MK=e.target.value;h10()};

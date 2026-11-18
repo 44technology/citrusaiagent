@@ -19,6 +19,7 @@ const { fetchCensus } = require('./lib/census');
 const REPORTS = {
   vol: ['3283', '3125'],     // İthalat hareketi: Washington DC ulusal ithalat + Nogales
   price: ['2401'],           // İthal meyve FOB fiyatları (Philadelphia/NY bölgesi)
+  mixed: ['2402', '2390'], // 2402 Phoenix+McAllen (Meksika ithal limon/misket limonu + AZ/CA yurt içi), 2390 Fresno (CA üzüm, yurt içi)
   hal: ['2314', '2318', '2285', '2281', '2290', '2302', '2277', '2294', '3913', '2310', '2306'], // 11 hal (Fruit)
 };
 
@@ -32,8 +33,9 @@ async function runUpdate(opts = {}) {
   if (!marsKey) throw new Error('MARS_API_KEY tanımlı değil');
 
   const D = fs.existsSync(file) ? C.decode(JSON.parse(fs.readFileSync(file, 'utf8')))
-    : { meta: {}, markets: {}, vol: [], price: [], hal: [], cen: [] };
+    : { meta: {}, markets: {}, vol: [], price: [], dom: [], hal: [], cen: [] };
   D.cen = D.cen || [];
+  D.dom = D.dom || [];
 
   const to = opts.to ? new Date(opts.to + 'T23:59:59Z') : new Date();
   const from = opts.from ? new Date(opts.from + 'T00:00:00Z') : new Date(to.getTime() - (opts.days || 21) * 864e5);
@@ -51,6 +53,13 @@ async function runUpdate(opts = {}) {
     const rows = C.convPrice(await fetchReport(slug, marsKey, from, to, log));
     if (rows.length) D.price = C.mergeRows(D.price, rows, 1, 0);
     summary['FOB ' + slug] = rows.length;
+  }
+  for (const slug of REPORTS.mixed) {
+    const { imp, dom } = C.splitMixed(await fetchReport(slug, marsKey, from, to, log));
+    if (imp.length) D.price = C.mergeRows(D.price, imp, 1, 0);
+    if (dom.length) D.dom = C.mergeRows(D.dom, dom, 1, 0);
+    summary['FOB ithal ' + slug] = imp.length;
+    summary['yurt içi ' + slug] = dom.length;
   }
   for (const slug of REPORTS.hal) {
     const rows = C.convHal(await fetchReport(slug, marsKey, from, to, log), D.markets);

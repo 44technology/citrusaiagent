@@ -12,6 +12,7 @@ function filterGroup(encoded, group) {
   const D = C.decode(encoded);
   D.vol   = D.vol.filter(r => grape(r[3]) === wantGrapes);
   D.price = D.price.filter(r => grape(r[2]) === wantGrapes);
+  D.dom   = (D.dom || []).filter(r => grape(r[2]) === wantGrapes);
   D.hal   = D.hal.filter(r => grape(r[2]) === wantGrapes);
   D.halw  = D.halw.filter(r => grape(r[2]) === wantGrapes);
   D.cen   = D.cen.filter(r => String(r[2]).startsWith('080610') === wantGrapes);

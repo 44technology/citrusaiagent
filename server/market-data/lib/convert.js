@@ -8,7 +8,8 @@ const KEEP = new Set(['Grapes', 'Oranges', 'Royal Mandarin', 'Tangerines', 'Mand
 // Her tablonun hangi sütunları metin (sözlükle sıkıştırılır)
 const SPEC = {
   vol:   [1, 1, 1, 1, 1, 1, 1, 0],                         // [tarih, rapor_baslangic, slug, ürün, menşe, district, taşıma, lb]
-  price: [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],    // [tarih, slug, ürün, district, çeşit, ambalaj, boy, low, high, mlow, mhigh, arz, talep, piyasa, not]
+  price: [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+  dom:   [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],    // yurt içi çıkış (shipping point) fiyatları — price ile aynı sütunlar, ithal ortalamaya karışmaz    // [tarih, slug, ürün, district, çeşit, ambalaj, boy, low, high, mlow, mhigh, arz, talep, piyasa, not]
   hal:   [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1],             // [tarih, slug, ürün, menşe, çeşit, ambalaj, boylar, low, high, ort, piyasa, kalite]
   cen:   [1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
   halw:  [1, 1, 1, 1, 0, 0],                               // haftalık hal geçmişi: [hafta(pazartesi), slug, ürün, menşe, kayıt sayısı, ort. $/kg]             // [ay, ülke, hs10, bölge, değer, cif, miktar, birim, kont.değer, kont.ağırlık, gemi.değer, gemi.ağırlık]
@@ -32,6 +33,21 @@ function convPrice(rows) {
   return rows.filter(x => KEEP.has(x.commodity)).map(x => [isoUS(x.report_date), String(x.slug_id || ''), x.commodity, x.district || '',
     na(x.var), na(x.pkg), na(x.item_size), num(x.low_price), num(x.high_price), num(x.mostly_low_price), num(x.mostly_high_price),
     x.supply_tone_comments || '', x.demand_tone_comments || '', x.market_tone_comments || '', x.rep_cmt || '']).filter(r => r[0]);
+}
+
+// Karışık FOB raporları (2402 Phoenix + McAllen, 2390 Fresno): her satırda import_export_flag var.
+// 'I' (ithal) satırlar FOB (price) tablosuna menşe ülkesiyle, 'D' (yurt içi) satırlar ayrı 'dom' tablosuna gider.
+const flagOf = x => String(x.import_export_flag || '').trim().toUpperCase();
+function impDistrict(d) { // "MEXICO CROSSINGS THROUGH TEXAS" -> "MEXICO IMPORTS - CROSSINGS THROUGH TEXAS" (panonun menşe ayrıştırıcısı " IMPORTS" arar)
+  const s = String(d || '').trim();
+  if (/ IMPORTS/i.test(s)) return s;
+  const m = s.match(/^(.+?) CROSSINGS\b(.*)$/i);
+  return m ? `${m[1]} IMPORTS - CROSSINGS${m[2]}` : s;
+}
+function splitMixed(rows) {
+  const imp = rows.filter(x => flagOf(x).startsWith('I')).map(x => ({ ...x, district: impDistrict(x.district) }));
+  const dom = rows.filter(x => flagOf(x).startsWith('D'));
+  return { imp: convPrice(imp), dom: convPrice(dom) };
 }
 
 // USDA hal (Terminal Market) fiyatları -> günlük ortalama hal satırları (organik hariç, kalite ayrı)
@@ -82,4 +98,4 @@ function encode(D) {
   return o;
 }
 
-module.exports = { KEEP, SPEC, isoUS, num, na, convVol, convPrice, convHal, convCen, mergeRows, decode, encode };
+module.exports = { KEEP, SPEC, isoUS, num, na, convVol, convPrice, splitMixed, convHal, convCen, mergeRows, decode, encode };
