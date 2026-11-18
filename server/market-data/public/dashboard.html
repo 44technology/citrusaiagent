@@ -42,7 +42,7 @@ h3{font-size:14px;margin:14px 0 6px}
 .bar .f{display:flex;flex-direction:column;gap:5px}
 .bar label{font-size:12px;font-weight:600;color:var(--muted)}
 select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;min-width:160px}
-.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dr{display:flex;gap:8px;margin-top:8px}.dr label{flex:1;display:block;font-size:12px;color:var(--muted,inherit)}.dr input{width:100%;box-sizing:border-box;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;font-size:13px}.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{border:0;background:var(--card);color:var(--ink);padding:8px 12px;font:inherit;cursor:pointer;border-right:1px solid var(--line)}
 .seg button:last-child{border-right:0}
 .seg button.on{background:var(--brand);color:#fff}
@@ -212,6 +212,10 @@ code{background:var(--card);border:1px solid var(--line);border-radius:6px;paddi
         <button data-v="365" data-i="p365"></button>
         <button data-v="0" data-i="p0"></button>
       </div>
+      <div class="dr" id="dRange">
+        <label><span data-i="fFrom"></span><input type="date" id="dFrom"></label>
+        <label><span data-i="fTo"></span><input type="date" id="dTo"></label>
+      </div>
     </div>
     <button class="btn fclose" id="fClose" type="button" data-i="fClose"></button>
   </div>
@@ -378,7 +382,7 @@ tr:{
  h10Hint1:'Şu an yalnızca panodaki günlük hal verisi (yaklaşık son 1 yıl) gösteriliyor. Son 10 yılın geçmişi sunucuda bir kez <code>node hal-history.js</code> çalıştırılınca eklenir.',
  h10Note:'Haftalık değer = o hafta hallerde raporlanan fiyatların ortalaması (tüm çeşit, boy ve kaliteler; organik hariç; yalnızca ağırlığı yazan ambalajlar). Fiyatlar nominal dolardır, enflasyona göre düzeltilmemiştir. İçinde bulunulan yıl henüz bitmediği için yıllık ortalaması diğer yıllarla birebir karşılaştırılamaz.', noH10:'Bu ürün/menşe için hal fiyatı yok.', kindW:'hal geçmişi',
  filtersBtn:'⚙ Filtreler', fClose:'Sonuçları göster', filtersT:'Filtreler', resetF:'Sıfırla', nKpi:'📊 Özet', nFlows:'🚢 Akışlar', nWeek:'📈 Haftalık & limanlar', nYears:'📅 Yıllara göre', nCal:'🗓️ Sezon takvimi', nFob:'💵 FOB fiyatları', nHal:'🏪 Hal fiyatları', nCen:'🧾 Alış & navlun', nCalc:'💰 Kârlılık hesabı', fProd:'Ürün', allProd:'Tüm narenciye + üzüm', fOrig:'Menşe', allOrig:'Tüm ülkeler', fMode:'Nasıl geliyor?', mBoat:'🚢 Gemi (konteyner)', mTruck:'🚚 Kamyon', mAir:'✈️ Uçak', mAll:'Hepsi',
- fPer:'Dönem', p7:'Son 1 hafta', p14:'Son 2 hafta', p28:'Son 4 hafta', p84:'Son 12 hafta', pytd:'Bu yıl', p365:'Son 12 ay', p0:'Tüm veri', fPort:'Liman / giriş noktası', allPorts:'Tüm limanlar',
+ fPer:'Dönem', pcustom:'Özel tarih aralığı', fFrom:'Başlangıç', fTo:'Bitiş', p7:'Son 1 hafta', p14:'Son 2 hafta', p28:'Son 4 hafta', p84:'Son 12 hafta', pytd:'Bu yıl', p365:'Son 12 ay', p0:'Tüm veri', fPort:'Liman / giriş noktası', allPorts:'Tüm limanlar',
  range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> ${a} – ${b} arasında ABD'ye <b>giriş yapan</b> mallar (${n} gün).${pa?` Karşılaştırma: geçen yıl aynı dönem (${pa} – ${pb}).`:''} USDA bir günün verisini ertesi iş günü yayınlar.`,
  tonU:'ton', k1:'Toplam miktar', k1s:w=>`metrik ton (USDA)`, k2:'En çok gelen ürün', k2s:'', k3:'En çok gelen ülke', k3s:(p,n,w)=>`toplamın %${p}'i · ${n} ${w}`, k4:'En yoğun liman', k4s:p=>`toplamın %${p}'i`,
  yoy:(prev,chg)=>`Geçen yıl aynı dönem: ${prev} · ${chg}`, pct:v=>`%${v}`,
@@ -436,7 +440,7 @@ en:{
  h10Hint1:'Only the daily terminal data already in the dashboard (about the last year) is shown. The last 10 years are added once <code>node hal-history.js</code> has been run on the server.',
  h10Note:'Weekly value = average of the prices reported at terminal markets that week (all varieties, sizes and grades; organic excluded; only packages that state a weight). Prices are nominal dollars, not adjusted for inflation. The current year is not finished, so its annual average is not directly comparable.', noH10:'No terminal prices for this product/origin.', kindW:'terminal history',
  filtersBtn:'⚙ Filters', fClose:'Show results', filtersT:'Filters', resetF:'Reset', nKpi:'📊 Summary', nFlows:'🚢 Trade flows', nWeek:'📈 Weekly & ports', nYears:'📅 Year over year', nCal:'🗓️ Season calendar', nFob:'💵 FOB prices', nHal:'🏪 Terminal prices', nCen:'🧾 Purchase & freight', nCalc:'💰 Profitability', fProd:'Product', allProd:'All citrus + grapes', fOrig:'Origin', allOrig:'All countries', fMode:'How it arrives', mBoat:'🚢 Ocean (containers)', mTruck:'🚚 Truck', mAir:'✈️ Air', mAll:'All',
- fPer:'Period', p7:'Last week', p14:'Last 2 weeks', p28:'Last 4 weeks', p84:'Last 12 weeks', pytd:'Year to date', p365:'Last 12 months', p0:'All data', fPort:'Port of entry', allPorts:'All ports',
+ fPer:'Period', pcustom:'Custom date range', fFrom:'Begin date', fTo:'End date', p7:'Last week', p14:'Last 2 weeks', p28:'Last 4 weeks', p84:'Last 12 weeks', pytd:'Year to date', p365:'Last 12 months', p0:'All data', fPort:'Port of entry', allPorts:'All ports',
  range:(per,a,b,n,pa,pb)=>`📅 <b>${per}:</b> product that <b>entered the US</b> between ${a} and ${b} (${n} days).${pa?` Compared with the same period last year (${pa} – ${pb}).`:''} USDA publishes each day's data on the next business day.`,
  tonU:'tons', k1:'Total volume', k1s:w=>`metric tons (USDA)`, k2:'Top product', k2s:'', k3:'Top origin', k3s:(p,n,w)=>`${p}% of total · ${n} ${w}`, k4:'Busiest port', k4s:p=>`${p}% of total`,
  yoy:(prev,chg)=>`Same period last year: ${prev} · ${chg}`, pct:v=>`${v}%`,
@@ -596,10 +600,15 @@ function fillPorts(){
 }
 function win(){
   const to=META.vTo; let from;
-  if(F.per==='ytd') from=to.slice(0,4)+'-01-01'; else if(+F.per) from=addDays(to,-(+F.per-1)); else from=META.vFrom;
+  let toD=to;
+  if(F.per==='custom'){
+    from=F.from||META.vFrom; toD=F.to||META.vTo;
+    if(from>toD){const t=from;from=toD;toD=t}
+    if(from<META.vFrom)from=META.vFrom; if(toD>META.vTo)toD=META.vTo; if(from>toD)from=toD;
+  } else if(F.per==='ytd') from=to.slice(0,4)+'-01-01'; else if(+F.per) from=addDays(to,-(+F.per-1)); else from=META.vFrom;
   let pf=null,pt=null;
-  if(F.per!=='0'&&F.per!==0){pf=addDays(from,-364);pt=addDays(to,-364);if(pf<META.vFrom){pf=null;pt=null}}
-  return {from,to,pf,pt};
+  if(F.per!=='0'&&F.per!==0){pf=addDays(from,-364);pt=addDays(toD,-364);if(pf<META.vFrom){pf=null;pt=null}}
+  return {from,to:toD,pf,pt};
 }
 const base=r=>(!F.prod||r.c===F.prod)&&(!F.orig||r.o===F.orig)&&(!F.mode||r.m===F.mode)&&(!F.port||r.praw===F.port);
 const rowsIn=(a,b)=>VOL.filter(r=>base(r)&&r.d>=a&&r.d<=b);
@@ -610,13 +619,16 @@ $('#fPort').onchange=e=>{F.port=e.target.value;render()};
 
 function seg(id,key){$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;F[key]=b.dataset.v;[...$(id).children].forEach(x=>x.classList.toggle('on',x===b));if(key==='mode'){fillOrig();fillPorts()}render()}}
 seg('#fMode','mode');seg('#fPer','per');
+$('#fPer').addEventListener('click',e=>{if(e.target.closest('button')){F.from='';F.to='';$('#dFrom').value='';$('#dTo').value=''}});
+function onDate(){F.from=$('#dFrom').value;F.to=$('#dTo').value;if(!F.from&&!F.to){F.per='28';[...$('#fPer').children].forEach(x=>x.classList.toggle('on',x.dataset.v==='28'))}else{F.per='custom';[...$('#fPer').children].forEach(x=>x.classList.remove('on'))}render()}
+$('#dFrom').onchange=onDate;$('#dTo').onchange=onDate;
 F.per='28';
 $('#moreBtn').onclick=()=>{showAll=!showAll;flows(CUR.rows,CUR.prev)};
 document.querySelectorAll('#nav a').forEach(a=>a.onclick=e=>{e.preventDefault();const el=document.querySelector(a.getAttribute('href'));if(el)el.scrollIntoView({behavior:'smooth',block:'start'})});
 function navOn(id){document.querySelectorAll('#nav a').forEach(a=>{const on=a.getAttribute('href')==='#'+id;a.classList.toggle('on',on);if(on&&window.innerWidth<=1100){const n=$('#nav');n.scrollLeft=a.offsetLeft-n.offsetLeft-12}})}
 try{const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){navOn(en.target.id)}})},{rootMargin:'-20% 0px -70% 0px'});
   document.querySelectorAll('#nav a').forEach(a=>{const el=document.querySelector(a.getAttribute('href'));if(el)io.observe(el)})}catch(e){}
-$('#resetF').onclick=()=>{F={prod:'',orig:'',mode:'Boat',per:'28',port:''};showAll=false;HGRADE='';CDIST='';
+$('#resetF').onclick=()=>{F={prod:'',orig:'',mode:'Boat',per:'28',port:'',from:'',to:''};$('#dFrom').value='';$('#dTo').value='';showAll=false;HGRADE='';CDIST='';
   [['#fMode','Boat'],['#fPer','28']].forEach(([id,v])=>[...$(id).children].forEach(x=>x.classList.toggle('on',x.dataset.v===v)));fillSelects();render()};
 $('#lang').onclick=e=>{const b=e.target.closest('button');if(!b)return;setLang(b.dataset.v)};
 
@@ -655,6 +667,7 @@ const lw=()=>tt('tonU');
 const ink=()=>getComputedStyle(document.body).color;
 function render(){
   const W=win();
+  ['dFrom','dTo'].forEach(i=>{const el=$('#'+i);el.min=META.vFrom;el.max=META.vTo});
   const days=Math.round((new Date(W.to)-new Date(W.from))/864e5)+1;
   $('#rangeInfo').innerHTML=tt('range',tt('p'+F.per),dF(W.from),dF(W.to),days,W.pf?dF(W.pf):'',W.pt?dF(W.pt):'');
   const rows=rowsIn(W.from,W.to), prev=W.pf?rowsIn(W.pf,W.pt):null;
