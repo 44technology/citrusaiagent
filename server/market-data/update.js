@@ -5,6 +5,7 @@
 //   node update.js --days 60       -> son 60 gün
 //   node update.js --census        -> Census'u da zorla güncelle (son 6 ay)
 //   node update.js --from 2024-01-01 --census-from 2024-01   -> geçmişi baştan doldur
+//   node update.js --from 2018-01-01 --to 2018-12-31          -> yalnızca bir yıl (bellek az ise yıl yıl doldurun)
 // Ortam değişkenleri: MARS_API_KEY (zorunlu), CENSUS_API_KEY (Census için), MARKET_DATA_FILE (varsayılan: UPLOADS_DIR/market-data.json)
 'use strict';
 
@@ -34,7 +35,7 @@ async function runUpdate(opts = {}) {
     : { meta: {}, markets: {}, vol: [], price: [], hal: [], cen: [] };
   D.cen = D.cen || [];
 
-  const to = new Date();
+  const to = opts.to ? new Date(opts.to + 'T23:59:59Z') : new Date();
   const from = opts.from ? new Date(opts.from + 'T00:00:00Z') : new Date(to.getTime() - (opts.days || 21) * 864e5);
   const summary = {};
 
@@ -57,7 +58,7 @@ async function runUpdate(opts = {}) {
     summary['hal ' + slug] = rows.length;
   }
 
-  const wantCensus = opts.census || opts.censusFrom || to.getUTCDate() <= 7;
+  const wantCensus = opts.census || opts.censusFrom || (!opts.to && to.getUTCDate() <= 7);
   if (wantCensus && censusKey) {
     const cFrom = opts.censusFrom || ym(new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - 6, 1)));
     const rows = C.convCen(await fetchCensus(censusKey, cFrom, ym(to), log));
@@ -76,7 +77,7 @@ async function runUpdate(opts = {}) {
 
 if (require.main === module) {
   const a = process.argv.slice(2), arg = n => { const i = a.indexOf(n); return i >= 0 ? a[i + 1] : undefined; };
-  runUpdate({ days: +(arg('--days') || 21), from: arg('--from'), census: a.includes('--census'), censusFrom: arg('--census-from') })
+  runUpdate({ days: +(arg('--days') || 21), from: arg('--from'), to: arg('--to'), census: a.includes('--census'), censusFrom: arg('--census-from') })
     .catch(e => { console.error('HATA:', e.message); process.exit(1); });
 }
 
